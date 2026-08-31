@@ -1,3 +1,4 @@
+import { MODRINTH_UNSUPPORTED, modrinthProjectId } from "../providers";
 import { ServerVariant } from "../shared";
 
 export const MODPACK_INDEX = "modrinth.index.json";
@@ -9,8 +10,6 @@ const GAME = "minecraft";
 const MAX_FILES = 1024;
 
 const SHA512_PATTERN = /^[a-f0-9]{128}$/;
-
-const UNSUPPORTED = "unsupported";
 
 const QUILT_LOADERS = [
 	"quilt",
@@ -34,6 +33,7 @@ export interface ModpackFile {
 	url: string;
 	digest: string | null;
 	sizeBytes: number | null;
+	projectId: string | null;
 }
 
 export interface ModpackIndex {
@@ -113,7 +113,7 @@ const readUrl = (value: unknown) => {
 };
 
 const readFile = (value: RawIndexFile): ModpackFile | null => {
-	if (typeof value.env?.server === "string" && value.env.server === UNSUPPORTED) {
+	if (typeof value.env?.server === "string" && value.env.server === MODRINTH_UNSUPPORTED) {
 		return null;
 	}
 
@@ -132,6 +132,7 @@ const readFile = (value: RawIndexFile): ModpackFile | null => {
 		url,
 		digest: SHA512_PATTERN.test(sha512) ? `sha512:${sha512}` : null,
 		sizeBytes,
+		projectId: modrinthProjectId(url),
 	};
 };
 

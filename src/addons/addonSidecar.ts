@@ -1,6 +1,6 @@
 import type { Bridge } from "@serverkgg/bridge";
 
-const SIDECAR = ".serverk-catalog.json";
+export const ADDON_SIDECAR = ".serverk-catalog.json";
 
 export interface SidecarEntry {
 	provider: string;
@@ -16,7 +16,7 @@ export interface SidecarEntry {
 export type Sidecar = Record<string, SidecarEntry>;
 
 export const sidecarPath = (directory: string) => {
-	return `${directory}/${SIDECAR}`;
+	return `${directory}/${ADDON_SIDECAR}`;
 };
 
 export const readSidecar = async (context: Bridge.Context, directory: string): Promise<Sidecar> => {

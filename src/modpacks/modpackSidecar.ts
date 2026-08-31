@@ -21,6 +21,8 @@ export interface ModpackSidecar extends ModpackIdentity {
 	loaderVersion: string | null;
 	appliedAt: string;
 	fileCount: number;
+	skippedCount: number;
+	files: string[] | null;
 }
 
 const VARIANTS = new Set<string>(Object.values(ServerVariant));
@@ -58,6 +60,8 @@ export const readModpackSidecar = async (context: Bridge.Context): Promise<Modpa
 			loaderVersion: typeof parsed.loaderVersion === "string" ? parsed.loaderVersion : null,
 			appliedAt: typeof parsed.appliedAt === "string" ? parsed.appliedAt : "",
 			fileCount: typeof parsed.fileCount === "number" ? parsed.fileCount : 0,
+			skippedCount: typeof parsed.skippedCount === "number" ? parsed.skippedCount : 0,
+			files: Array.isArray(parsed.files) ? parsed.files.filter((path) => typeof path === "string") : null,
 		};
 	} catch {
 		return null;

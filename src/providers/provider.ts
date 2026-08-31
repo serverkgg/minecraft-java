@@ -49,6 +49,7 @@ export interface CatalogRelease {
 	pageUrl: string | null;
 	gameVersions: string[] | null;
 	loaders: string[] | null;
+	serverSide: string | null;
 	file: CatalogFile;
 	dependencies: string[];
 }

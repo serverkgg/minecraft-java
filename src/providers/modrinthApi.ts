@@ -8,11 +8,19 @@ export const MODRINTH_SEARCH_CACHE_SECONDS = 60;
 
 export const MODRINTH_PROJECT_CACHE_SECONDS = 600;
 
+export const MODRINTH_SIDE_CACHE_SECONDS = 86_400;
+
+export const MODRINTH_UNSUPPORTED = "unsupported";
+
 const MODRINTH_CDN = "cdn.modrinth.com";
 
 const SECRET = "MODRINTH_API_KEY";
 
 const SHA512_PATTERN = /^[a-f0-9]{128}$/;
+
+const PROJECT_BATCH = 100;
+
+const CDN_PROJECT_PATTERN = /^\/data\/([A-Za-z0-9]+)\/versions\//;
 
 const REJECTED_STATUSES = [
 	401,
@@ -68,6 +76,8 @@ export interface ModrinthProject {
 	slug: string;
 	title: string;
 	icon_url: string | null;
+	server_side: string;
+	client_side: string;
 }
 
 const headersOf = (context: Bridge.Context) => {
@@ -104,6 +114,37 @@ export const modrinthRequest = async <Result>(
 
 		throw asRateLimit(error, CatalogProviderId.Modrinth);
 	}
+};
+
+export const modrinthProjects = async (context: Bridge.Context, ids: string[]): Promise<ModrinthProject[]> => {
+	const wanted = [
+		...new Set(ids),
+	].sort();
+	const projects: ModrinthProject[] = [];
+
+	for (let cursor = 0; cursor < wanted.length; cursor += PROJECT_BATCH) {
+		const url = new URL(`${MODRINTH}/projects`);
+
+		url.searchParams.set("ids", JSON.stringify(wanted.slice(cursor, cursor + PROJECT_BATCH)));
+
+		projects.push(...(await modrinthRequest<ModrinthProject[]>(context, url.toString(), MODRINTH_SIDE_CACHE_SECONDS)));
+	}
+
+	return projects;
+};
+
+export const modrinthProjectId = (url: string): string | null => {
+	if (!URL.canParse(url)) {
+		return null;
+	}
+
+	const parsed = new URL(url);
+
+	if (parsed.hostname !== MODRINTH_CDN) {
+		return null;
+	}
+
+	return CDN_PROJECT_PATTERN.exec(parsed.pathname)?.[1] ?? null;
 };
 
 export const modrinthFile = (version: ModrinthVersion): CatalogFile | null => {

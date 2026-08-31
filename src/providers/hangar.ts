@@ -290,6 +290,7 @@ export const hangarProvider: CatalogProvider = {
 			pageUrl: `https://hangar.papermc.io/${namespace}`,
 			gameVersions: null,
 			loaders: null,
+			serverSide: null,
 			file: usable.file,
 			dependencies: (usable.version.pluginDependencies[PLATFORM] ?? [])
 				.filter((dependency) => dependency.required && dependency.projectId !== null)

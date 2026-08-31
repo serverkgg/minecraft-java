@@ -81,6 +81,7 @@ export const modrinthLoaderRelease = async (
 		pageUrl: `https://modrinth.com/project/${encodeURIComponent(project)}`,
 		gameVersions: newest.game_versions,
 		loaders: newest.loaders,
+		serverSide: null,
 		file,
 		dependencies: [],
 	};
@@ -283,6 +284,7 @@ export const modrinthProvider: CatalogProvider = {
 			pageUrl: `https://modrinth.com/${target.kind}/${details.slug}`,
 			gameVersions: version.game_versions,
 			loaders: version.loaders,
+			serverSide: details.server_side,
 			file,
 			dependencies: version.dependencies
 				.filter((dependency) => dependency.dependency_type === "required" && dependency.project_id !== null)

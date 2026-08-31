@@ -105,14 +105,12 @@ export const install: Bridge.Install = {
 		const mismatched = plan.kind === ModpackPlanKind.Apply && staged === null && plan.sidecar !== null;
 
 		if (mismatched) {
-			context.log("the modpack that was on this server no longer fits it, so it goes, and its world with it", {
-				modpack: plan.sidecar?.title ?? "",
-			});
-
-			await wipeData(context);
+			throw new Error(
+				`the modpack "${plan.sidecar?.title ?? ""}" does not fit this server any more, so nothing was changed — choose a version built for ${variant} ${version}, or remove the modpack`,
+			);
 		}
 
-		const detaching = plan.kind === ModpackPlanKind.Detach || mismatched;
+		const detaching = plan.kind === ModpackPlanKind.Detach;
 
 		const build = staged ? staged.index.loaderVersion : next.build;
 

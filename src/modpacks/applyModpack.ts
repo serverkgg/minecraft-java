@@ -6,10 +6,19 @@ import {
 	modpackProject,
 	modpackRelease,
 } from "../providers";
-import { type ServerVariant, STAGING_ROOT } from "../shared";
-import { MODPACK_INDEX, type ModpackIndex, parseModpackIndex, variantForLoaders } from "./modpackIndex";
+import { mapConcurrent, type ServerVariant, STAGING_ROOT } from "../shared";
+import { CLIENT_ONLY_DIRECTORIES, fileNameOf, isClientOnlyFilename } from "./clientMods";
+import { modpackCleanup } from "./modpackCleanup";
+import {
+	MODPACK_INDEX,
+	type ModpackFile,
+	type ModpackIndex,
+	parseModpackIndex,
+	variantForLoaders,
+} from "./modpackIndex";
 import { decodeModpackRef, type ModpackRef } from "./modpackRef";
 import { clearModpackSidecar, type ModpackSidecar, readModpackSidecar, writeModpackSidecar } from "./modpackSidecar";
+import { partitionModpackFiles, resolveUnsupported } from "./modpackSideness";
 
 export const MODPACK_VARIABLE = "MODPACK";
 
@@ -24,15 +33,15 @@ const OVERRIDE_FOLDERS = [
 	"server-overrides",
 ];
 
-const PACK_DIRECTORIES = [
-	"mods",
-	"config",
-	"defaultconfigs",
-	"kubejs",
-	"scripts",
-];
-
 const PROGRESS_STEP = 25;
+
+const DOWNLOAD_WIDTH = 4;
+
+const THROTTLE_ATTEMPTS = 3;
+
+const THROTTLE_WAIT_MS = 20_000;
+
+const THROTTLED_PATTERN = /\b429\b/;
 
 const NO_MATCHING_FILES = "contained no matching files";
 
@@ -65,10 +74,48 @@ const clearStaging = async (context: Bridge.Context) => {
 	await context.files.remove(PACK_STAGING);
 };
 
-const clearPackDirectories = async (context: Bridge.Context) => {
-	for (const directory of PACK_DIRECTORIES) {
-		await context.files.remove(directory);
+const removePaths = async (context: Bridge.Context, paths: string[]) => {
+	for (const path of paths) {
+		await context.files.remove(path);
 	}
+};
+
+const pruneClientOnly = async (context: Bridge.Context, written: string[]) => {
+	const directories = new Set<string>();
+	const files: string[] = [];
+
+	for (const path of written) {
+		const directory = path.split("/").at(0) ?? "";
+
+		if (CLIENT_ONLY_DIRECTORIES.includes(directory.toLowerCase())) {
+			directories.add(directory);
+		} else if (isClientOnlyFilename(fileNameOf(path))) {
+			files.push(path);
+		}
+	}
+
+	try {
+		for (const target of [
+			...directories,
+			...files,
+		]) {
+			await context.files.remove(target);
+		}
+	} catch (error) {
+		context.log.warn("could not remove every client-side file the modpack shipped", {
+			error: error instanceof Error ? error.message : String(error),
+		});
+	}
+
+	const removed = new Set(files);
+
+	for (const path of written) {
+		if (directories.has(path.split("/").at(0) ?? "")) {
+			removed.add(path);
+		}
+	}
+
+	return removed;
 };
 
 const applyOverrides = async (context: Bridge.Context, folder: string) => {
@@ -78,47 +125,88 @@ const applyOverrides = async (context: Bridge.Context, folder: string) => {
 			select: `${folder}/`,
 		});
 
+		const removed = await pruneClientOnly(context, written);
+		const kept = written.filter((path) => !removed.has(path));
+
 		context.log("copied the modpack's own files", {
 			folder,
-			files: written.length,
+			files: kept.length,
+			skipped: removed.size,
 		});
+
+		return kept;
 	} catch (error) {
 		if (!isEmptySelection(error)) {
 			throw error;
 		}
 	}
+
+	return [];
 };
 
-const downloadFiles = async (context: Bridge.Context, index: ModpackIndex) => {
+const isThrottled = (error: unknown) => {
+	return error instanceof Error && THROTTLED_PATTERN.test(error.message);
+};
+
+const wait = (ms: number) => {
+	return new Promise((resolve) => {
+		setTimeout(resolve, ms);
+	});
+};
+
+const downloadFile = async (context: Bridge.Context, file: ModpackFile) => {
+	const options = {
+		cache: true,
+		...(file.digest === null
+			? {}
+			: {
+					digest: file.digest,
+				}),
+		...(file.sizeBytes === null
+			? {}
+			: {
+					sizeBytes: file.sizeBytes,
+				}),
+	};
+
+	for (let attempt = 1; ; attempt += 1) {
+		try {
+			await context.files.download(file.path, file.url, options);
+
+			return;
+		} catch (error) {
+			if (attempt > THROTTLE_ATTEMPTS || !isThrottled(error)) {
+				throw error;
+			}
+
+			context.log.warn("the download limit was reached, waiting before carrying on", {
+				file: fileNameOf(file.path),
+				attempt,
+			});
+
+			await wait(THROTTLE_WAIT_MS * attempt);
+		}
+	}
+};
+
+const downloadFiles = async (context: Bridge.Context, files: ModpackFile[]) => {
 	let done = 0;
 	let milestone = 0;
 
-	for (const file of index.files) {
-		await context.files.download(file.path, file.url, {
-			cache: true,
-			...(file.digest === null
-				? {}
-				: {
-						digest: file.digest,
-					}),
-			...(file.sizeBytes === null
-				? {}
-				: {
-						sizeBytes: file.sizeBytes,
-					}),
-		});
+	await mapConcurrent(files, DOWNLOAD_WIDTH, async (file) => {
+		await downloadFile(context, file);
 
 		done += 1;
 
-		if (done - milestone >= PROGRESS_STEP && done < index.files.length) {
+		if (done - milestone >= PROGRESS_STEP && done < files.length) {
 			milestone = done;
 
 			context.log("downloading the modpack", {
 				done,
-				total: index.files.length,
+				total: files.length,
 			});
 		}
-	}
+	});
 };
 
 export const modpackPlan = async (
@@ -277,23 +365,41 @@ export const stageModpack = async (
 
 export const applyModpack = async (context: Bridge.Context, staged: StagedModpack) => {
 	const { index, project, release, ref } = staged;
+	const previous = await readModpackSidecar(context);
+	const cleanup = modpackCleanup(previous?.files ?? null);
 
-	context.log("clearing the old mods and configs before the modpack goes in", {
-		directories: PACK_DIRECTORIES.join(", "),
-	});
+	context.log(
+		cleanup.wholesale
+			? "clearing the old mods and configs before the modpack goes in"
+			: "removing the files the last modpack installed, everything you added stays",
+		{
+			files: cleanup.paths.length,
+		},
+	);
 
-	await clearPackDirectories(context);
+	await removePaths(context, cleanup.paths);
+
+	const { keep, skipped } = partitionModpackFiles(index.files, await resolveUnsupported(context, index.files));
+
+	if (skipped.length > 0) {
+		context.log.warn("left out the modpack's client-side files, they cannot run on a server", {
+			skipped: skipped.length,
+			example: fileNameOf(skipped[0]?.path ?? ""),
+		});
+	}
 
 	context.log("installing the modpack", {
 		title: project.title,
 		version: release.version,
-		files: index.files.length,
+		files: keep.length,
 	});
 
-	await downloadFiles(context, index);
+	await downloadFiles(context, keep);
+
+	const installed = keep.map((file) => file.path);
 
 	for (const folder of OVERRIDE_FOLDERS) {
-		await applyOverrides(context, folder);
+		installed.push(...(await applyOverrides(context, folder)));
 	}
 
 	await writeModpackSidecar(context, {
@@ -308,7 +414,9 @@ export const applyModpack = async (context: Bridge.Context, staged: StagedModpac
 		variant: index.variant,
 		loaderVersion: index.loaderVersion,
 		appliedAt: new Date().toISOString(),
-		fileCount: index.files.length,
+		fileCount: keep.length,
+		skippedCount: skipped.length,
+		files: installed,
 	});
 
 	await clearStaging(context);
@@ -320,11 +428,15 @@ export const applyModpack = async (context: Bridge.Context, staged: StagedModpac
 };
 
 export const detachModpack = async (context: Bridge.Context) => {
+	const previous = await readModpackSidecar(context);
+	const cleanup = modpackCleanup(previous?.files ?? null);
+
 	context.log("removing the modpack and everything it installed", {
-		directories: PACK_DIRECTORIES.join(", "),
+		files: cleanup.paths.length,
 	});
 
-	await clearPackDirectories(context);
+	await removePaths(context, cleanup.paths);
+
 	await clearModpackSidecar(context);
 	await clearStaging(context);
 };

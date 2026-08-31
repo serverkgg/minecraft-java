@@ -419,6 +419,7 @@ export const curseForgeProvider: CatalogProvider = {
 			pageUrl: details.data.links?.websiteUrl ?? null,
 			gameVersions: null,
 			loaders: null,
+			serverSide: null,
 			file,
 			dependencies: entry.dependencies
 				.filter((dependency) => dependency.relationType === REQUIRED_DEPENDENCY)

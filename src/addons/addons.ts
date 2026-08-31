@@ -5,6 +5,7 @@ import {
 	decodeProviderRef,
 	describeProviders,
 	encodeProviderRef,
+	MODRINTH_UNSUPPORTED,
 	providerById,
 	resolveProvider,
 	targetLoaders,
@@ -43,6 +44,13 @@ const isStale = (tracked: SidecarEntry | undefined, target: AddonTarget) => {
 };
 
 const assertCompatible = (release: CatalogRelease, target: AddonTarget) => {
+	if (release.serverSide === MODRINTH_UNSUPPORTED) {
+		throw new BridgeFailureError(
+			BridgeFailureCode.NoCatalogVersionAvailable,
+			`"${release.title}" only runs on the player's own game, it cannot be installed on a server`,
+		);
+	}
+
 	if (release.gameVersions && !release.gameVersions.includes(target.gameVersion)) {
 		throw new BridgeFailureError(
 			BridgeFailureCode.NoCatalogVersionAvailable,
