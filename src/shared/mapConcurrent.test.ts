@@ -106,7 +106,7 @@ describe("running work a few items at a time", () => {
 	});
 
 	test("lets a failure surface instead of swallowing it", async () => {
-		expect(
+		await expect(
 			mapConcurrent(
 				[
 					1,
@@ -121,5 +121,52 @@ describe("running work a few items at a time", () => {
 				},
 			),
 		).rejects.toThrow("nope");
+	});
+
+	test("stops handing out work once something fails", async () => {
+		const seen: number[] = [];
+
+		await expect(
+			mapConcurrent(
+				Array.from(
+					{
+						length: 20,
+					},
+					(_, index) => index,
+				),
+				2,
+				async (item) => {
+					await settle();
+
+					seen.push(item);
+
+					if (item === 1) {
+						throw new Error("nope");
+					}
+				},
+			),
+		).rejects.toThrow("nope");
+
+		expect(seen.length).toBeLessThan(20);
+		expect(seen).toContain(1);
+	});
+
+	test("reports the failure that came first", async () => {
+		await expect(
+			mapConcurrent(
+				[
+					1,
+					2,
+				],
+				2,
+				async (item) => {
+					if (item === 2) {
+						await settle();
+					}
+
+					throw new Error(`nope ${item}`);
+				},
+			),
+		).rejects.toThrow("nope 1");
 	});
 });

@@ -107,6 +107,15 @@ reset:
     - user_jvm_args.txt
     - .serverk-install.json
 
+presence:
+  name: player
+  avatar: "https://mc-heads.net/avatar/{skin}/128"
+  fields:
+    - key: platform
+      label:
+        ar: المنصة
+        en: Platform
+
 files:
   protected:
     - libraries

@@ -4,12 +4,32 @@ export const events: Bridge.Events = {
 	kind: BridgeKind.Events,
 	patterns: [
 		{
-			match: /(?<player>\.?[\w,]{2,16}) joined the game/,
+			match: /(?<![\w.])(?<player>(?<skin>[\w,]{2,16})) joined the game/,
 			emit: "PlayerJoined",
+			payload: {
+				platform: "java",
+			},
 		},
 		{
-			match: /(?<player>\.?[\w,]{2,16}) left the game/,
+			match: /(?<player>\.(?<skin>[\w,]{2,16})) joined the game/,
+			emit: "PlayerJoined",
+			payload: {
+				platform: "bedrock",
+			},
+		},
+		{
+			match: /(?<![\w.])(?<player>(?<skin>[\w,]{2,16})) left the game/,
 			emit: "PlayerLeft",
+			payload: {
+				platform: "java",
+			},
+		},
+		{
+			match: /(?<player>\.(?<skin>[\w,]{2,16})) left the game/,
+			emit: "PlayerLeft",
+			payload: {
+				platform: "bedrock",
+			},
 		},
 		{
 			match: /Done \([\d.]+s\)! For help, type "help"/,

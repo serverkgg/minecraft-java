@@ -1,5 +1,5 @@
 import { ADDON_SIDECAR } from "../addons";
-import { fileNameOf } from "./clientMods";
+import { fileNameOf } from "../shared";
 
 export const PACK_DIRECTORIES = [
 	"mods",

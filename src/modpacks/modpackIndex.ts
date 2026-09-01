@@ -1,4 +1,4 @@
-import { MODRINTH_UNSUPPORTED, modrinthProjectId } from "../providers";
+import { modrinthProjectId } from "../providers";
 import { ServerVariant } from "../shared";
 
 export const MODPACK_INDEX = "modrinth.index.json";
@@ -10,6 +10,12 @@ const GAME = "minecraft";
 const MAX_FILES = 1024;
 
 const SHA512_PATTERN = /^[a-f0-9]{128}$/;
+
+const ALLOWED_HOSTS = new Set([
+	"cdn.modrinth.com",
+	"github.com",
+	"raw.githubusercontent.com",
+]);
 
 const QUILT_LOADERS = [
 	"quilt",
@@ -31,7 +37,7 @@ const LOADER_VARIANTS: Record<string, ServerVariant> = {
 export interface ModpackFile {
 	path: string;
 	url: string;
-	digest: string | null;
+	digest: string;
 	sizeBytes: number | null;
 	projectId: string | null;
 }
@@ -51,9 +57,6 @@ interface RawIndexFile {
 		sha512?: unknown;
 	};
 	fileSize?: unknown;
-	env?: {
-		server?: unknown;
-	};
 }
 
 interface RawIndex {
@@ -104,7 +107,13 @@ const readUrl = (value: unknown) => {
 	}
 
 	for (const candidate of value) {
-		if (typeof candidate === "string" && URL.canParse(candidate) && new URL(candidate).protocol === "https:") {
+		if (typeof candidate !== "string" || !URL.canParse(candidate)) {
+			continue;
+		}
+
+		const remote = new URL(candidate);
+
+		if (remote.protocol === "https:" && ALLOWED_HOSTS.has(remote.hostname)) {
 			return candidate;
 		}
 	}
@@ -112,25 +121,31 @@ const readUrl = (value: unknown) => {
 	return null;
 };
 
-const readFile = (value: RawIndexFile): ModpackFile | null => {
-	if (typeof value.env?.server === "string" && value.env.server === MODRINTH_UNSUPPORTED) {
-		return null;
-	}
-
+const readFile = (value: RawIndexFile): ModpackFile => {
 	const path = readPath(value.path);
-	const url = readUrl(value.downloads);
 
-	if (!path || !url) {
+	if (!path) {
 		throw new Error(`the modpack lists a file we cannot install ("${String(value.path)}")`);
 	}
 
+	const url = readUrl(value.downloads);
+
+	if (!url) {
+		throw new Error(`the modpack downloads "${path}" from a host we do not install from`);
+	}
+
 	const sha512 = typeof value.hashes?.sha512 === "string" ? value.hashes.sha512.toLowerCase() : "";
+
+	if (!SHA512_PATTERN.test(sha512)) {
+		throw new Error(`the modpack lists "${path}" with no checksum we can verify`);
+	}
+
 	const sizeBytes = typeof value.fileSize === "number" && value.fileSize > 0 ? value.fileSize : null;
 
 	return {
 		path,
 		url,
-		digest: SHA512_PATTERN.test(sha512) ? `sha512:${sha512}` : null,
+		digest: `sha512:${sha512}`,
 		sizeBytes,
 		projectId: modrinthProjectId(url),
 	};
@@ -195,11 +210,7 @@ export const parseModpackIndex = (raw: string): ModpackIndex => {
 	const files: ModpackFile[] = [];
 
 	for (const entry of entries) {
-		const file = readFile(entry);
-
-		if (file) {
-			files.push(file);
-		}
+		files.push(readFile(entry));
 	}
 
 	return {

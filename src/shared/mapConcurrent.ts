@@ -5,17 +5,28 @@ export const mapConcurrent = async <Item>(
 ) => {
 	const width = Math.max(1, Math.min(limit, items.length));
 	let cursor = 0;
+	let failed = false;
+	let failure: unknown;
 
 	const worker = async () => {
-		while (cursor < items.length) {
+		while (cursor < items.length && !failed) {
 			const index = cursor;
 
 			cursor += 1;
 
 			const item = items[index];
 
-			if (item !== undefined) {
+			if (item === undefined) {
+				continue;
+			}
+
+			try {
 				await run(item, index);
+			} catch (error) {
+				if (!failed) {
+					failed = true;
+					failure = error;
+				}
 			}
 		}
 	};
@@ -28,4 +39,8 @@ export const mapConcurrent = async <Item>(
 			worker,
 		),
 	);
+
+	if (failed) {
+		throw failure;
+	}
 };

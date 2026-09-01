@@ -6,8 +6,7 @@ import {
 	modpackProject,
 	modpackRelease,
 } from "../providers";
-import { mapConcurrent, type ServerVariant, STAGING_ROOT } from "../shared";
-import { CLIENT_ONLY_DIRECTORIES, fileNameOf, isClientOnlyFilename } from "./clientMods";
+import { fileNameOf, mapConcurrent, type ServerVariant, STAGING_ROOT } from "../shared";
 import { modpackCleanup } from "./modpackCleanup";
 import {
 	MODPACK_INDEX,
@@ -18,7 +17,6 @@ import {
 } from "./modpackIndex";
 import { decodeModpackRef, type ModpackRef } from "./modpackRef";
 import { clearModpackSidecar, type ModpackSidecar, readModpackSidecar, writeModpackSidecar } from "./modpackSidecar";
-import { partitionModpackFiles, resolveUnsupported } from "./modpackSideness";
 
 export const MODPACK_VARIABLE = "MODPACK";
 
@@ -80,44 +78,6 @@ const removePaths = async (context: Bridge.Context, paths: string[]) => {
 	}
 };
 
-const pruneClientOnly = async (context: Bridge.Context, written: string[]) => {
-	const directories = new Set<string>();
-	const files: string[] = [];
-
-	for (const path of written) {
-		const directory = path.split("/").at(0) ?? "";
-
-		if (CLIENT_ONLY_DIRECTORIES.includes(directory.toLowerCase())) {
-			directories.add(directory);
-		} else if (isClientOnlyFilename(fileNameOf(path))) {
-			files.push(path);
-		}
-	}
-
-	try {
-		for (const target of [
-			...directories,
-			...files,
-		]) {
-			await context.files.remove(target);
-		}
-	} catch (error) {
-		context.log.warn("could not remove every client-side file the modpack shipped", {
-			error: error instanceof Error ? error.message : String(error),
-		});
-	}
-
-	const removed = new Set(files);
-
-	for (const path of written) {
-		if (directories.has(path.split("/").at(0) ?? "")) {
-			removed.add(path);
-		}
-	}
-
-	return removed;
-};
-
 const applyOverrides = async (context: Bridge.Context, folder: string) => {
 	try {
 		const written = await context.files.extract(ARCHIVE, "", {
@@ -125,16 +85,12 @@ const applyOverrides = async (context: Bridge.Context, folder: string) => {
 			select: `${folder}/`,
 		});
 
-		const removed = await pruneClientOnly(context, written);
-		const kept = written.filter((path) => !removed.has(path));
-
 		context.log("copied the modpack's own files", {
 			folder,
-			files: kept.length,
-			skipped: removed.size,
+			files: written.length,
 		});
 
-		return kept;
+		return written;
 	} catch (error) {
 		if (!isEmptySelection(error)) {
 			throw error;
@@ -157,11 +113,7 @@ const wait = (ms: number) => {
 const downloadFile = async (context: Bridge.Context, file: ModpackFile) => {
 	const options = {
 		cache: true,
-		...(file.digest === null
-			? {}
-			: {
-					digest: file.digest,
-				}),
+		digest: file.digest,
 		...(file.sizeBytes === null
 			? {}
 			: {
@@ -379,24 +331,15 @@ export const applyModpack = async (context: Bridge.Context, staged: StagedModpac
 
 	await removePaths(context, cleanup.paths);
 
-	const { keep, skipped } = partitionModpackFiles(index.files, await resolveUnsupported(context, index.files));
-
-	if (skipped.length > 0) {
-		context.log.warn("left out the modpack's client-side files, they cannot run on a server", {
-			skipped: skipped.length,
-			example: fileNameOf(skipped[0]?.path ?? ""),
-		});
-	}
-
 	context.log("installing the modpack", {
 		title: project.title,
 		version: release.version,
-		files: keep.length,
+		files: index.files.length,
 	});
 
-	await downloadFiles(context, keep);
+	await downloadFiles(context, index.files);
 
-	const installed = keep.map((file) => file.path);
+	const installed = index.files.map((file) => file.path);
 
 	for (const folder of OVERRIDE_FOLDERS) {
 		installed.push(...(await applyOverrides(context, folder)));
@@ -414,8 +357,7 @@ export const applyModpack = async (context: Bridge.Context, staged: StagedModpac
 		variant: index.variant,
 		loaderVersion: index.loaderVersion,
 		appliedAt: new Date().toISOString(),
-		fileCount: keep.length,
-		skippedCount: skipped.length,
+		fileCount: index.files.length,
 		files: installed,
 	});
 
