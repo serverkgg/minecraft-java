@@ -5,7 +5,7 @@
     "": {
       "name": "@serverkgg/minecraft",
       "dependencies": {
-        "@serverkgg/bridge": "0.0.7",
+        "@serverkgg/bridge": "0.0.9",
       },
       "devDependencies": {
         "@biomejs/biome": "2.5.7",
@@ -34,7 +34,7 @@
 
     "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@2.5.7", "", { "os": "win32", "cpu": "x64" }, "sha512-V+0wu/nrj2S+MhP4EQ0uHNolP0IALEsz45pg0WoKkHfDeh0+ItHwP/p7bX5RPoMOl9NkpHYWdYPhIcy2mACHvQ=="],
 
-    "@serverkgg/bridge": ["@serverkgg/bridge@0.0.7", "", { "dependencies": { "zod": "4.4.3" }, "bin": { "serverk-bridge": "src/cli/main.ts" } }, "sha512-fcLULk4CuszrkQjssKUJb8UpGSbabsLnnDBIo0kWrxYfRnF5KhoJbwqwuM0rvleZDJh/P1oqsQiLuvst0yfduw=="],
+    "@serverkgg/bridge": ["@serverkgg/bridge@0.0.9", "", { "dependencies": { "zod": "4.5.4" }, "bin": { "serverk-bridge": "src/cli/main.ts" } }, "sha512-ZX88s+tNO68AgbFxFm7FyGDNBLfkuF72SPKwAIOJcHyDKHQCD2/CywlGg0By8gc2Q4vMqaUcuWCnokYZWg7Lwg=="],
 
     "@types/bun": ["@types/bun@1.3.14", "", { "dependencies": { "bun-types": "1.3.14" } }, "sha512-h1hFqFVcvAvD9j9K7ZW7vd82aSA+rTdznZa+5bwvCwqSB1jmmfLcbIWhOLx1/+boy/xmjgCs/OMUL8hRJSmnPw=="],
 
@@ -46,6 +46,6 @@
 
     "undici-types": ["undici-types@8.3.0", "", {}, "sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ=="],
 
-    "zod": ["zod@4.4.3", "", {}, "sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ=="],
+    "zod": ["zod@4.5.4", "", {}, "sha512-sC95tT5iHHH9gtpj6A81kh+NEaRAUFN+qlUPDUbRfOMvNf5QCBqsb3WgvnpVtK5Y+4UfA6KqufotuTvMGiTlsA=="],
   }
 }

@@ -20,7 +20,7 @@ export const transitionPreview: Bridge.Preview = {
 		if (plan.kind === ModpackPlanKind.Detach) {
 			return {
 				confirm: BridgeConfirm.Strong,
-				lines: modpackDetachLines(),
+				lines: modpackDetachLines(next),
 			};
 		}
 

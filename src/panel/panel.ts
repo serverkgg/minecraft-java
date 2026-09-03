@@ -7,7 +7,7 @@ import {
 	BridgeLayout,
 } from "@serverkgg/bridge";
 import { CROSSPLAY, VERSION_COMPAT } from "../companions";
-import { MODPACK_VARIABLE } from "../modpacks";
+import { MODPACK_UPDATE_ACTION, MODPACK_VARIABLE } from "../modpacks";
 import { CHAT_MESSAGE_LENGTH, WORLD_STAGING, XP_MAX_LEVELS, XP_MIN_LEVELS } from "../shared";
 
 const LOADER_TYPES = [
@@ -90,6 +90,52 @@ const MESSAGE_FIELD: Bridge.Field = {
 	maxLength: CHAT_MESSAGE_LENGTH,
 };
 
+const modpackStatusSection: Bridge.Section = {
+	layout: BridgeLayout.Detail,
+	id: "modpack-status",
+	title: {
+		ar: "سيرفرك على مودباك",
+		en: "Running a modpack",
+	},
+	module: "modpackStatus",
+	reinstall: true,
+	variable: MODPACK_VARIABLE,
+	confirm: BridgeConfirm.Strong,
+	confirmText: {
+		ar: "ناخذ نسخة احتياطية أول. شيل المودباك يشيله هو وموداته والماب اللي بنيته عليه، ويرجّع سيرفرك عادي على نفس النوع والنسخة بماب جديدة. اللي ركّبته بنفسك يبقى.",
+		en: "We take a backup first. Removing the modpack takes it, its mods and the world you built on it, and leaves your server plain on the same type and version with a fresh world. Anything you installed yourself stays.",
+	},
+	actions: [
+		{
+			id: MODPACK_UPDATE_ACTION,
+			label: {
+				ar: "حدّث المودباك",
+				en: "Update modpack",
+			},
+			confirm: BridgeConfirm.Strong,
+			confirmText: {
+				ar: "ناخذ نسخة احتياطية أول، بعدها نركّب آخر إصدار من نفس المودباك. مابك تبقى إذا الإصدار الجديد على نفس النوع ونفس النسخة أو أحدث.",
+				en: "We take a backup first, then install the latest release of the same pack. Your world stays as long as the new release is on the same type and the same version or newer.",
+			},
+		},
+	],
+	related: {
+		tab: "modpacks",
+		label: {
+			ar: "تصفّح المودباكات",
+			en: "Browse modpacks",
+		},
+	},
+	empty: {
+		ar: "ما ركّبنا المودباك بعد. افتح تبويب المودباك وشوف وين وصل.",
+		en: "The modpack is not installed yet. Open the Modpacks tab to see where it stands.",
+	},
+	visibleWhen: {
+		variable: MODPACK_VARIABLE,
+		empty: false,
+	},
+};
+
 const versionTab: Bridge.Tab = {
 	id: "version",
 	title: {
@@ -98,6 +144,7 @@ const versionTab: Bridge.Tab = {
 	},
 	icon: BridgeIcon.Tag,
 	sections: [
+		modpackStatusSection,
 		{
 			layout: BridgeLayout.Form,
 			id: "version",
@@ -163,29 +210,15 @@ const versionTab: Bridge.Tab = {
 					},
 				},
 			],
-			visibleWhen: {
-				variable: MODPACK_VARIABLE,
-				empty: true,
-			},
-		},
-		{
-			layout: BridgeLayout.Cards,
-			id: "modpack-status",
-			title: {
-				ar: "سيرفرك على مودباك",
-				en: "Running a modpack",
-			},
-			module: "modpackStatus",
-			titleKey: "title",
-			subtitleKey: "identity",
-			empty: {
-				ar: "ما ركّبنا المودباك بعد. افتح تبويب المودباك وشوف وين وصل.",
-				en: "The modpack is not installed yet. Open the Modpacks tab to see where it stands.",
-			},
-			visibleWhen: {
-				variable: MODPACK_VARIABLE,
-				empty: false,
-			},
+			clears: [
+				{
+					variable: MODPACK_VARIABLE,
+					warning: {
+						ar: "سيرفرك على مودباك. أي تغيير هنا يشيل المودباك وموداته والماب اللي بنيته عليه، ويرجّع سيرفرك على النوع والنسخة اللي تختارها بماب جديدة.",
+						en: "Your server runs a modpack. Any change here removes the pack, its mods and the world you built on it, and puts your server on the type and version you pick with a fresh world.",
+					},
+				},
+			],
 		},
 	],
 };
@@ -830,21 +863,17 @@ const worldsTab: Bridge.Tab = {
 	],
 };
 
-const modsTab: Bridge.Tab = {
-	id: "mods",
+const pluginsTab: Bridge.Tab = {
+	id: "plugins",
 	title: {
-		ar: "المودات",
-		en: "Mods",
+		ar: "الإضافات",
+		en: "Plugins",
 	},
 	icon: BridgeIcon.Puzzle,
 	sections: [
 		{
 			layout: BridgeLayout.Catalog,
-			id: "plugins",
-			title: {
-				ar: "الإضافات",
-				en: "Plugins",
-			},
+			id: "plugin-list",
 			module: "addons",
 			restartHint: true,
 			empty: {
@@ -859,13 +888,20 @@ const modsTab: Bridge.Tab = {
 				],
 			},
 		},
+	],
+};
+
+const modsTab: Bridge.Tab = {
+	id: "mods",
+	title: {
+		ar: "المودات",
+		en: "Mods",
+	},
+	icon: BridgeIcon.Puzzle,
+	sections: [
 		{
 			layout: BridgeLayout.Catalog,
 			id: "mod-list",
-			title: {
-				ar: "المودات",
-				en: "Mods",
-			},
 			module: "addons",
 			restartHint: true,
 			empty: {
@@ -892,6 +928,7 @@ export const panel: Bridge.Panel = {
 		playersTab,
 		gameplayTab,
 		worldsTab,
+		pluginsTab,
 		modsTab,
 	],
 };

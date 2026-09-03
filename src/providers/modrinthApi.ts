@@ -1,4 +1,4 @@
-import { type Bridge, BridgeNetError, BridgeSecretError } from "@serverkgg/bridge";
+import { type Bridge, BridgeHttpMethod, BridgeNetError, BridgeSecretError } from "@serverkgg/bridge";
 import { type CatalogFile, CatalogProviderId } from "./provider";
 import { asRateLimit } from "./rateLimit";
 
@@ -21,6 +21,12 @@ const SHA512_PATTERN = /^[a-f0-9]{128}$/;
 const PROJECT_BATCH = 100;
 
 const CDN_PROJECT_PATTERN = /^\/data\/([A-Za-z0-9]+)\/versions\//;
+
+const CDN_VERSION_PATTERN = /^\/data\/[A-Za-z0-9]+\/versions\/([A-Za-z0-9]+)\//;
+
+export const MODRINTH_REQUIRED = "required";
+
+export const MODRINTH_SHA1 = "sha1";
 
 const REJECTED_STATUSES = [
 	401,
@@ -75,9 +81,18 @@ export interface ModrinthProject {
 	id: string;
 	slug: string;
 	title: string;
+	description: string | null;
 	icon_url: string | null;
+	downloads: number | null;
 	server_side: string;
 	client_side: string;
+}
+
+export interface ModrinthTeamMember {
+	role: string;
+	user: {
+		username: string;
+	};
 }
 
 const headersOf = (context: Bridge.Context) => {
@@ -94,6 +109,7 @@ export const modrinthRequest = async <Result>(
 	context: Bridge.Context,
 	url: string,
 	cacheSeconds = MODRINTH_PROJECT_CACHE_SECONDS,
+	body?: unknown,
 ): Promise<Result> => {
 	const headers = headersOf(context);
 
@@ -101,6 +117,12 @@ export const modrinthRequest = async <Result>(
 		return await context.net.json<Result>(url, {
 			headers,
 			cacheSeconds,
+			...(body === undefined
+				? {}
+				: {
+						body: JSON.stringify(body),
+						httpMethod: BridgeHttpMethod.Post,
+					}),
 		});
 	} catch (error) {
 		if (
@@ -131,6 +153,63 @@ export const modrinthProjects = async (context: Bridge.Context, ids: string[]): 
 	}
 
 	return projects;
+};
+
+export const modrinthVersions = async (context: Bridge.Context, ids: string[]): Promise<ModrinthVersion[]> => {
+	const wanted = [
+		...new Set(ids),
+	].sort();
+	const versions: ModrinthVersion[] = [];
+
+	for (let cursor = 0; cursor < wanted.length; cursor += PROJECT_BATCH) {
+		const url = new URL(`${MODRINTH}/versions`);
+
+		url.searchParams.set("ids", JSON.stringify(wanted.slice(cursor, cursor + PROJECT_BATCH)));
+
+		versions.push(...(await modrinthRequest<ModrinthVersion[]>(context, url.toString(), MODRINTH_SIDE_CACHE_SECONDS)));
+	}
+
+	return versions;
+};
+
+export const modrinthVersionsByHashes = async (
+	context: Bridge.Context,
+	hashes: string[],
+): Promise<Record<string, ModrinthVersion>> => {
+	const wanted = [
+		...new Set(hashes.map((hash) => hash.toLowerCase())),
+	].sort();
+	const matches: Record<string, ModrinthVersion> = {};
+
+	for (let cursor = 0; cursor < wanted.length; cursor += PROJECT_BATCH) {
+		const found = await modrinthRequest<Record<string, ModrinthVersion>>(
+			context,
+			`${MODRINTH}/version_files`,
+			MODRINTH_SIDE_CACHE_SECONDS,
+			{
+				algorithm: MODRINTH_SHA1,
+				hashes: wanted.slice(cursor, cursor + PROJECT_BATCH),
+			},
+		);
+
+		Object.assign(matches, found);
+	}
+
+	return matches;
+};
+
+export const modrinthVersionId = (url: string): string | null => {
+	if (!URL.canParse(url)) {
+		return null;
+	}
+
+	const parsed = new URL(url);
+
+	if (parsed.hostname !== MODRINTH_CDN) {
+		return null;
+	}
+
+	return CDN_VERSION_PATTERN.exec(parsed.pathname)?.[1] ?? null;
 };
 
 export const modrinthProjectId = (url: string): string | null => {

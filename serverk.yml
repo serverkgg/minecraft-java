@@ -88,8 +88,8 @@ secrets:
     required: false
   - key: CURSEFORGE_API_KEY
     description:
-      ar: مفتاح CurseForge API — بدونه ما يشتغل مصدر كيرس فورج في الكتالوج.
-      en: CurseForge API key — without it the CurseForge source in the catalog stays off.
+      ar: مفتاح CurseForge API — بدونه ما يشتغل مصدر كيرس فورج في كتالوج المودات ولا في المودباكات.
+      en: CurseForge API key — without it the CurseForge source stays off in both the mod catalog and the modpacks tab.
     required: false
   - key: HANGAR_API_KEY
     description:
@@ -98,14 +98,7 @@ secrets:
     required: false
 
 reset:
-  keep:
-    - libraries
-    - versions
-    - server.jar
-    - run.sh
-    - run.bat
-    - user_jvm_args.txt
-    - .serverk-install.json
+  keep: []
 
 presence:
   name: player
@@ -125,7 +118,7 @@ files:
     - run.sh
     - run.bat
     - .serverk-install.json
-    - .serverk-safemode
+    - .serverk-crashscan.json
     - .serverk-companions.json
     - .serverk-modpack.json
     - plugins/.serverk-catalog.json

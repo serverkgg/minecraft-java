@@ -32,11 +32,11 @@ export const unchangedLines = (next: InstallIdentity): Bridge.Text[] => {
 	];
 };
 
-export const modpackDetachLines = (): Bridge.Text[] => {
+export const modpackDetachLines = (next: InstallIdentity): Bridge.Text[] => {
 	return [
 		{
-			ar: "نشيل المودباك وموداته والماب اللي بنيته عليه، ويرجع سيرفرك عادي بماب جديدة.",
-			en: "We remove the modpack, its mods and the world you built on it, and your server goes back to plain with a fresh world.",
+			ar: `نشيل المودباك وموداته والماب اللي بنيته عليه، ويرجع سيرفرك عادي على ${nameOf(next)} بماب جديدة.`,
+			en: `We remove the modpack, its mods and the world you built on it, and your server goes back to plain on ${nameOf(next)} with a fresh world.`,
 		},
 	];
 };

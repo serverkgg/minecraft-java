@@ -1,10 +1,10 @@
-import { type Bridge, BridgeKind } from "@serverkgg/bridge";
+import { type Bridge, BridgeKind, BridgeUserError } from "@serverkgg/bridge";
 import { installedLayout } from "../install/installLayout";
+import { formatByteSize, relativeUploadPath } from "../shared";
 import {
 	activeWorld,
 	discoverWorlds,
 	findLevelDirectories,
-	relativeWorldSource,
 	safeWorldName,
 	setActiveWorld,
 	worldDimensions,
@@ -12,33 +12,7 @@ import {
 	worldSize,
 } from "./world";
 
-const BASE_UNIT = "B";
-
-const SIZE_UNITS = [
-	BASE_UNIT,
-	"KB",
-	"MB",
-	"GB",
-	"TB",
-];
-
-const SIZE_STEP = 1024;
-
 const ACTIVE_MARK = "✓";
-
-const formatSize = (bytes: number) => {
-	let value = bytes;
-	let unit = 0;
-
-	while (value >= SIZE_STEP && unit < SIZE_UNITS.length - 1) {
-		value /= SIZE_STEP;
-		unit += 1;
-	}
-
-	const symbol = SIZE_UNITS.at(unit) ?? BASE_UNIT;
-
-	return unit === 0 ? `${value} ${symbol}` : `${value.toFixed(1)} ${symbol}`;
-};
 
 const nameOf = (path: string) => {
 	return path.split("/").at(-1) ?? "";
@@ -48,9 +22,10 @@ const uploadedWorldDirectory = async (context: Bridge.Context, source: string) =
 	const found = await findLevelDirectories(context, source);
 
 	if (found.length === 0) {
-		throw new Error(
-			"ما لقينا ملف level.dat جوّا الملف المضغوط، تأكد إنك ضاغط مجلد الماب نفسه — the archive holds no level.dat, make sure you zipped the world folder itself",
-		);
+		throw new BridgeUserError({
+			ar: "ما لقينا ملف level.dat جوّا الملف المضغوط، تأكد إنك ضاغط مجلد الماب نفسه",
+			en: "the archive holds no level.dat, make sure you zipped the world folder itself",
+		});
 	}
 
 	if (found.includes(source)) {
@@ -60,9 +35,10 @@ const uploadedWorldDirectory = async (context: Bridge.Context, source: string) =
 	const nested = found.at(0);
 
 	if (found.length > 1 || nested === undefined) {
-		throw new Error(
-			"الملف فيه أكثر من ماب، ارفع كل ماب لحالها — the archive holds more than one world, upload them one at a time",
-		);
+		throw new BridgeUserError({
+			ar: "الملف فيه أكثر من ماب، ارفع كل ماب لحالها",
+			en: "the archive holds more than one world, upload them one at a time",
+		});
 	}
 
 	return nested;
@@ -73,9 +49,10 @@ const refuseActiveWorld = async (context: Bridge.Context, name: string) => {
 		return;
 	}
 
-	throw new Error(
-		"ما تقدر تحذف الماب الشغّالة، فعّل ماب ثانية أول — you cannot delete the active world, activate another one first",
-	);
+	throw new BridgeUserError({
+		ar: "ما تقدر تحذف الماب الشغّالة، فعّل ماب ثانية أول",
+		en: "you cannot delete the active world, activate another one first",
+	});
 };
 
 export const worlds: Bridge.Collection = {
@@ -89,7 +66,7 @@ export const worlds: Bridge.Collection = {
 			rows.push({
 				id: name,
 				name,
-				size: formatSize(await worldSize(context, name)),
+				size: formatByteSize(await worldSize(context, name)),
 				active: name === active ? ACTIVE_MARK : "",
 				path: name,
 			});
@@ -99,24 +76,31 @@ export const worlds: Bridge.Collection = {
 	},
 
 	async add(context, input) {
-		const source = relativeWorldSource(input);
+		const source = relativeUploadPath(input);
 
 		if (source === null || !(await context.files.exists(source))) {
-			throw new Error("ما لقينا الملفات اللي رفعتها — the uploaded files were not found");
+			throw new BridgeUserError({
+				ar: "ما لقينا الملفات اللي رفعتها",
+				en: "the uploaded files were not found",
+			});
 		}
 
 		const directory = await uploadedWorldDirectory(context, source);
 		const name = safeWorldName(nameOf(directory));
 
 		if (name.length === 0) {
-			throw new Error(
-				"سمّ مجلد الماب بأحرف إنجليزية وأرقام وارفعه مرة ثانية — name the world folder with latin letters and digits and upload it again",
-			);
+			throw new BridgeUserError({
+				ar: "سمّ مجلد الماب بأحرف إنجليزية وأرقام وارفعه مرة ثانية",
+				en: "name the world folder with latin letters and digits and upload it again",
+			});
 		}
 
 		for (const path of worldPaths(name)) {
 			if (await context.files.exists(path)) {
-				throw new Error(`عندك ماب اسمها "${name}"، غيّر اسم المجلد وارفعه — a world named "${name}" is already here`);
+				throw new BridgeUserError({
+					ar: `عندك ماب اسمها "${name}"، غيّر اسم المجلد وارفعه`,
+					en: `a world named "${name}" is already here`,
+				});
 			}
 		}
 
@@ -134,7 +118,10 @@ export const worlds: Bridge.Collection = {
 	actions: {
 		async activate(context, row) {
 			if ((await activeWorld(context)) === row.id) {
-				throw new Error("هذي الماب شغّالة أصلًا — this world is already the active one");
+				throw new BridgeUserError({
+					ar: "هذي الماب شغّالة أصلًا",
+					en: "this world is already the active one",
+				});
 			}
 
 			await setActiveWorld(context, row.id);

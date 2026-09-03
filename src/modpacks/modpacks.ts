@@ -1,60 +1,29 @@
 import { type Bridge, BridgeFailureCode, BridgeFailureError, BridgeKind } from "@serverkgg/bridge";
-import {
-	CatalogProviderId,
-	decodeProviderRef,
-	encodeProviderRef,
-	MODPACK_CATEGORIES,
-	MODPACK_SORTS,
-	type ModpackRelease,
-	modpackProject,
-	modpackReleases,
-	modrinthProvider,
-	searchModpacks,
-} from "../providers";
-import { addonDirectory, gameVersionOf, variantOf } from "../shared";
+import { decodeProviderRef, encodeProviderRef, modpackSourceById, modpackSources } from "../providers";
+import { addonDirectory } from "../shared";
 import { MODPACK_VARIABLE } from "./applyModpack";
+import { describeProject, identityMismatched, outdated, serverRelease } from "./modpackFreshness";
 import { usesQuilt, variantForLoaders } from "./modpackIndex";
 import { decodeModpackRef, encodeModpackRef } from "./modpackRef";
 import { MODPACK_SIDECAR, modpackIdentity, readModpackSidecar } from "./modpackSidecar";
 
 const PAGE_SIZE = 20;
 
-const sources = (): Bridge.CatalogProvider[] => {
-	return [
-		{
-			id: modrinthProvider.id,
-			label: modrinthProvider.label,
-			ready: true,
-		},
-	];
-};
+const sources = (context: Bridge.Context): Bridge.CatalogProvider[] => {
+	return modpackSources().map((source) => {
+		const ready = source.ready(context);
 
-const serverRelease = (releases: ModpackRelease[]) => {
-	const supported = releases.filter((release) => variantForLoaders(release.loaders) !== null);
-
-	return supported.find((release) => release.stable) ?? supported.at(0) ?? null;
-};
-
-const latestRelease = async (context: Bridge.Context, project: string) => {
-	return serverRelease(await modpackReleases(context, project));
-};
-
-const outdated = async (context: Bridge.Context, project: string, versionId: string) => {
-	try {
-		const latest = await latestRelease(context, project);
-
-		return latest !== null && latest.versionId !== versionId;
-	} catch {
-		return false;
-	}
-};
-
-const describeProject = async (context: Bridge.Context, project: string) => {
-	try {
-		return await modpackProject(context, project);
-	} catch {
-		return null;
-	}
+		return {
+			id: source.id,
+			label: source.label,
+			ready,
+			...(ready
+				? {}
+				: {
+						note: source.note,
+					}),
+		};
+	});
 };
 
 const declaredEntries = async (context: Bridge.Context): Promise<Bridge.CatalogEntry[]> => {
@@ -65,7 +34,7 @@ const declaredEntries = async (context: Bridge.Context): Promise<Bridge.CatalogE
 	}
 
 	const ref = decodeModpackRef(declared);
-	const project = ref ? await describeProject(context, ref.project) : null;
+	const project = ref ? await describeProject(context, modpackSourceById(ref.provider), ref.project) : null;
 
 	return [
 		{
@@ -84,14 +53,15 @@ const declaredEntries = async (context: Bridge.Context): Promise<Bridge.CatalogE
 	];
 };
 
-const installModpack = async (context: Bridge.Context, id: string): Promise<Bridge.CatalogEntry> => {
+export const installModpack = async (context: Bridge.Context, id: string): Promise<Bridge.CatalogEntry> => {
 	const decoded = decodeProviderRef(id);
+	const source = decoded ? modpackSourceById(decoded.provider) : null;
 
-	if (!decoded || decoded.provider !== CatalogProviderId.Modrinth) {
-		throw new Error(`"${id}" is not a modrinth modpack reference`);
+	if (!decoded || !source || source.id !== decoded.provider) {
+		throw new Error(`"${id}" is not a modpack reference we can install`);
 	}
 
-	const releases = await modpackReleases(context, decoded.project);
+	const releases = await source.releases(context, decoded.project);
 	const release = serverRelease(releases);
 
 	if (!release) {
@@ -113,11 +83,11 @@ const installModpack = async (context: Bridge.Context, id: string): Promise<Brid
 		);
 	}
 
-	const project = await modpackProject(context, decoded.project);
+	const project = await source.project(context, decoded.project);
 
 	return {
-		id: encodeProviderRef(CatalogProviderId.Modrinth, project.id),
-		provider: CatalogProviderId.Modrinth,
+		id: encodeProviderRef(source.id, project.id),
+		provider: source.id,
 		path: MODPACK_SIDECAR,
 		title: project.title,
 		version: release.version,
@@ -131,7 +101,7 @@ const installModpack = async (context: Bridge.Context, id: string): Promise<Brid
 		pageUrl: project.pageUrl,
 		icon: project.icon,
 		variables: {
-			[MODPACK_VARIABLE]: encodeModpackRef(CatalogProviderId.Modrinth, project.id, release.versionId),
+			[MODPACK_VARIABLE]: encodeModpackRef(source.id, project.id, release.versionId),
 			SERVER_TYPE: variant,
 			MC_VERSION: mcVersion,
 			LOADER_VERSION: "",
@@ -144,7 +114,8 @@ export const modpacks: Bridge.Catalog = {
 	pageSize: PAGE_SIZE,
 
 	async search(context, query) {
-		const results = await searchModpacks(context, {
+		const source = modpackSourceById(query.provider);
+		const results = await source.search(context, {
 			query: query.query,
 			page: query.page,
 			pageSize: PAGE_SIZE,
@@ -156,14 +127,14 @@ export const modpacks: Bridge.Catalog = {
 			hits: results.hits.map((hit) => {
 				return {
 					...hit,
-					id: encodeProviderRef(CatalogProviderId.Modrinth, hit.id),
-					provider: CatalogProviderId.Modrinth,
+					id: encodeProviderRef(source.id, hit.id),
+					provider: source.id,
 				};
 			}),
 			total: results.total,
-			providers: sources(),
-			categories: MODPACK_CATEGORIES,
-			sorts: MODPACK_SORTS,
+			providers: sources(context),
+			categories: source.categories,
+			sorts: source.sorts,
 		};
 	},
 
@@ -174,7 +145,8 @@ export const modpacks: Bridge.Catalog = {
 			return await declaredEntries(context);
 		}
 
-		const mismatched = sidecar.variant !== variantOf(context) || sidecar.mcVersion !== (await gameVersionOf(context));
+		const source = modpackSourceById(sidecar.provider);
+		const mismatched = await identityMismatched(context, sidecar);
 
 		return [
 			{
@@ -186,7 +158,7 @@ export const modpacks: Bridge.Catalog = {
 				sizeBytes: await context.files.size(addonDirectory(context)),
 				enabled: true,
 				gameVersion: modpackIdentity(sidecar),
-				stale: mismatched || (await outdated(context, sidecar.project, sidecar.versionId)),
+				stale: mismatched || (await outdated(context, source, sidecar.project, sidecar.versionId)),
 				pageUrl: sidecar.pageUrl,
 				icon: sidecar.icon,
 			},

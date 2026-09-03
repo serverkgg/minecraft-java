@@ -143,12 +143,27 @@ describe("reading a modpack index", () => {
 		}).toThrow("from a host we do not install from");
 	});
 
-	test("installs a file even when the pack marks it unsupported on a server", () => {
+	test("leaves out a file the pack itself marks unsupported on a server", () => {
 		const parsed = parseModpackIndex(
 			index(
 				entry({
 					env: {
 						server: "unsupported",
+					},
+				}),
+			),
+		);
+
+		expect(parsed.files).toEqual([]);
+	});
+
+	test("installs a file the pack marks optional on a server", () => {
+		const parsed = parseModpackIndex(
+			index(
+				entry({
+					env: {
+						client: "required",
+						server: "optional",
 					},
 				}),
 			),

@@ -4,6 +4,7 @@ import {
 	MODRINTH_SEARCH_CACHE_SECONDS,
 	type ModrinthProject,
 	type ModrinthSearch,
+	type ModrinthTeamMember,
 	type ModrinthVersion,
 	modrinthFile,
 	modrinthRequest,
@@ -14,6 +15,8 @@ const SERVER_SIDE = [
 	"server_side:required",
 	"server_side:optional",
 ];
+
+const OWNER_ROLE = "owner";
 
 export const MODPACK_SORTS: Bridge.CatalogFacet[] = [
 	{
@@ -133,6 +136,7 @@ const releaseOf = (version: ModrinthVersion): ModpackRelease | null => {
 		loaders: version.loaders,
 		gameVersions: version.game_versions,
 		file,
+		serverPacks: [],
 	};
 };
 
@@ -178,6 +182,21 @@ export const searchModpacks = async (context: Bridge.Context, search: CatalogSea
 	} satisfies CatalogResults;
 };
 
+const modpackAuthor = async (context: Bridge.Context, project: string): Promise<string | null> => {
+	try {
+		const members = await modrinthRequest<ModrinthTeamMember[]>(
+			context,
+			`${MODRINTH}/project/${encodeURIComponent(project)}/members`,
+		);
+
+		const owner = members.find((member) => member.role.toLowerCase() === OWNER_ROLE) ?? members.at(0);
+
+		return owner?.user.username ?? null;
+	} catch {
+		return null;
+	}
+};
+
 export const modpackProject = async (context: Bridge.Context, project: string): Promise<ModpackProject> => {
 	const details = await modrinthRequest<ModrinthProject>(context, `${MODRINTH}/project/${encodeURIComponent(project)}`);
 
@@ -186,6 +205,9 @@ export const modpackProject = async (context: Bridge.Context, project: string): 
 		title: details.title,
 		icon: details.icon_url,
 		pageUrl: `https://modrinth.com/modpack/${details.slug}`,
+		description: details.description,
+		author: await modpackAuthor(context, details.id),
+		downloads: details.downloads,
 	};
 };
 

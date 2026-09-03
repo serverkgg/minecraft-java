@@ -1,7 +1,13 @@
-import { modrinthProjectId } from "../providers";
+import { MODRINTH_UNSUPPORTED, modrinthProjectId } from "../providers";
 import { ServerVariant } from "../shared";
 
 export const MODPACK_INDEX = "modrinth.index.json";
+
+export const MODS_DIRECTORY = "mods";
+
+export const modPath = (fileName: string) => {
+	return `${MODS_DIRECTORY}/${fileName}`;
+};
 
 const FORMAT_VERSION = 1;
 
@@ -42,17 +48,32 @@ export interface ModpackFile {
 	projectId: string | null;
 }
 
+export interface BlockedFile {
+	modId: number;
+	fileId: number;
+	fileName: string;
+	sha1: string;
+	sizeBytes: number | null;
+	name: string;
+	slug: string;
+	pageUrl: string | null;
+}
+
 export interface ModpackIndex {
 	name: string;
 	mcVersion: string;
 	variant: ServerVariant;
 	loaderVersion: string;
 	files: ModpackFile[];
+	blocked: BlockedFile[];
 }
 
 interface RawIndexFile {
 	path?: unknown;
 	downloads?: unknown;
+	env?: {
+		server?: unknown;
+	};
 	hashes?: {
 		sha512?: unknown;
 	};
@@ -121,7 +142,11 @@ const readUrl = (value: unknown) => {
 	return null;
 };
 
-const readFile = (value: RawIndexFile): ModpackFile => {
+const readFile = (value: RawIndexFile): ModpackFile | null => {
+	if (value.env?.server === MODRINTH_UNSUPPORTED) {
+		return null;
+	}
+
 	const path = readPath(value.path);
 
 	if (!path) {
@@ -210,7 +235,11 @@ export const parseModpackIndex = (raw: string): ModpackIndex => {
 	const files: ModpackFile[] = [];
 
 	for (const entry of entries) {
-		files.push(readFile(entry));
+		const file = readFile(entry);
+
+		if (file) {
+			files.push(file);
+		}
 	}
 
 	return {
@@ -219,5 +248,6 @@ export const parseModpackIndex = (raw: string): ModpackIndex => {
 		variant,
 		loaderVersion,
 		files,
+		blocked: [],
 	};
 };

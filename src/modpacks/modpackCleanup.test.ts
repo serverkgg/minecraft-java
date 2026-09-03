@@ -10,19 +10,28 @@ const PREVIOUS = [
 ];
 
 describe("clearing the last modpack before the next one goes in", () => {
-	test("removes only the files that modpack installed", () => {
+	test("removes only the files that modpack installed, and the copies the doctor disabled", () => {
 		expect(modpackCleanup(PREVIOUS).paths).toEqual([
 			"config/create-server.toml",
+			"config/create-server.toml.disabled",
 			"kubejs/server_scripts/recipes.js",
+			"kubejs/server_scripts/recipes.js.disabled",
 			"mods/create-1.20.1.jar",
+			"mods/create-1.20.1.jar.disabled",
 			"mods/jei-15.2.0.jar",
+			"mods/jei-15.2.0.jar.disabled",
 		]);
+	});
+
+	test("clears a jar the crash doctor renamed out of the way", () => {
+		expect(modpackCleanup(PREVIOUS).paths).toContain("mods/jei-15.2.0.jar.disabled");
 	});
 
 	test("leaves a mod the player installed themselves alone", () => {
 		const paths = modpackCleanup(PREVIOUS).paths;
 
 		expect(paths).not.toContain("mods/dynmap-3.7.jar");
+		expect(paths).not.toContain("mods/dynmap-3.7.jar.disabled");
 		expect(paths.some((path) => path.startsWith("config/dynmap"))).toBe(false);
 	});
 
@@ -34,6 +43,7 @@ describe("clearing the last modpack before the next one goes in", () => {
 
 		expect(paths).toEqual([
 			"mods/create-1.20.1.jar",
+			"mods/create-1.20.1.jar.disabled",
 		]);
 	});
 
@@ -58,6 +68,7 @@ describe("clearing the last modpack before the next one goes in", () => {
 			]).paths,
 		).toEqual([
 			"mods/create-1.20.1.jar",
+			"mods/create-1.20.1.jar.disabled",
 		]);
 	});
 });

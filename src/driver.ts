@@ -10,6 +10,7 @@ import { lifecycle } from "./lifecycle";
 import { modpackStatus, modpacks } from "./modpacks";
 import { gameVersion, loaderBuild, serverType } from "./options";
 import { panel } from "./panel";
+import { pending } from "./pending";
 import { query } from "./query";
 import { settings, version } from "./settings";
 import { terminal } from "./terminal";
@@ -22,6 +23,7 @@ export const driver: BridgeDriver = {
 	query,
 	backup,
 	announce,
+	pending,
 	terminal,
 	panel,
 	modules: {

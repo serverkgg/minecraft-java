@@ -1,5 +1,5 @@
 import { ADDON_SIDECAR } from "../addons";
-import { fileNameOf } from "../shared";
+import { DISABLED_SUFFIX, fileNameOf } from "../shared";
 
 export const PACK_DIRECTORIES = [
 	"mods",
@@ -23,7 +23,16 @@ export const modpackCleanup = (installed: string[] | null): ModpackCleanup => {
 	}
 
 	const paths = [
-		...new Set(installed.filter((path) => path.length > 0 && fileNameOf(path) !== ADDON_SIDECAR)),
+		...new Set(
+			installed
+				.filter((path) => path.length > 0 && fileNameOf(path) !== ADDON_SIDECAR)
+				.flatMap((path) => {
+					return [
+						path,
+						`${path}${DISABLED_SUFFIX}`,
+					];
+				}),
+		),
 	].sort();
 
 	return {

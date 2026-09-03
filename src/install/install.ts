@@ -1,5 +1,14 @@
 import { type Bridge, BridgeKind } from "@serverkgg/bridge";
-import { applyModpack, detachModpack, ModpackPlanKind, stageModpack } from "../modpacks";
+import { reportModCrash } from "../events";
+import {
+	applyModpack,
+	detachModpack,
+	ModpackPlanKind,
+	type PendingFile,
+	pendingHold,
+	settlePendingFiles,
+	stageModpack,
+} from "../modpacks";
 import { SEEDED_PROPERTIES } from "../settings";
 import { addonDirectory, javaMajorFor, ServerVariant } from "../shared";
 import { applyTransition, transitionFor, wipeData } from "./applyTransition";
@@ -52,6 +61,8 @@ const finalize = async (context: Bridge.Context) => {
 export const install: Bridge.Install = {
 	kind: BridgeKind.Install,
 	async run(context) {
+		await reportModCrash(context);
+
 		const stamp = await readStamp(context);
 		const { next, plan } = await resolveNext(context, stamp);
 		const { variant, version } = next;
@@ -73,7 +84,7 @@ export const install: Bridge.Install = {
 
 				await finalize(context);
 
-				return;
+				return pendingHold(await settlePendingFiles(context));
 			}
 
 			context.log("the recorded install is missing its files, installing it again", {
@@ -131,10 +142,14 @@ export const install: Bridge.Install = {
 			launch,
 		});
 
+		let pending: PendingFile[] = [];
+
 		if (staged) {
-			await applyModpack(context, staged);
+			pending = await applyModpack(context, staged);
 		} else if (detaching) {
 			await detachModpack(context);
+		} else {
+			pending = await settlePendingFiles(context);
 		}
 
 		await finalize(context);
@@ -145,6 +160,8 @@ export const install: Bridge.Install = {
 			build,
 			launch: launch.kind,
 		});
+
+		return pendingHold(pending);
 	},
 	async describe(context) {
 		const stamp = await readStamp(context);

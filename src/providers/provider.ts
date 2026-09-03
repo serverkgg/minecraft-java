@@ -67,6 +67,9 @@ export interface ModpackProject {
 	title: string;
 	icon: string | null;
 	pageUrl: string;
+	description: string | null;
+	author: string | null;
+	downloads: number | null;
 }
 
 export interface ModpackRelease {
@@ -76,6 +79,7 @@ export interface ModpackRelease {
 	loaders: string[];
 	gameVersions: string[];
 	file: CatalogFile;
+	serverPacks: CatalogFile[];
 }
 
 export interface CatalogResults {
