@@ -53,6 +53,28 @@ const worldNameOf = (line: string) => {
 	return name.length > 0 && !name.startsWith(".") ? name : null;
 };
 
+export const discoveredWorlds = (output: string): string[] => {
+	const names = new Set<string>();
+
+	for (const line of output.split("\n")) {
+		const name = worldNameOf(line);
+
+		if (name !== null) {
+			names.add(name);
+		}
+	}
+
+	return [
+		...names,
+	]
+		.filter((name) => {
+			const base = dimensionBase(name);
+
+			return base === null || !names.has(base);
+		})
+		.sort();
+};
+
 export const discoverWorlds = async (context: Bridge.Context): Promise<string[]> => {
 	const result = await context.exec(
 		[
@@ -75,29 +97,28 @@ export const discoverWorlds = async (context: Bridge.Context): Promise<string[]>
 		});
 	}
 
-	const names = new Set<string>();
-
-	for (const line of result.stdout.split("\n")) {
-		const name = worldNameOf(line);
-
-		if (name !== null) {
-			names.add(name);
-		}
-	}
-
-	return [
-		...names,
-	]
-		.filter((name) => {
-			const base = dimensionBase(name);
-
-			return base === null || !names.has(base);
-		})
-		.sort();
+	return discoveredWorlds(result.stdout);
 };
 
 export const safeWorldName = (name: string) => {
 	return name.replace(UNSAFE_CHARACTERS, "-").slice(0, NAME_LIMIT).replace(EDGE_CHARACTERS, "");
+};
+
+export const levelDirectories = (output: string): string[] => {
+	const directories = new Set<string>();
+	const suffix = `/${LEVEL_FILE}`;
+
+	for (const line of output.split("\n")) {
+		const trimmed = line.trim();
+
+		if (trimmed.endsWith(suffix) && trimmed.length > suffix.length) {
+			directories.add(trimmed.slice(0, -suffix.length));
+		}
+	}
+
+	return [
+		...directories,
+	].sort();
 };
 
 export const findLevelDirectories = async (context: Bridge.Context, source: string): Promise<string[]> => {
@@ -115,20 +136,7 @@ export const findLevelDirectories = async (context: Bridge.Context, source: stri
 		},
 	);
 
-	const directories = new Set<string>();
-
-	for (const line of result.stdout.split("\n")) {
-		const trimmed = line.trim();
-		const suffix = `/${LEVEL_FILE}`;
-
-		if (trimmed.endsWith(suffix) && trimmed.length > suffix.length) {
-			directories.add(trimmed.slice(0, -suffix.length));
-		}
-	}
-
-	return [
-		...directories,
-	].sort();
+	return levelDirectories(result.stdout);
 };
 
 export const activeWorld = async (context: Bridge.Context) => {

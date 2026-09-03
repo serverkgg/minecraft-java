@@ -13,6 +13,7 @@ import {
 	type PaperBuild,
 	PURPUR_PROJECT,
 	type PurpurVersion,
+	pinnedChoice,
 	toOptions,
 } from "./minecraftMeta";
 import { ServerVariant, variantOf } from "./variant";
@@ -143,9 +144,7 @@ export const buildsFor = async (context: Bridge.Context, gameVersion: string) =>
 };
 
 export const declaredBuild = (context: Bridge.Context) => {
-	const declared = context.variable("LOADER_VERSION") ?? "";
-
-	return declared.length > 0 && declared !== "latest" ? declared : null;
+	return pinnedChoice(context.variable("LOADER_VERSION"));
 };
 
 export const requestedBuild = async (context: Bridge.Context, gameVersion: string) => {

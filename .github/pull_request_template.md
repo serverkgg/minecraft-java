@@ -6,4 +6,6 @@
 
 - [ ] `bun run check`
 - [ ] `bun run tsc`
+- [ ] `bun run test`
 - [ ] `bun run validate`
+- [ ] `bunx serverk-bridge schema --check`

@@ -44,13 +44,9 @@ const parseLaunch = (value: unknown): LaunchPlan | null => {
 	};
 };
 
-export const readStamp = async (context: Bridge.Context): Promise<InstallStamp | null> => {
-	if (!(await context.files.exists(STAMP_FILE))) {
-		return null;
-	}
-
+export const parseStamp = (text: string): InstallStamp | null => {
 	try {
-		const parsed = JSON.parse(await context.files.read(STAMP_FILE)) as Partial<InstallStamp>;
+		const parsed = JSON.parse(text) as Partial<InstallStamp>;
 		const launch = parseLaunch(parsed.launch);
 		const variant = parseVariant(parsed.variant);
 
@@ -69,6 +65,18 @@ export const readStamp = async (context: Bridge.Context): Promise<InstallStamp |
 			java: parsed.java,
 			launch,
 		};
+	} catch {
+		return null;
+	}
+};
+
+export const readStamp = async (context: Bridge.Context): Promise<InstallStamp | null> => {
+	if (!(await context.files.exists(STAMP_FILE))) {
+		return null;
+	}
+
+	try {
+		return parseStamp(await context.files.read(STAMP_FILE));
 	} catch {
 		return null;
 	}

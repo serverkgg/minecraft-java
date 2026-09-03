@@ -21,5 +21,11 @@ fi
 echo "pre-commit: tsc"
 bun run tsc
 
+echo "pre-commit: test"
+bun run test
+
 echo "pre-commit: validate"
 bun run validate
+
+echo "pre-commit: schema"
+bunx serverk-bridge schema --check

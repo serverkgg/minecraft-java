@@ -20,11 +20,13 @@ export const jarLaunch: LaunchPlan = {
 	target: SERVER_JAR,
 };
 
+export const argsTarget = (script: string) => {
+	return script.match(ARGS_REFERENCE)?.[1] ?? null;
+};
+
 export const detectLoaderLaunch = async (context: Bridge.Context): Promise<LaunchPlan | null> => {
 	if (await context.files.exists(RUN_SCRIPT)) {
-		const script = await context.files.read(RUN_SCRIPT);
-		const match = script.match(ARGS_REFERENCE);
-		const target = match?.[1];
+		const target = argsTarget(await context.files.read(RUN_SCRIPT));
 
 		if (target && (await context.files.exists(target))) {
 			return {

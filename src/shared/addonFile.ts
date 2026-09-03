@@ -1,10 +1,14 @@
 import type { Bridge } from "@serverkgg/bridge";
-import { MOD_VARIANTS, variantOf } from "./variant";
+import { MOD_VARIANTS, type ServerVariant, variantOf } from "./variant";
 
 export const DISABLED_SUFFIX = ".disabled";
 
+export const addonDirectoryFor = (variant: ServerVariant) => {
+	return MOD_VARIANTS.includes(variant) ? "mods" : "plugins";
+};
+
 export const addonDirectory = (context: Bridge.Context) => {
-	return MOD_VARIANTS.includes(variantOf(context)) ? "mods" : "plugins";
+	return addonDirectoryFor(variantOf(context));
 };
 
 export const fileNameOf = (path: string) => {

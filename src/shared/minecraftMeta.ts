@@ -26,6 +26,8 @@ export const NEOFORGE_MAVEN_METADATA = `${NEOFORGE_MAVEN}/maven-metadata.xml`;
 
 export const SERVER_JAR = "server.jar";
 
+const LATEST_CHOICE = "latest";
+
 const UNSTABLE_MARKERS = [
 	"-rc",
 	"-pre",
@@ -202,10 +204,14 @@ export const releaseOrder = async (context: Bridge.Context) => {
 	);
 };
 
-export const requestedGameVersion = (context: Bridge.Context) => {
-	const declared = context.variable("MC_VERSION") ?? "";
+export const pinnedChoice = (declared: string | null) => {
+	const value = declared ?? "";
 
-	return declared.length > 0 && declared !== "latest" ? declared : null;
+	return value.length > 0 && value !== LATEST_CHOICE ? value : null;
+};
+
+export const requestedGameVersion = (context: Bridge.Context) => {
+	return pinnedChoice(context.variable("MC_VERSION"));
 };
 
 export const gameVersionOf = async (context: Bridge.Context) => {

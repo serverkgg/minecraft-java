@@ -19,6 +19,16 @@ export const sidecarPath = (directory: string) => {
 	return `${directory}/${ADDON_SIDECAR}`;
 };
 
+export const parseSidecar = (text: string): Sidecar => {
+	try {
+		const parsed = JSON.parse(text) as unknown;
+
+		return parsed !== null && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as Sidecar) : {};
+	} catch {
+		return {};
+	}
+};
+
 export const readSidecar = async (context: Bridge.Context, directory: string): Promise<Sidecar> => {
 	const path = sidecarPath(directory);
 
@@ -27,9 +37,7 @@ export const readSidecar = async (context: Bridge.Context, directory: string): P
 	}
 
 	try {
-		const parsed = JSON.parse(await context.files.read(path)) as unknown;
-
-		return parsed !== null && typeof parsed === "object" && !Array.isArray(parsed) ? (parsed as Sidecar) : {};
+		return parseSidecar(await context.files.read(path));
 	} catch {
 		return {};
 	}

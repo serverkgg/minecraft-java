@@ -28,15 +28,9 @@ const isRecord = (value: unknown): value is CompanionRecord => {
 	);
 };
 
-export const readCompanionSidecar = async (context: Bridge.Context): Promise<CompanionSidecar> => {
-	if (!(await context.files.exists(SIDECAR))) {
-		return {
-			entries: {},
-		};
-	}
-
+export const parseCompanionSidecar = (text: string): CompanionSidecar => {
 	try {
-		const parsed = JSON.parse(await context.files.read(SIDECAR)) as {
+		const parsed = JSON.parse(text) as {
 			entries?: unknown;
 		};
 		const entries = parsed.entries;
@@ -53,6 +47,22 @@ export const readCompanionSidecar = async (context: Bridge.Context): Promise<Com
 				CompanionRecord
 			>,
 		};
+	} catch {
+		return {
+			entries: {},
+		};
+	}
+};
+
+export const readCompanionSidecar = async (context: Bridge.Context): Promise<CompanionSidecar> => {
+	if (!(await context.files.exists(SIDECAR))) {
+		return {
+			entries: {},
+		};
+	}
+
+	try {
+		return parseCompanionSidecar(await context.files.read(SIDECAR));
 	} catch {
 		return {
 			entries: {},

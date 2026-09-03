@@ -36,8 +36,12 @@ export const VARIANT_LABELS: Record<ServerVariant, string> = {
 
 const VARIANTS = new Set<string>(Object.values(ServerVariant));
 
-export const variantOf = (context: Bridge.Context): ServerVariant => {
-	const declared = context.variable("SERVER_TYPE") ?? "";
+export const variantFrom = (declared: string | null): ServerVariant => {
+	const value = declared ?? "";
 
-	return VARIANTS.has(declared) ? (declared as ServerVariant) : ServerVariant.Vanilla;
+	return VARIANTS.has(value) ? (value as ServerVariant) : ServerVariant.Vanilla;
+};
+
+export const variantOf = (context: Bridge.Context): ServerVariant => {
+	return variantFrom(context.variable("SERVER_TYPE"));
 };

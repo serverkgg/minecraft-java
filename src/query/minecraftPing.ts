@@ -113,7 +113,7 @@ const toDescription = (description: unknown): string | null => {
 	return typeof text === "string" ? text : null;
 };
 
-const parseStatus = (view: Uint8Array) => {
+export const parseStatus = (view: Uint8Array): Omit<PingStatus, "latencyMs"> | null => {
 	const frame = readVarInt(view, 0);
 
 	if (!frame) {
