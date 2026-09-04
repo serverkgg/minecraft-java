@@ -1,4 +1,4 @@
-import { type Bridge, BridgeFailureCode, BridgeFailureError, BridgeKind } from "@serverkgg/bridge";
+import { type Bridge, BridgeFailureCode, BridgeFailureError, BridgeKind, BridgeUserError } from "@serverkgg/bridge";
 import { decodeProviderRef, encodeProviderRef, modpackSourceById, modpackSources } from "../providers";
 import { addonDirectory } from "../shared";
 import { MODPACK_VARIABLE } from "./applyModpack";
@@ -58,7 +58,10 @@ export const installModpack = async (context: Bridge.Context, id: string): Promi
 	const source = decoded ? modpackSourceById(decoded.provider) : null;
 
 	if (!decoded || !source || source.id !== decoded.provider) {
-		throw new Error(`"${id}" is not a modpack reference we can install`);
+		throw new BridgeUserError({
+			ar: "ما نقدر نركّب هذا المودباك من المرجع اللي وصلنا. حدّث الصفحة وجرّب مرة ثانية.",
+			en: `"${id}" is not a modpack reference we can install.`,
+		});
 	}
 
 	const releases = await source.releases(context, decoded.project);
@@ -170,6 +173,9 @@ export const modpacks: Bridge.Catalog = {
 	},
 
 	async remove() {
-		throw new Error("clear the modpack from the modpacks tab, removing it rebuilds the server without it");
+		throw new BridgeUserError({
+			ar: "امسح المودباك من تبويب المودباكات. إزالته من هنا تعيد بناء السيرفر بدونه.",
+			en: "Clear the modpack from the modpacks tab. Removing it here rebuilds the server without it.",
+		});
 	},
 };

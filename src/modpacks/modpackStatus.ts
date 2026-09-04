@@ -1,4 +1,4 @@
-import { type Bridge, BridgeDetailFormat, BridgeDetailTone, BridgeKind } from "@serverkgg/bridge";
+import { type Bridge, BridgeDetailFormat, BridgeDetailTone, BridgeKind, BridgeUserError } from "@serverkgg/bridge";
 import { encodeProviderRef, modpackSourceById } from "../providers";
 import { addonDirectory, VARIANT_LABELS } from "../shared";
 import { MODPACK_VARIABLE } from "./applyModpack";
@@ -241,13 +241,19 @@ export const modpackStatus: Bridge.Detail = {
 			const sidecar = await readModpackSidecar(context);
 
 			if (!sidecar) {
-				throw new Error("no modpack is installed, so there is nothing to update");
+				throw new BridgeUserError({
+					ar: "ما فيه مودباك مركّب، فما فيه شي نحدّثه.",
+					en: "No modpack is installed, so there is nothing to update.",
+				});
 			}
 
 			const latest = await latestRelease(context, modpackSourceById(sidecar.provider), sidecar.project);
 
 			if (!latest || latest.versionId === sidecar.versionId) {
-				throw new Error("this modpack is already on its latest release");
+				throw new BridgeUserError({
+					ar: "المودباك على آخر إصدار.",
+					en: "This modpack is already on its latest release.",
+				});
 			}
 
 			const entry = await installModpack(context, encodeProviderRef(sidecar.provider, sidecar.project));

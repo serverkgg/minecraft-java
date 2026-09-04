@@ -1,4 +1,4 @@
-import type { Bridge } from "@serverkgg/bridge";
+import { type Bridge, BridgeUserError } from "@serverkgg/bridge";
 
 const PREFIX = "[ServerK]";
 
@@ -14,7 +14,10 @@ export const messageArgument = (args: Bridge.Values) => {
 		.trim();
 
 	if (message.length === 0) {
-		throw new Error("اكتب الرسالة أول — write the message first");
+		throw new BridgeUserError({
+			ar: "اكتب الرسالة أول.",
+			en: "Write the message first.",
+		});
 	}
 
 	return message.slice(0, CHAT_MESSAGE_LENGTH);

@@ -1,4 +1,4 @@
-import { type Bridge, BridgeFailureCode, BridgeFailureError, BridgeKind } from "@serverkgg/bridge";
+import { type Bridge, BridgeFailureCode, BridgeFailureError, BridgeKind, BridgeUserError } from "@serverkgg/bridge";
 import { companionForProject, isCompanionFile } from "../companions";
 import type { AddonTarget, CatalogProvider, CatalogRelease } from "../providers";
 import {
@@ -177,22 +177,29 @@ const installProject = async (context: Bridge.Context, id: string): Promise<Brid
 	const decoded = decodeProviderRef(id);
 
 	if (!decoded) {
-		throw new Error(`"${id}" is not a provider reference`);
+		throw new BridgeUserError({
+			ar: "ما نقدر نركّب هذي الإضافة من المرجع اللي وصلنا. حدّث الصفحة وجرّب مرة ثانية.",
+			en: `"${id}" is not a provider reference.`,
+		});
 	}
 
 	const companion = companionForProject(context, decoded.project);
 
 	if (companion) {
-		throw new Error(
-			`${companion.title} is installed and updated by the ${companion.feature.switchLabel} switch in the settings tab`,
-		);
+		throw new BridgeUserError({
+			ar: `${companion.title} يتركّب ويتحدّث من مفتاح ${companion.feature.switchLabel} في تبويب الإعدادات.`,
+			en: `${companion.title} is installed and updated by the ${companion.feature.switchLabel} switch in the settings tab.`,
+		});
 	}
 
 	const target = await addonTarget(context);
 	const provider = providerById(decoded.provider);
 
 	if (!provider?.supports(target)) {
-		throw new Error(`${decoded.provider} has nothing for a ${target.variant} server`);
+		throw new BridgeUserError({
+			ar: `${decoded.provider} ما عنده شي يناسب سيرفر ${target.variant}.`,
+			en: `${decoded.provider} has nothing for a ${target.variant} server.`,
+		});
 	}
 
 	const pending = await gather(context, provider, target, decoded.project);
@@ -282,7 +289,10 @@ const removeEntry = async (context: Bridge.Context, id: string) => {
 	const name = enabledName(id);
 
 	if (!name.endsWith(".jar")) {
-		throw new Error(`"${id}" is not installed`);
+		throw new BridgeUserError({
+			ar: `"${id}" مو مركّب.`,
+			en: `"${id}" is not installed.`,
+		});
 	}
 
 	await forget(context, target, sidecar, name);
