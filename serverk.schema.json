@@ -686,7 +686,7 @@
 						"avatar": {
 							"type": "string",
 							"maxLength": 300,
-							"pattern": "^https:\\/\\/"
+							"pattern": "^(https:\\/\\/|serverk:\\/\\/avatars\\/)"
 						},
 						"fields": {
 							"default": [],
