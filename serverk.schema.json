@@ -430,7 +430,8 @@
 										"console",
 										"files",
 										"backups",
-										"panel"
+										"panel",
+										"setup"
 									]
 								}
 							},
@@ -879,7 +880,8 @@
 										"console",
 										"files",
 										"backups",
-										"panel"
+										"panel",
+										"setup"
 									]
 								}
 							},

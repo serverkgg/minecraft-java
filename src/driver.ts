@@ -13,6 +13,7 @@ import { panel } from "./panel";
 import { pending } from "./pending";
 import { query } from "./query";
 import { settings, version } from "./settings";
+import { setup } from "./setup";
 import { terminal } from "./terminal";
 import { worlds } from "./worlds";
 
@@ -24,6 +25,7 @@ export const driver: BridgeDriver = {
 	backup,
 	announce,
 	pending,
+	setup,
 	terminal,
 	panel,
 	modules: {
