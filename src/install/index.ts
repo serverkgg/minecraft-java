@@ -2,6 +2,7 @@ export * from "./applyTransition";
 export * from "./install";
 export * from "./installIdentity";
 export * from "./installLayout";
+export * from "./installRcon";
 export * from "./installStamp";
 export * from "./launchPlan";
 export * from "./transition";

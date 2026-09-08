@@ -6,6 +6,7 @@ import {
 	BridgeIcon,
 	BridgeLayout,
 } from "@serverkgg/bridge";
+import { rconAccessSections } from "@serverkgg/bridge/rcon";
 import { CROSSPLAY, VERSION_COMPAT } from "../companions";
 import { MODPACK_UPDATE_ACTION, MODPACK_VARIABLE } from "../modpacks";
 import { CHAT_MESSAGE_LENGTH, WORLD_STAGING, XP_MAX_LEVELS, XP_MIN_LEVELS } from "../shared";
@@ -476,6 +477,7 @@ const settingsTab: Bridge.Tab = {
 				},
 			],
 		},
+		...rconAccessSections(),
 	],
 };
 

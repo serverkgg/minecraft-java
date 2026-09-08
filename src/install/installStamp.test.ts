@@ -13,6 +13,8 @@ const stamp = (overrides: Partial<InstallStamp> = {}): InstallStamp => ({
 		kind: LaunchKind.Args,
 		target: "libraries/net/neoforged/neoforge/21.1.176/unix_args.txt",
 	},
+	rconPassword: "live-password",
+	rconPasswordNext: null,
 	...overrides,
 });
 
@@ -41,6 +43,37 @@ describe("reading the record of what is already installed", () => {
 		});
 
 		expect(parseInstallStamp(JSON.stringify(written))).toEqual(written);
+	});
+
+	test("a stamp written before remote access existed is kept, with no rcon password yet", () => {
+		const { rconPassword, rconPasswordNext, ...legacy } = stamp();
+
+		expect(parseInstallStamp(JSON.stringify(legacy))).toEqual({
+			...legacy,
+			rconPassword: null,
+			rconPasswordNext: null,
+		});
+		expect(rconPassword).toBe("live-password");
+		expect(rconPasswordNext).toBeNull();
+	});
+
+	test("a pending rcon password rides the stamp beside the live one", () => {
+		const written = stamp({
+			rconPasswordNext: "next-password",
+		});
+
+		expect(parseInstallStamp(JSON.stringify(written))).toEqual(written);
+	});
+
+	test("an empty rcon password is read as none", () => {
+		expect(
+			parseInstallStamp(
+				JSON.stringify({
+					...stamp(),
+					rconPassword: "",
+				}),
+			)?.rconPassword,
+		).toBeNull();
 	});
 
 	test("a build that is not text is read as no build rather than rejecting the stamp", () => {

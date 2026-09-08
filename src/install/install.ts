@@ -18,6 +18,7 @@ import { resolveNext } from "./installIdentity";
 import { installNeoForge } from "./installNeoForge";
 import { installPaper } from "./installPaper";
 import { installPurpur } from "./installPurpur";
+import { pinRconProperties } from "./installRcon";
 import { matchesStamp, readInstallStamp, writeInstallStamp } from "./installStamp";
 import { installVanilla } from "./installVanilla";
 import type { LaunchPlan } from "./launchPlan";
@@ -55,6 +56,7 @@ const finalize = async (context: Bridge.Context) => {
 		await context.codec.properties.merge("server.properties", SEEDED_PROPERTIES);
 	}
 
+	await pinRconProperties(context);
 	await context.files.ensure(addonDirectory(context), "logs");
 };
 
@@ -140,6 +142,8 @@ export const install: Bridge.Install = {
 			build,
 			java: javaMajor,
 			launch,
+			rconPassword: stamp?.rconPassword ?? null,
+			rconPasswordNext: stamp?.rconPasswordNext ?? null,
 		});
 
 		let pending: PendingFile[] = [];

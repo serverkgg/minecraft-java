@@ -1,11 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import { BridgeLayout, BridgeSetupStepKind } from "@serverkgg/bridge";
 import { GuideOpenTab } from "@serverkgg/bridge/guides";
+import { RCON_ACCESS_MODULE, RCON_ACCESS_VARIABLE } from "@serverkgg/bridge/rcon";
 import { driver } from "./driver";
 
 const modules = driver.modules ?? {};
 
 const tabs = driver.panel?.tabs ?? [];
+
+const sections = tabs.flatMap((tab) => tab.sections);
 
 const steps = driver.setup?.steps ?? [];
 
@@ -81,5 +84,20 @@ describe("walking the customer through the first run", () => {
 
 	test("keeps the setup singleton out of the panel modules, because its id is reserved", () => {
 		expect(Object.keys(modules)).not.toContain("setup");
+	});
+});
+
+describe("assembling the minecraft driver", () => {
+	test("registers every module the panel binds a section to", () => {
+		for (const section of sections) {
+			if (section.layout !== BridgeLayout.Form) {
+				expect(Object.keys(modules)).toContain(section.module);
+			}
+		}
+	});
+
+	test("declares the remote access toggle the rcon port is published by, beside its card", () => {
+		expect(formSection("settings", "rcon-access")?.fields.map((field) => field.key)).toContain(RCON_ACCESS_VARIABLE);
+		expect(Object.keys(modules)).toContain(RCON_ACCESS_MODULE);
 	});
 });

@@ -273,7 +273,7 @@
 									},
 									"activeWhen": {
 										"default": [],
-										"description": "Conditions on the server's variables that must all hold for the game to listen on this port. The port is still allocated; the panel hides the address otherwise.",
+										"description": "Conditions on the server's variables that must all hold for this port to be published. The host port stays allocated either way; while a condition fails the container does not publish it and the panel hides the address.",
 										"maxItems": 4,
 										"type": "array",
 										"items": {

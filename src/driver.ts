@@ -12,6 +12,7 @@ import { gameVersion, loaderBuild, serverType } from "./options";
 import { panel } from "./panel";
 import { pending } from "./pending";
 import { query } from "./query";
+import { rconAccess } from "./rcon";
 import { settings, version } from "./settings";
 import { setup } from "./setup";
 import { terminal } from "./terminal";
@@ -44,5 +45,6 @@ export const driver: BridgeDriver = {
 		modpackStatus,
 		gameplay,
 		broadcast,
+		rconAccess,
 	},
 };

@@ -12,11 +12,17 @@ export interface InstallIdentity {
 export interface InstallStamp extends InstallIdentity {
 	java: number;
 	launch: LaunchPlan;
+	rconPassword: string | null;
+	rconPasswordNext: string | null;
 }
 
 const LAUNCH_KINDS = new Set<string>(Object.values(LaunchKind));
 
 const VARIANTS = Object.values(ServerVariant);
+
+const parseText = (value: unknown) => {
+	return typeof value === "string" && value.length > 0 ? value : null;
+};
 
 const parseVariant = (value: unknown) => {
 	return VARIANTS.find((variant) => variant === value) ?? null;
@@ -65,6 +71,8 @@ const installStampOf = (parsed: Partial<InstallStamp> | null): InstallStamp | nu
 		build: typeof parsed.build === "string" ? parsed.build : null,
 		java: parsed.java,
 		launch,
+		rconPassword: parseText(parsed.rconPassword),
+		rconPasswordNext: parseText(parsed.rconPasswordNext),
 	};
 };
 
