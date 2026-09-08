@@ -376,6 +376,8 @@ describe("naming the memory a pack asks for", () => {
 describe("what the events module promises the platform", () => {
 	test("declares every name it emits outside a console pattern", () => {
 		expect(events.emits).toContain("ModCrashed");
+		expect(events.emits).toContain("PlayerKicked");
+		expect(events.emits).toContain("PlayerBanned");
 	});
 
 	test("stays well inside the platform's event name budget", () => {

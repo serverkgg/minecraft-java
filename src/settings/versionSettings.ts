@@ -1,11 +1,11 @@
 import { type Bridge, BridgeKind } from "@serverkgg/bridge";
-import { readStamp } from "../install";
+import { readInstallStamp } from "../install";
 import { variantOf } from "../shared";
 
 export const version: Bridge.Settings = {
 	kind: BridgeKind.Settings,
 	async read(context) {
-		const stamp = await readStamp(context);
+		const stamp = await readInstallStamp(context);
 
 		return {
 			SERVER_TYPE: stamp?.variant ?? variantOf(context),

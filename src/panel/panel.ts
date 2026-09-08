@@ -623,6 +623,52 @@ const playersTab: Bridge.Tab = {
 				en: "The whitelist is empty. Add a Java name as it is, and a Bedrock gamertag with a dot in front and its spaces kept.",
 			},
 		},
+		{
+			layout: BridgeLayout.Table,
+			id: "bans",
+			title: {
+				ar: "المحظورون",
+				en: "Banned players",
+			},
+			module: "bans",
+			columns: [
+				{
+					key: "name",
+					label: {
+						ar: "اللاعب",
+						en: "Player",
+					},
+				},
+				{
+					key: "source",
+					label: {
+						ar: "مصدر الحظر",
+						en: "Banned by",
+					},
+				},
+				{
+					key: "reason",
+					label: {
+						ar: "السبب",
+						en: "Reason",
+					},
+				},
+			],
+			actions: [
+				{
+					id: "remove",
+					label: {
+						ar: "رفع الحظر",
+						en: "Unban",
+					},
+					confirm: BridgeConfirm.Normal,
+				},
+			],
+			empty: {
+				ar: "ما فيه أحد محظور من سيرفرك. أي لاعب تحظره من جدول المتصلين يطلع لك هنا، ومن هنا ترفع عنه الحظر ويرجع يدخل على طول.",
+				en: "Nobody is banned from your server. Anyone you ban from the online list shows up here, and this is where you lift the ban so they can join again right away.",
+			},
+		},
 	],
 };
 

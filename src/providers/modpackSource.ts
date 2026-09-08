@@ -1,6 +1,6 @@
 import type { Bridge } from "@serverkgg/bridge";
+import { CURSEFORGE_SECRET } from "@serverkgg/bridge/catalogs";
 import { curseForgeProvider } from "./curseforge";
-import { CURSEFORGE_SECRET } from "./curseforgeApi";
 import {
 	CURSEFORGE_MODPACK_CATEGORIES,
 	CURSEFORGE_MODPACK_SORTS,

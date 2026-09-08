@@ -1,5 +1,6 @@
 import type { Bridge } from "@serverkgg/bridge";
-import { FABRIC_META, type FabricEntry, MANIFEST_CACHE_SECONDS, SERVER_JAR } from "../shared";
+import { FABRIC_META, type FabricEntry, MANIFEST_CACHE_SECONDS, SERVER_JAR, ServerVariant } from "../shared";
+import { buildUnavailable } from "./buildUnavailable";
 import { jarLaunch } from "./launchPlan";
 
 export const installFabric = async (context: Bridge.Context, gameVersion: string, build: string | null) => {
@@ -9,7 +10,11 @@ export const installFabric = async (context: Bridge.Context, gameVersion: string
 
 	const installer = installers.find((entry) => entry.stable)?.version;
 
-	if (!build || !installer) {
+	if (!build) {
+		throw buildUnavailable(ServerVariant.Fabric, gameVersion);
+	}
+
+	if (!installer) {
 		throw new Error(`no stable Fabric loader for minecraft ${gameVersion}`);
 	}
 

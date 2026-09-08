@@ -1,10 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import {
-	type CurseFileEntry,
-	curseforgeDownloadUrl,
-	curseforgeFallbackUrl,
-	isCurseforgeServerFile,
-} from "./curseforgeApi";
+import type { CurseforgeFile } from "@serverkgg/bridge/catalogs";
 import {
 	curseforgeFilesExhausted,
 	curseforgeReleaseOf,
@@ -13,7 +8,7 @@ import {
 	SERVER_PACK_CANDIDATES,
 } from "./curseforgeModpack";
 
-const entry = (overrides: Partial<CurseFileEntry> = {}): CurseFileEntry => {
+const entry = (overrides: Partial<CurseforgeFile> = {}): CurseforgeFile => {
 	return {
 		id: 4_712_868,
 		modId: 238_222,
@@ -38,144 +33,6 @@ const entry = (overrides: Partial<CurseFileEntry> = {}): CurseFileEntry => {
 		...overrides,
 	};
 };
-
-describe("which side of the game a curseforge file belongs to", () => {
-	test("a server tag wins outright", () => {
-		expect(
-			isCurseforgeServerFile(
-				entry({
-					gameVersions: [
-						"1.20.1",
-						"Client",
-						"Server",
-					],
-				}),
-			),
-		).toBe(true);
-	});
-
-	test("a client tag with no server tag loses", () => {
-		expect(
-			isCurseforgeServerFile(
-				entry({
-					gameVersions: [
-						"1.20.1",
-						"Client",
-					],
-				}),
-			),
-		).toBe(false);
-	});
-
-	test("a file tagged neither way is a library and stays", () => {
-		expect(
-			isCurseforgeServerFile(
-				entry({
-					gameVersions: [
-						"1.20.1",
-						"Forge",
-					],
-				}),
-			),
-		).toBe(true);
-	});
-
-	test("the tags are read whatever their casing", () => {
-		expect(
-			isCurseforgeServerFile(
-				entry({
-					gameVersions: [
-						"client",
-					],
-				}),
-			),
-		).toBe(false);
-	});
-});
-
-describe("the download url a blocked curseforge file falls back to", () => {
-	test("splits a modern file id after four digits", () => {
-		expect(curseforgeFallbackUrl(4_712_868, "jei.jar")).toBe("https://edge.forgecdn.net/files/4712/868/jei.jar");
-	});
-
-	test("divides a legacy file id by a thousand", () => {
-		expect(curseforgeFallbackUrl(232_323, "old.jar")).toBe("https://edge.forgecdn.net/files/232/232323/old.jar");
-	});
-
-	test("escapes a file name a url cannot carry", () => {
-		expect(curseforgeFallbackUrl(5_228_909, "Butchersdelight beta 1.20.1 2.1.0.jar")).toBe(
-			"https://edge.forgecdn.net/files/5228/909/Butchersdelight%20beta%201.20.1%202.1.0.jar",
-		);
-	});
-});
-
-describe("the download url curseforge hands us directly", () => {
-	test("escapes a raw file name exactly once", () => {
-		expect(
-			curseforgeDownloadUrl(
-				entry({
-					downloadUrl: "https://edge.forgecdn.net/files/7000/123/BMC5 [NEOFORGE] 1.21.1 v52.zip",
-				}),
-			),
-		).toBe("https://edge.forgecdn.net/files/7000/123/BMC5%20%5BNEOFORGE%5D%201.21.1%20v52.zip");
-	});
-
-	test("leaves a name curseforge already escaped escaped once", () => {
-		expect(
-			curseforgeDownloadUrl(
-				entry({
-					downloadUrl: "https://edge.forgecdn.net/files/7000/123/BMC5%20%5BNEOFORGE%5D%201.21.1%20v52.zip",
-				}),
-			),
-		).toBe("https://edge.forgecdn.net/files/7000/123/BMC5%20%5BNEOFORGE%5D%201.21.1%20v52.zip");
-	});
-
-	test("leaves a plain file name untouched", () => {
-		expect(curseforgeDownloadUrl(entry())).toBe(
-			"https://edge.forgecdn.net/files/4712/868/jei-1.20.1-forge-15.3.0.4.jar",
-		);
-	});
-
-	test("refuses a host that is not the curseforge cdn", () => {
-		expect(
-			curseforgeDownloadUrl(
-				entry({
-					downloadUrl: "https://example.com/files/4712/868/jei.jar",
-				}),
-			),
-		).toBeNull();
-	});
-
-	test("refuses a download that is not over https", () => {
-		expect(
-			curseforgeDownloadUrl(
-				entry({
-					downloadUrl: "http://edge.forgecdn.net/files/4712/868/jei.jar",
-				}),
-			),
-		).toBeNull();
-	});
-
-	test("refuses a path carrying a broken escape", () => {
-		expect(
-			curseforgeDownloadUrl(
-				entry({
-					downloadUrl: "https://edge.forgecdn.net/files/7000/123/100% complete.jar",
-				}),
-			),
-		).toBeNull();
-	});
-
-	test("refuses a file curseforge blocked from direct download", () => {
-		expect(
-			curseforgeDownloadUrl(
-				entry({
-					downloadUrl: null,
-				}),
-			),
-		).toBeNull();
-	});
-});
 
 describe("reading a curseforge modpack release", () => {
 	test("lowers the loader tag out of the game versions so the server type resolves", () => {
@@ -409,7 +266,7 @@ describe("choosing which server packs a blocked file may be rescued from", () =>
 		],
 	});
 
-	const pack = (overrides: Partial<CurseFileEntry> = {}): CurseFileEntry => {
+	const pack = (overrides: Partial<CurseforgeFile> = {}): CurseforgeFile => {
 		return entry({
 			fileName: "pack-server.zip",
 			downloadUrl: "https://edge.forgecdn.net/files/7100/1/pack-server.zip",
@@ -422,7 +279,7 @@ describe("choosing which server packs a blocked file may be rescued from", () =>
 		});
 	};
 
-	const idsOf = (candidates: CurseFileEntry[]) => {
+	const idsOf = (candidates: CurseforgeFile[]) => {
 		return candidates.map((candidate) => candidate.id);
 	};
 

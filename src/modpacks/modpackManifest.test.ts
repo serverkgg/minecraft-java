@@ -1,12 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import {
-	CURSEFORGE_CLASS_MODS,
-	CURSEFORGE_REQUIRED_DEPENDENCY,
-	CURSEFORGE_SHA1,
-	type CurseFileEntry,
-	type CurseMod,
-	type ModrinthVersion,
-} from "../providers";
+	CurseforgeDependency,
+	type CurseforgeFile,
+	CurseforgeHash,
+	type CurseforgeMod,
+} from "@serverkgg/bridge/catalogs";
+import { CURSEFORGE_CLASS_MODS, type ModrinthVersion } from "../providers";
 import { ServerVariant } from "../shared";
 import {
 	ladderCurseforgeEntries,
@@ -261,12 +260,12 @@ const requires = (...modIds: number[]) => {
 	return modIds.map((modId) => {
 		return {
 			modId,
-			relationType: CURSEFORGE_REQUIRED_DEPENDENCY,
+			relationType: CurseforgeDependency.Required,
 		};
 	});
 };
 
-const file = (fileName: string, modId: number, overrides: Partial<CurseFileEntry> = {}): CurseFileEntry => {
+const file = (fileName: string, modId: number, overrides: Partial<CurseforgeFile> = {}): CurseforgeFile => {
 	return {
 		id: modId * 10,
 		modId,
@@ -287,7 +286,7 @@ const file = (fileName: string, modId: number, overrides: Partial<CurseFileEntry
 	};
 };
 
-const clientTagged = (fileName: string, modId: number, overrides: Partial<CurseFileEntry> = {}) => {
+const clientTagged = (fileName: string, modId: number, overrides: Partial<CurseforgeFile> = {}) => {
 	return file(fileName, modId, {
 		gameVersions: [
 			"1.20.1",
@@ -298,14 +297,14 @@ const clientTagged = (fileName: string, modId: number, overrides: Partial<CurseF
 	});
 };
 
-const unreadable = (entry: CurseFileEntry) => {
+const unreadable = (entry: CurseforgeFile) => {
 	return {
 		...entry,
 		dependencies: undefined,
-	} as unknown as CurseFileEntry;
+	} as unknown as CurseforgeFile;
 };
 
-const names = (entries: CurseFileEntry[]) => {
+const names = (entries: CurseforgeFile[]) => {
 	return entries.map((entry) => entry.fileName);
 };
 
@@ -464,19 +463,19 @@ const SHA512 = "b".repeat(128);
 
 const MODRINTH_PROJECT = "AABBCCDD";
 
-const hashed = (entry: CurseFileEntry, value = SHA1): CurseFileEntry => {
+const hashed = (entry: CurseforgeFile, value = SHA1): CurseforgeFile => {
 	return {
 		...entry,
 		hashes: [
 			{
-				algo: CURSEFORGE_SHA1,
+				algo: CurseforgeHash.Sha1,
 				value,
 			},
 		],
 	};
 };
 
-const mod = (modId: number, overrides: Partial<CurseMod> = {}): CurseMod => {
+const mod = (modId: number, overrides: Partial<CurseforgeMod> = {}): CurseforgeMod => {
 	return {
 		id: modId,
 		classId: CURSEFORGE_CLASS_MODS,
@@ -523,13 +522,13 @@ const mirrored = (fileName: string): ModrinthVersion => {
 };
 
 interface LadderOptions {
-	mods?: CurseMod[];
+	mods?: CurseforgeMod[];
 	matches?: Record<string, ModrinthVersion>;
 	unsupported?: string[];
 	wanted?: ModpackManifestFile[];
 }
 
-const ladder = (entries: CurseFileEntry[], options: LadderOptions = {}) => {
+const ladder = (entries: CurseforgeFile[], options: LadderOptions = {}) => {
 	return ladderCurseforgeEntries({
 		installable: entries,
 		matches: options.matches ?? {},

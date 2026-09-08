@@ -1,4 +1,5 @@
 import { type Bridge, BridgeKind, BridgeStream } from "@serverkgg/bridge";
+import { BridgeEventName } from "@serverkgg/bridge/protocol";
 
 export const events: Bridge.Events = {
 	kind: BridgeKind.Events,
@@ -281,6 +282,8 @@ export const events: Bridge.Events = {
 		},
 	],
 	emits: [
-		"ModCrashed",
+		BridgeEventName.ModCrashed,
+		BridgeEventName.PlayerKicked,
+		BridgeEventName.PlayerBanned,
 	],
 };

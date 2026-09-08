@@ -3,7 +3,7 @@ import { broadcast, gameplay } from "./actions";
 import { addons } from "./addons";
 import { announce } from "./announce";
 import { backup } from "./backup";
-import { players, whitelist } from "./collections";
+import { bans, players, whitelist } from "./collections";
 import { events } from "./events";
 import { install, transitionPreview } from "./install";
 import { lifecycle } from "./lifecycle";
@@ -37,6 +37,7 @@ export const driver: BridgeDriver = {
 		settings,
 		players,
 		whitelist,
+		bans,
 		worlds,
 		addons,
 		modpacks,

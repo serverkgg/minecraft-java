@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { ServerVariant } from "../shared";
 import type { InstallIdentity, InstallStamp } from "./installStamp";
-import { matchesStamp, parseStamp } from "./installStamp";
+import { matchesStamp, parseInstallStamp } from "./installStamp";
 import { LaunchKind } from "./launchPlan";
 
 const stamp = (overrides: Partial<InstallStamp> = {}): InstallStamp => ({
@@ -27,7 +27,7 @@ describe("reading the record of what is already installed", () => {
 	test("a complete stamp is read back whole", () => {
 		const written = stamp();
 
-		expect(parseStamp(JSON.stringify(written))).toEqual(written);
+		expect(parseInstallStamp(JSON.stringify(written))).toEqual(written);
 	});
 
 	test("a vanilla stamp carries no build", () => {
@@ -40,12 +40,12 @@ describe("reading the record of what is already installed", () => {
 			},
 		});
 
-		expect(parseStamp(JSON.stringify(written))).toEqual(written);
+		expect(parseInstallStamp(JSON.stringify(written))).toEqual(written);
 	});
 
 	test("a build that is not text is read as no build rather than rejecting the stamp", () => {
 		expect(
-			parseStamp(
+			parseInstallStamp(
 				JSON.stringify({
 					...stamp(),
 					build: 176,
@@ -56,7 +56,7 @@ describe("reading the record of what is already installed", () => {
 
 	test("a stamp written by a version we no longer know is thrown away, so the install runs again", () => {
 		expect(
-			parseStamp(
+			parseInstallStamp(
 				JSON.stringify({
 					...stamp(),
 					variant: "spigot",
@@ -67,7 +67,7 @@ describe("reading the record of what is already installed", () => {
 
 	test("a stamp missing the version, the java major or the launch plan is thrown away", () => {
 		expect(
-			parseStamp(
+			parseInstallStamp(
 				JSON.stringify({
 					...stamp(),
 					version: undefined,
@@ -75,7 +75,7 @@ describe("reading the record of what is already installed", () => {
 			),
 		).toBeNull();
 		expect(
-			parseStamp(
+			parseInstallStamp(
 				JSON.stringify({
 					...stamp(),
 					java: "21",
@@ -83,7 +83,7 @@ describe("reading the record of what is already installed", () => {
 			),
 		).toBeNull();
 		expect(
-			parseStamp(
+			parseInstallStamp(
 				JSON.stringify({
 					...stamp(),
 					launch: undefined,
@@ -94,7 +94,7 @@ describe("reading the record of what is already installed", () => {
 
 	test("a launch plan with an unknown kind or an empty target is thrown away", () => {
 		expect(
-			parseStamp(
+			parseInstallStamp(
 				JSON.stringify({
 					...stamp(),
 					launch: {
@@ -105,7 +105,7 @@ describe("reading the record of what is already installed", () => {
 			),
 		).toBeNull();
 		expect(
-			parseStamp(
+			parseInstallStamp(
 				JSON.stringify({
 					...stamp(),
 					launch: {
@@ -118,9 +118,9 @@ describe("reading the record of what is already installed", () => {
 	});
 
 	test("a truncated or empty file is thrown away instead of throwing", () => {
-		expect(parseStamp("")).toBeNull();
-		expect(parseStamp('{"variant":"neoforge"')).toBeNull();
-		expect(parseStamp("null")).toBeNull();
+		expect(parseInstallStamp("")).toBeNull();
+		expect(parseInstallStamp('{"variant":"neoforge"')).toBeNull();
+		expect(parseInstallStamp("null")).toBeNull();
 	});
 });
 

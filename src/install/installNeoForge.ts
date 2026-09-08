@@ -1,5 +1,6 @@
 import type { Bridge } from "@serverkgg/bridge";
-import { NEOFORGE_MAVEN } from "../shared";
+import { NEOFORGE_MAVEN, ServerVariant } from "../shared";
+import { buildUnavailable } from "./buildUnavailable";
 import type { LaunchPlan } from "./launchPlan";
 import { runLoaderInstaller } from "./loaderInstaller";
 
@@ -10,7 +11,7 @@ export const installNeoForge = async (
 	javaMajor: number,
 ): Promise<LaunchPlan> => {
 	if (!build) {
-		throw new Error(`no NeoForge build for minecraft ${gameVersion}`);
+		throw buildUnavailable(ServerVariant.NeoForge, gameVersion);
 	}
 
 	const plan = await runLoaderInstaller(context, {

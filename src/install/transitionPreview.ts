@@ -2,7 +2,7 @@ import { type Bridge, BridgeConfirm, BridgeKind } from "@serverkgg/bridge";
 import { ModpackPlanKind } from "../modpacks";
 import { transitionFor } from "./applyTransition";
 import { resolveNext } from "./installIdentity";
-import { matchesStamp, readStamp } from "./installStamp";
+import { matchesStamp, readInstallStamp } from "./installStamp";
 import {
 	freshInstallLines,
 	modpackDetachLines,
@@ -14,7 +14,7 @@ import {
 export const transitionPreview: Bridge.Preview = {
 	kind: BridgeKind.Preview,
 	async preview(context) {
-		const stamp = await readStamp(context);
+		const stamp = await readInstallStamp(context);
 		const { next, plan } = await resolveNext(context, stamp, true);
 
 		if (plan.kind === ModpackPlanKind.Detach) {

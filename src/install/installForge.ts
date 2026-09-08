@@ -1,5 +1,6 @@
 import type { Bridge } from "@serverkgg/bridge";
-import { FORGE_MAVEN, SERVER_JAR } from "../shared";
+import { FORGE_MAVEN, SERVER_JAR, ServerVariant } from "../shared";
+import { buildUnavailable } from "./buildUnavailable";
 import { jarLaunch, type LaunchPlan } from "./launchPlan";
 import { runLoaderInstaller } from "./loaderInstaller";
 
@@ -17,7 +18,7 @@ export const installForge = async (
 	javaMajor: number,
 ): Promise<LaunchPlan> => {
 	if (!build) {
-		throw new Error(`no Forge build for minecraft ${gameVersion}`);
+		throw buildUnavailable(ServerVariant.Forge, gameVersion);
 	}
 
 	const release = `${gameVersion}-${build}`;

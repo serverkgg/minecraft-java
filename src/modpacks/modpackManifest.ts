@@ -1,15 +1,16 @@
 import type { Bridge } from "@serverkgg/bridge";
 import {
-	CURSEFORGE_CLASS_MODS,
-	CURSEFORGE_REQUIRED_DEPENDENCY,
-	type CurseFileEntry,
-	type CurseMod,
+	CurseforgeDependency,
+	type CurseforgeFile,
+	type CurseforgeMod,
 	curseforgeDownloadUrl,
 	curseforgeFallbackUrl,
-	curseforgeFiles,
-	curseforgeMods,
 	curseforgeSha1,
 	isCurseforgeServerFile,
+} from "@serverkgg/bridge/catalogs";
+import {
+	CURSEFORGE_CLASS_MODS,
+	curseforgeCatalog,
 	MODRINTH_UNSUPPORTED,
 	type ModrinthVersion,
 	modrinthFile,
@@ -187,13 +188,10 @@ export const parseCurseforgeManifest = (raw: string): ModpackManifest => {
 	};
 };
 
-const modsByFile = async (context: Bridge.Context, entries: CurseFileEntry[]) => {
-	const mods = new Map<number, CurseMod>();
+const modsByFile = async (context: Bridge.Context, entries: CurseforgeFile[]) => {
+	const mods = new Map<number, CurseforgeMod>();
 
-	for (const mod of await curseforgeMods(
-		context,
-		entries.map((entry) => entry.modId),
-	)) {
+	for (const mod of await curseforgeCatalog(context).mods(entries.map((entry) => entry.modId))) {
 		mods.set(mod.id, mod);
 	}
 
@@ -237,9 +235,9 @@ const modrinthUnsupported = async (context: Bridge.Context, ids: string[]) => {
 };
 
 export interface CurseforgePartition {
-	installable: CurseFileEntry[];
+	installable: CurseforgeFile[];
 	required: Set<number>;
-	shielded: CurseFileEntry[];
+	shielded: CurseforgeFile[];
 	absent: number[];
 	degraded: boolean;
 }
@@ -249,7 +247,7 @@ interface CurseforgeClosure {
 	absent: number[];
 }
 
-const isServerEntry = (entry: CurseFileEntry, degraded: boolean) => {
+const isServerEntry = (entry: CurseforgeFile, degraded: boolean) => {
 	if (isServerSafeFilename(entry.fileName)) {
 		return true;
 	}
@@ -261,9 +259,9 @@ const isServerEntry = (entry: CurseFileEntry, degraded: boolean) => {
 	return degraded || isCurseforgeServerFile(entry);
 };
 
-const requiredModIds = (entry: CurseFileEntry) => {
+const requiredModIds = (entry: CurseforgeFile) => {
 	return entry.dependencies.flatMap((dependency) => {
-		return dependency.relationType === CURSEFORGE_REQUIRED_DEPENDENCY && typeof dependency.modId === "number"
+		return dependency.relationType === CurseforgeDependency.Required && typeof dependency.modId === "number"
 			? [
 					dependency.modId,
 				]
@@ -271,13 +269,13 @@ const requiredModIds = (entry: CurseFileEntry) => {
 	});
 };
 
-const curseforgeClosure = (entries: CurseFileEntry[]): CurseforgeClosure | null => {
+const curseforgeClosure = (entries: CurseforgeFile[]): CurseforgeClosure | null => {
 	if (entries.some((entry) => !Array.isArray(entry.dependencies))) {
 		return null;
 	}
 
 	try {
-		const present = new Map<number, CurseFileEntry>();
+		const present = new Map<number, CurseforgeFile>();
 
 		for (const entry of entries) {
 			if (!present.has(entry.modId)) {
@@ -323,13 +321,13 @@ const curseforgeClosure = (entries: CurseFileEntry[]): CurseforgeClosure | null 
 	}
 };
 
-export const partitionCurseforgeEntries = (entries: CurseFileEntry[]): CurseforgePartition => {
+export const partitionCurseforgeEntries = (entries: CurseforgeFile[]): CurseforgePartition => {
 	const closure = curseforgeClosure(entries);
 	const degraded = closure === null;
 	const required = closure?.required ?? new Set<number>();
 
-	const installable: CurseFileEntry[] = [];
-	const shielded: CurseFileEntry[] = [];
+	const installable: CurseforgeFile[] = [];
+	const shielded: CurseforgeFile[] = [];
 
 	for (const entry of entries) {
 		if (isServerEntry(entry, degraded)) {
@@ -354,8 +352,8 @@ export const partitionCurseforgeEntries = (entries: CurseFileEntry[]): Curseforg
 };
 
 export interface CurseforgeLadderInput {
-	installable: CurseFileEntry[];
-	mods: Map<number, CurseMod>;
+	installable: CurseforgeFile[];
+	mods: Map<number, CurseforgeMod>;
 	matches: Record<string, ModrinthVersion>;
 	unsupported: Set<string>;
 	partition: CurseforgePartition;
@@ -369,7 +367,7 @@ export interface CurseforgeLadderResult {
 	skipped: number;
 }
 
-const curseforgeModPage = (mod: CurseMod): string | null => {
+const curseforgeModPage = (mod: CurseforgeMod): string | null => {
 	if (mod.links?.websiteUrl) {
 		return mod.links.websiteUrl;
 	}
@@ -476,10 +474,7 @@ export const resolveCurseforgeFiles = async (
 			file,
 		]),
 	);
-	const entries = await curseforgeFiles(
-		context,
-		manifest.files.map((file) => file.fileId),
-	);
+	const entries = await curseforgeCatalog(context).files(manifest.files.map((file) => file.fileId));
 	const mods = await modsByFile(context, entries);
 
 	const foreign: string[] = [];

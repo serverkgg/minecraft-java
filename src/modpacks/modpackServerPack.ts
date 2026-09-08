@@ -1,5 +1,6 @@
 import type { Bridge } from "@serverkgg/bridge";
-import { type CatalogFile, CURSEFORGE_CDN_SUFFIX } from "../providers";
+import { CURSEFORGE_CDN_SUFFIX } from "@serverkgg/bridge/catalogs";
+import type { CatalogFile } from "../providers";
 import { fileNameOf, STAGING_ROOT } from "../shared";
 import { type BlockedFile, MODS_DIRECTORY, modPath } from "./modpackIndex";
 

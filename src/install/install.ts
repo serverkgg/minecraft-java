@@ -18,7 +18,7 @@ import { resolveNext } from "./installIdentity";
 import { installNeoForge } from "./installNeoForge";
 import { installPaper } from "./installPaper";
 import { installPurpur } from "./installPurpur";
-import { matchesStamp, readStamp, writeStamp } from "./installStamp";
+import { matchesStamp, readInstallStamp, writeInstallStamp } from "./installStamp";
 import { installVanilla } from "./installVanilla";
 import type { LaunchPlan } from "./launchPlan";
 
@@ -63,7 +63,7 @@ export const install: Bridge.Install = {
 	async run(context) {
 		await reportModCrash(context);
 
-		const stamp = await readStamp(context);
+		const stamp = await readInstallStamp(context);
 		const { next, plan } = await resolveNext(context, stamp);
 		const { variant, version } = next;
 		const javaMajor = await javaMajorFor(context, version);
@@ -134,7 +134,7 @@ export const install: Bridge.Install = {
 
 		const launch = await INSTALL_BY_VARIANT[variant](context, version, build, javaMajor);
 
-		await writeStamp(context, {
+		await writeInstallStamp(context, {
 			variant,
 			version,
 			build,
@@ -164,7 +164,7 @@ export const install: Bridge.Install = {
 		return pendingHold(pending);
 	},
 	async describe(context) {
-		const stamp = await readStamp(context);
+		const stamp = await readInstallStamp(context);
 
 		return {
 			version: stamp?.version ?? null,

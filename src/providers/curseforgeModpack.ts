@@ -1,24 +1,23 @@
 import type { Bridge } from "@serverkgg/bridge";
 import {
-	CURSEFORGE,
-	CURSEFORGE_CLASS_MODPACKS,
-	CURSEFORGE_GAME_ID,
-	CURSEFORGE_RELEASE,
-	CURSEFORGE_SEARCH_CACHE_SECONDS,
 	CURSEFORGE_SEARCH_CEILING,
-	type CurseFileEntry,
-	type CurseFiles,
-	type CurseSearch,
-	curseforgeCatalogFile,
+	type CurseforgeFile,
+	type CurseforgeFilesPage,
+	type CurseforgePagination,
+	CurseforgeReleaseType,
+	CurseforgeSort,
 	curseforgeFallbackUrl,
-	curseforgeFile,
-	curseforgeMod,
-	curseforgeRequest,
 	curseforgeSha1,
+} from "@serverkgg/bridge/catalogs";
+import {
+	CURSEFORGE_CLASS_MODPACKS,
+	CURSEFORGE_FILE_PAGE_SIZE,
+	curseforgeCatalog,
+	curseforgeCatalogFile,
+	curseforgeCategoryOf,
+	curseforgeSortOf,
 } from "./curseforgeApi";
 import type { CatalogFile, CatalogResults, CatalogSearch, ModpackProject, ModpackRelease } from "./provider";
-
-const FILE_PAGE_SIZE = 50;
 
 const MAX_FILE_PAGES = 20;
 
@@ -35,28 +34,28 @@ export const SERVER_PACK_CANDIDATES = 2;
 
 export const CURSEFORGE_MODPACK_SORTS: Bridge.CatalogFacet[] = [
 	{
-		value: "2",
+		value: CurseforgeSort.Popularity,
 		label: {
 			ar: "الأكثر شهرة",
 			en: "Most popular",
 		},
 	},
 	{
-		value: "6",
+		value: CurseforgeSort.TotalDownloads,
 		label: {
 			ar: "الأكثر تحميلًا",
 			en: "Most downloaded",
 		},
 	},
 	{
-		value: "3",
+		value: CurseforgeSort.LastUpdated,
 		label: {
 			ar: "آخر تحديث",
 			en: "Recently updated",
 		},
 	},
 	{
-		value: "4",
+		value: CurseforgeSort.Name,
 		label: {
 			ar: "الاسم",
 			en: "Name",
@@ -66,7 +65,7 @@ export const CURSEFORGE_MODPACK_SORTS: Bridge.CatalogFacet[] = [
 
 export const CURSEFORGE_MODPACK_CATEGORIES: Bridge.CatalogFacet[] = [];
 
-const modpackFileOf = (entry: CurseFileEntry): CatalogFile | null => {
+const modpackFileOf = (entry: CurseforgeFile): CatalogFile | null => {
 	const direct = curseforgeCatalogFile(entry);
 
 	if (direct) {
@@ -87,7 +86,7 @@ const modpackFileOf = (entry: CurseFileEntry): CatalogFile | null => {
 	};
 };
 
-const loadersOf = (entry: CurseFileEntry): string[] => {
+const loadersOf = (entry: CurseforgeFile): string[] => {
 	const loaders: string[] = [];
 
 	for (const tag of entry.gameVersions) {
@@ -101,11 +100,11 @@ const loadersOf = (entry: CurseFileEntry): string[] => {
 	return loaders;
 };
 
-const gameVersionsOf = (entry: CurseFileEntry): string[] => {
+const gameVersionsOf = (entry: CurseforgeFile): string[] => {
 	return entry.gameVersions.filter((tag) => VERSION_PATTERN.test(tag));
 };
 
-export const curseforgeServerPackOf = (client: CurseFileEntry, candidates: CurseFileEntry[]): CurseFileEntry | null => {
+export const curseforgeServerPackOf = (client: CurseforgeFile, candidates: CurseforgeFile[]): CurseforgeFile | null => {
 	const linked =
 		typeof client.serverPackFileId === "number"
 			? candidates.find((candidate) => candidate.id === client.serverPackFileId)
@@ -121,12 +120,12 @@ export const curseforgeServerPackOf = (client: CurseFileEntry, candidates: Curse
 	);
 };
 
-export const curseforgeServerPacksOf = (client: CurseFileEntry, candidates: CurseFileEntry[]): CurseFileEntry[] => {
+export const curseforgeServerPacksOf = (client: CurseforgeFile, candidates: CurseforgeFile[]): CurseforgeFile[] => {
 	const wanted = gameVersionsOf(client);
-	const picked: CurseFileEntry[] = [];
+	const picked: CurseforgeFile[] = [];
 	const taken = new Set<number>();
 
-	const take = (candidate: CurseFileEntry) => {
+	const take = (candidate: CurseforgeFile) => {
 		if (taken.has(candidate.id) || !curseforgeCatalogFile(candidate)) {
 			return;
 		}
@@ -158,7 +157,7 @@ export const curseforgeServerPacksOf = (client: CurseFileEntry, candidates: Curs
 	return picked;
 };
 
-const serverPackFilesOf = (entries: CurseFileEntry[]): CatalogFile[] => {
+const serverPackFilesOf = (entries: CurseforgeFile[]): CatalogFile[] => {
 	const files: CatalogFile[] = [];
 
 	for (const entry of entries) {
@@ -173,8 +172,8 @@ const serverPackFilesOf = (entries: CurseFileEntry[]): CatalogFile[] => {
 };
 
 export const curseforgeReleaseOf = (
-	entry: CurseFileEntry,
-	serverPacks: CurseFileEntry[] = [],
+	entry: CurseforgeFile,
+	serverPacks: CurseforgeFile[] = [],
 ): ModpackRelease | null => {
 	if (!entry.isAvailable || entry.isServerPack === true) {
 		return null;
@@ -189,7 +188,7 @@ export const curseforgeReleaseOf = (
 	return {
 		versionId: String(entry.id),
 		version: entry.displayName,
-		stable: entry.releaseType === CURSEFORGE_RELEASE,
+		stable: entry.releaseType === CurseforgeReleaseType.Release,
 		loaders: loadersOf(entry),
 		gameVersions: gameVersionsOf(entry),
 		file,
@@ -210,21 +209,14 @@ export const searchCurseforgeModpacks = async (
 		};
 	}
 
-	const url = new URL(`${CURSEFORGE}/mods/search`);
-
-	url.searchParams.set("gameId", String(CURSEFORGE_GAME_ID));
-	url.searchParams.set("classId", String(CURSEFORGE_CLASS_MODPACKS));
-	url.searchParams.set("searchFilter", search.query);
-	url.searchParams.set("sortField", search.sort ?? "2");
-	url.searchParams.set("sortOrder", "desc");
-	url.searchParams.set("index", String(index));
-	url.searchParams.set("pageSize", String(search.pageSize));
-
-	if (search.category) {
-		url.searchParams.set("categoryId", search.category);
-	}
-
-	const result = await curseforgeRequest<CurseSearch>(context, url.toString(), CURSEFORGE_SEARCH_CACHE_SECONDS);
+	const result = await curseforgeCatalog(context).search({
+		query: search.query,
+		classId: CURSEFORGE_CLASS_MODPACKS,
+		sort: curseforgeSortOf(search.sort),
+		index,
+		pageSize: search.pageSize,
+		categoryId: curseforgeCategoryOf(search.category),
+	});
 
 	return {
 		hits: result.data.map((mod) => {
@@ -245,7 +237,7 @@ export const searchCurseforgeModpacks = async (
 };
 
 export const curseforgeModpackProject = async (context: Bridge.Context, project: string): Promise<ModpackProject> => {
-	const mod = await curseforgeMod(context, project);
+	const mod = await curseforgeCatalog(context).mod(project);
 
 	return {
 		id: String(mod.id),
@@ -258,8 +250,12 @@ export const curseforgeModpackProject = async (context: Bridge.Context, project:
 	};
 };
 
-export const curseforgeFilesExhausted = (collected: number, page: CurseFiles): boolean => {
-	if (page.data.length === 0 || page.data.length < FILE_PAGE_SIZE) {
+export interface CurseforgeFilePage extends Pick<CurseforgeFilesPage, "data"> {
+	pagination?: Pick<CurseforgePagination, "totalCount">;
+}
+
+export const curseforgeFilesExhausted = (collected: number, page: CurseforgeFilePage): boolean => {
+	if (page.data.length === 0 || page.data.length < CURSEFORGE_FILE_PAGE_SIZE) {
 		return true;
 	}
 
@@ -268,16 +264,15 @@ export const curseforgeFilesExhausted = (collected: number, page: CurseFiles): b
 	return total > 0 && collected >= total;
 };
 
-export const curseforgeProjectFiles = async (context: Bridge.Context, project: string): Promise<CurseFileEntry[]> => {
-	const files: CurseFileEntry[] = [];
+export const curseforgeProjectFiles = async (context: Bridge.Context, project: string): Promise<CurseforgeFile[]> => {
+	const catalog = curseforgeCatalog(context);
+	const files: CurseforgeFile[] = [];
 
 	for (let page = 0; page < MAX_FILE_PAGES; page += 1) {
-		const url = new URL(`${CURSEFORGE}/mods/${encodeURIComponent(project)}/files`);
-
-		url.searchParams.set("index", String(page * FILE_PAGE_SIZE));
-		url.searchParams.set("pageSize", String(FILE_PAGE_SIZE));
-
-		const result = await curseforgeRequest<CurseFiles>(context, url.toString());
+		const result = await catalog.modFiles(project, {
+			index: page * CURSEFORGE_FILE_PAGE_SIZE,
+			pageSize: CURSEFORGE_FILE_PAGE_SIZE,
+		});
 
 		files.push(...result.data);
 
@@ -311,9 +306,9 @@ const curseforgeServerPackEntry = async (
 	context: Bridge.Context,
 	project: string,
 	fileId: number,
-): Promise<CurseFileEntry | null> => {
+): Promise<CurseforgeFile | null> => {
 	try {
-		return await curseforgeFile(context, project, String(fileId));
+		return await curseforgeCatalog(context).file(project, fileId);
 	} catch (error) {
 		context.log.warn("could not read the modpack author's server pack, carrying on without it", {
 			project,
@@ -325,7 +320,7 @@ const curseforgeServerPackEntry = async (
 	}
 };
 
-const curseforgeServerPackPool = async (context: Bridge.Context, project: string): Promise<CurseFileEntry[]> => {
+const curseforgeServerPackPool = async (context: Bridge.Context, project: string): Promise<CurseforgeFile[]> => {
 	try {
 		return await curseforgeProjectFiles(context, project);
 	} catch (error) {
@@ -343,7 +338,7 @@ export const curseforgeModpackRelease = async (
 	project: string,
 	fileId: string,
 ): Promise<ModpackRelease | null> => {
-	const entry = await curseforgeFile(context, project, fileId);
+	const entry = await curseforgeCatalog(context).file(project, fileId);
 	const serverPackFileId = entry.serverPackFileId;
 	const linked =
 		typeof serverPackFileId === "number" && serverPackFileId > 0

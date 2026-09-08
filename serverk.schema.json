@@ -303,6 +303,32 @@
 												"variable"
 											]
 										}
+									},
+									"mirror": {
+										"default": false,
+										"description": "Binds the allocated host port as the container port too, so the game advertises the number players dial. Declare it when the game reports its own port to a master server or an A2S client.",
+										"type": "boolean"
+									},
+									"follows": {
+										"description": "Allocates this port at the named port's host port plus the offset, for games that derive one port from another. The named port must use the same protocol.",
+										"type": "object",
+										"properties": {
+											"key": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 32,
+												"pattern": "^[a-z][a-z0-9-]*$"
+											},
+											"offset": {
+												"type": "integer",
+												"minimum": 1,
+												"maximum": 16
+											}
+										},
+										"required": [
+											"key",
+											"offset"
+										]
 									}
 								},
 								"required": [
@@ -310,6 +336,64 @@
 									"containerPort",
 									"hostRange"
 								]
+							}
+						},
+						"runtime": {
+							"description": "How the container is built and how long the platform waits for it.",
+							"default": {},
+							"type": "object",
+							"properties": {
+								"platform": {
+									"default": "linux",
+									"description": "Whether the game binary is a Linux executable or a Windows one the image runs through Wine or Proton.",
+									"type": "string",
+									"enum": [
+										"linux",
+										"wine"
+									]
+								},
+								"installBudgetMinutes": {
+									"default": 15,
+									"description": "How long the first install may take before the platform gives up on it, in minutes.",
+									"type": "integer",
+									"minimum": 5,
+									"maximum": 180
+								},
+								"bootBudgetMinutes": {
+									"default": 12,
+									"description": "How long the game may take to report itself running after the install, in minutes.",
+									"type": "integer",
+									"minimum": 2,
+									"maximum": 60
+								},
+								"shmMb": {
+									"default": 64,
+									"description": "Size of /dev/shm inside the container, in MB. Wine and Proton games need at least 256.",
+									"type": "integer",
+									"minimum": 64,
+									"maximum": 4096
+								},
+								"pidsLimit": {
+									"default": 512,
+									"description": "How many processes and threads the container may hold at once.",
+									"type": "integer",
+									"minimum": 128,
+									"maximum": 4096
+								},
+								"capabilities": {
+									"default": [],
+									"description": "Linux capabilities added back on top of the dropped set, from the allow-list this schema declares.",
+									"maxItems": 3,
+									"type": "array",
+									"items": {
+										"type": "string",
+										"enum": [
+											"SYS_NICE",
+											"IPC_LOCK",
+											"SYS_PTRACE"
+										]
+									}
+								}
 							}
 						}
 					},

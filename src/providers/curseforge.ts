@@ -1,24 +1,22 @@
 import { type Bridge, BridgeFailureCode, BridgeFailureError } from "@serverkgg/bridge";
-import { ServerVariant } from "../shared";
 import {
-	CURSEFORGE,
-	CURSEFORGE_CLASS_MODS,
-	CURSEFORGE_CLASS_PLUGINS,
-	CURSEFORGE_GAME_ID,
-	CURSEFORGE_RELEASE,
-	CURSEFORGE_REQUIRED_DEPENDENCY,
-	CURSEFORGE_SEARCH_CACHE_SECONDS,
 	CURSEFORGE_SEARCH_CEILING,
 	CURSEFORGE_SECRET,
-	type CurseFiles,
-	type CurseSearch,
-	type CurseSingle,
+	CurseforgeDependency,
+	CurseforgeReleaseType,
+	CurseforgeSort,
+} from "@serverkgg/bridge/catalogs";
+import { ServerVariant } from "../shared";
+import {
+	CURSEFORGE_CLASS_MODS,
+	CURSEFORGE_CLASS_PLUGINS,
+	CURSEFORGE_FILE_PAGE_SIZE,
+	curseforgeCatalog,
 	curseforgeCatalogFile,
-	curseforgeRequest,
+	curseforgeCategoryOf,
+	curseforgeSortOf,
 } from "./curseforgeApi";
 import { AddonKind, type AddonTarget, type CatalogProvider, CatalogProviderId, type CatalogRelease } from "./provider";
-
-const FILE_PAGE_SIZE = 50;
 
 const CLASS_ID: Record<AddonKind, number> = {
 	[AddonKind.Mod]: CURSEFORGE_CLASS_MODS,
@@ -31,26 +29,15 @@ const LOADER_TYPE: Partial<Record<ServerVariant, number>> = {
 	[ServerVariant.NeoForge]: 6,
 };
 
-const applyCompatibility = (url: URL, target: AddonTarget) => {
-	url.searchParams.set("gameVersion", target.gameVersion);
-
-	const loader = LOADER_TYPE[target.variant];
-
-	if (loader !== undefined) {
-		url.searchParams.set("modLoaderType", String(loader));
-	}
-};
-
 const bestFile = async (context: Bridge.Context, target: AddonTarget, project: string) => {
-	const url = new URL(`${CURSEFORGE}/mods/${encodeURIComponent(project)}/files`);
-
-	applyCompatibility(url, target);
-	url.searchParams.set("pageSize", String(FILE_PAGE_SIZE));
-
-	const files = await curseforgeRequest<CurseFiles>(context, url.toString());
+	const files = await curseforgeCatalog(context).modFiles(project, {
+		gameVersion: target.gameVersion,
+		modLoaderType: LOADER_TYPE[target.variant],
+		pageSize: CURSEFORGE_FILE_PAGE_SIZE,
+	});
 	const usable = files.data.filter((entry) => entry.isAvailable);
 
-	return usable.find((entry) => entry.releaseType === CURSEFORGE_RELEASE) ?? usable.at(0) ?? null;
+	return usable.find((entry) => entry.releaseType === CurseforgeReleaseType.Release) ?? usable.at(0) ?? null;
 };
 
 export const curseForgeProvider: CatalogProvider = {
@@ -68,28 +55,28 @@ export const curseForgeProvider: CatalogProvider = {
 
 	sorts: [
 		{
-			value: "2",
+			value: CurseforgeSort.Popularity,
 			label: {
 				ar: "الأكثر شهرة",
 				en: "Most popular",
 			},
 		},
 		{
-			value: "6",
+			value: CurseforgeSort.TotalDownloads,
 			label: {
 				ar: "الأكثر تحميلًا",
 				en: "Most downloaded",
 			},
 		},
 		{
-			value: "3",
+			value: CurseforgeSort.LastUpdated,
 			label: {
 				ar: "آخر تحديث",
 				en: "Recently updated",
 			},
 		},
 		{
-			value: "4",
+			value: CurseforgeSort.Name,
 			label: {
 				ar: "الاسم",
 				en: "Name",
@@ -223,24 +210,16 @@ export const curseForgeProvider: CatalogProvider = {
 			};
 		}
 
-		const url = new URL(`${CURSEFORGE}/mods/search`);
-
-		url.searchParams.set("gameId", String(CURSEFORGE_GAME_ID));
-		url.searchParams.set("classId", String(CLASS_ID[target.kind]));
-
-		applyCompatibility(url, target);
-
-		url.searchParams.set("searchFilter", search.query);
-		url.searchParams.set("sortField", search.sort ?? "2");
-		url.searchParams.set("sortOrder", "desc");
-		url.searchParams.set("index", String(index));
-		url.searchParams.set("pageSize", String(search.pageSize));
-
-		if (search.category) {
-			url.searchParams.set("categoryId", search.category);
-		}
-
-		const result = await curseforgeRequest<CurseSearch>(context, url.toString(), CURSEFORGE_SEARCH_CACHE_SECONDS);
+		const result = await curseforgeCatalog(context).search({
+			query: search.query,
+			classId: CLASS_ID[target.kind],
+			gameVersion: target.gameVersion,
+			modLoaderType: LOADER_TYPE[target.variant],
+			sort: curseforgeSortOf(search.sort),
+			index,
+			pageSize: search.pageSize,
+			categoryId: curseforgeCategoryOf(search.category),
+		});
 
 		return {
 			hits: result.data.map((mod) => {
@@ -261,7 +240,7 @@ export const curseForgeProvider: CatalogProvider = {
 	},
 
 	async resolve(context, target, project): Promise<CatalogRelease | null> {
-		const details = await curseforgeRequest<CurseSingle>(context, `${CURSEFORGE}/mods/${encodeURIComponent(project)}`);
+		const details = await curseforgeCatalog(context).mod(project);
 		const entry = await bestFile(context, target, project);
 
 		if (!entry) {
@@ -271,10 +250,10 @@ export const curseForgeProvider: CatalogProvider = {
 		const file = curseforgeCatalogFile(entry);
 
 		if (!file) {
-			if (details.data.allowModDistribution === false) {
+			if (details.allowModDistribution === false) {
 				throw new BridgeFailureError(
 					BridgeFailureCode.CatalogRestricted,
-					`"${details.data.name}" does not allow downloads outside curseforge`,
+					`"${details.name}" does not allow downloads outside curseforge`,
 				);
 			}
 
@@ -282,16 +261,16 @@ export const curseForgeProvider: CatalogProvider = {
 		}
 
 		return {
-			title: details.data.name,
+			title: details.name,
 			version: entry.displayName,
-			icon: details.data.logo?.thumbnailUrl ?? null,
-			pageUrl: details.data.links?.websiteUrl ?? null,
+			icon: details.logo?.thumbnailUrl ?? null,
+			pageUrl: details.links?.websiteUrl ?? null,
 			gameVersions: null,
 			loaders: null,
 			serverSide: null,
 			file,
 			dependencies: entry.dependencies
-				.filter((dependency) => dependency.relationType === CURSEFORGE_REQUIRED_DEPENDENCY)
+				.filter((dependency) => dependency.relationType === CurseforgeDependency.Required)
 				.map((dependency) => String(dependency.modId)),
 		};
 	},

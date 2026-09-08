@@ -1,6 +1,6 @@
 import { type Bridge, BridgeKind } from "@serverkgg/bridge";
 import { pinCompanionConfigs, syncCompanions } from "../companions";
-import { launchArguments, readStamp } from "../install";
+import { launchArguments, readInstallStamp } from "../install";
 import { javaBinary } from "../shared";
 import { heapFor } from "./heap";
 
@@ -15,7 +15,7 @@ export const lifecycle: Bridge.Lifecycle = {
 	async command(context) {
 		await syncCompanions(context);
 
-		const stamp = await readStamp(context);
+		const stamp = await readInstallStamp(context);
 
 		if (!stamp) {
 			throw new Error("minecraft is not installed yet");

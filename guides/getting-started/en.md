@@ -50,6 +50,8 @@ Every server setting lives in `server.properties`.
 
 Turn the whitelist on, then add each friend by name from the console with `whitelist add playername`.
 
+And if you banned somebody and want them back, find them under Banned players in the **Players** tab and press Unban.
+
 @[command](whitelist on)
 
 ### Your world is safe

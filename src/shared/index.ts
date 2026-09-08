@@ -1,4 +1,5 @@
 export * from "./addonFile";
+export * from "./banList";
 export * from "./byteSize";
 export * from "./chat";
 export * from "./gameplay";

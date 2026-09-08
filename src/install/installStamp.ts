@@ -1,8 +1,7 @@
 import type { Bridge } from "@serverkgg/bridge";
+import { parseStamp, readStamp, writeStamp } from "@serverkgg/bridge/install";
 import { ServerVariant } from "../shared";
 import { LaunchKind, type LaunchPlan } from "./launchPlan";
-
-const STAMP_FILE = ".serverk-install.json";
 
 export interface InstallIdentity {
 	variant: ServerVariant;
@@ -44,46 +43,41 @@ const parseLaunch = (value: unknown): LaunchPlan | null => {
 	};
 };
 
-export const parseStamp = (text: string): InstallStamp | null => {
-	try {
-		const parsed = JSON.parse(text) as Partial<InstallStamp>;
-		const launch = parseLaunch(parsed.launch);
-		const variant = parseVariant(parsed.variant);
-
-		if (variant === null || typeof parsed.version !== "string") {
-			return null;
-		}
-
-		if (typeof parsed.java !== "number" || !launch) {
-			return null;
-		}
-
-		return {
-			variant,
-			version: parsed.version,
-			build: typeof parsed.build === "string" ? parsed.build : null,
-			java: parsed.java,
-			launch,
-		};
-	} catch {
+const installStampOf = (parsed: Partial<InstallStamp> | null): InstallStamp | null => {
+	if (parsed === null) {
 		return null;
 	}
+
+	const launch = parseLaunch(parsed.launch);
+	const variant = parseVariant(parsed.variant);
+
+	if (variant === null || typeof parsed.version !== "string") {
+		return null;
+	}
+
+	if (typeof parsed.java !== "number" || !launch) {
+		return null;
+	}
+
+	return {
+		variant,
+		version: parsed.version,
+		build: typeof parsed.build === "string" ? parsed.build : null,
+		java: parsed.java,
+		launch,
+	};
 };
 
-export const readStamp = async (context: Bridge.Context): Promise<InstallStamp | null> => {
-	if (!(await context.files.exists(STAMP_FILE))) {
-		return null;
-	}
-
-	try {
-		return parseStamp(await context.files.read(STAMP_FILE));
-	} catch {
-		return null;
-	}
+export const parseInstallStamp = (text: string): InstallStamp | null => {
+	return installStampOf(parseStamp<Partial<InstallStamp>>(text));
 };
 
-export const writeStamp = async (context: Bridge.Context, stamp: InstallStamp) => {
-	await context.files.write(STAMP_FILE, `${JSON.stringify(stamp, null, 2)}\n`);
+export const readInstallStamp = async (context: Bridge.Context): Promise<InstallStamp | null> => {
+	return installStampOf(await readStamp<Partial<InstallStamp>>(context));
+};
+
+export const writeInstallStamp = async (context: Bridge.Context, stamp: InstallStamp) => {
+	await writeStamp(context, stamp);
 };
 
 export const matchesStamp = (stamp: InstallStamp | null, next: InstallIdentity) => {
@@ -93,5 +87,5 @@ export const matchesStamp = (stamp: InstallStamp | null, next: InstallIdentity) 
 };
 
 export const installedGameVersion = async (context: Bridge.Context) => {
-	return (await readStamp(context))?.version ?? null;
+	return (await readInstallStamp(context))?.version ?? null;
 };

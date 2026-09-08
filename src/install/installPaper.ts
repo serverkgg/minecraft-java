@@ -1,21 +1,31 @@
-import type { Bridge } from "@serverkgg/bridge";
-import { BUILDS_CACHE_SECONDS, PAPER_PROJECT, type PaperBuild, SERVER_JAR } from "../shared";
+import { type Bridge, BridgeNetError } from "@serverkgg/bridge";
+import { BUILDS_CACHE_SECONDS, PAPER_PROJECT, type PaperBuild, SERVER_JAR, ServerVariant } from "../shared";
+import { buildUnavailable } from "./buildUnavailable";
 import { jarLaunch } from "./launchPlan";
 
-export const installPaper = async (context: Bridge.Context, gameVersion: string, build: string | null) => {
-	const builds = await context.net.json<PaperBuild[]>(
-		`${PAPER_PROJECT}/versions/${encodeURIComponent(gameVersion)}/builds`,
-		{
+const publishedBuilds = async (context: Bridge.Context, gameVersion: string) => {
+	try {
+		return await context.net.json<PaperBuild[]>(`${PAPER_PROJECT}/versions/${encodeURIComponent(gameVersion)}/builds`, {
 			cacheSeconds: BUILDS_CACHE_SECONDS,
-		},
-	);
+		});
+	} catch (error) {
+		if (error instanceof BridgeNetError && error.status === 404) {
+			throw buildUnavailable(ServerVariant.Paper, gameVersion);
+		}
+
+		throw error;
+	}
+};
+
+export const installPaper = async (context: Bridge.Context, gameVersion: string, build: string | null) => {
+	const builds = await publishedBuilds(context, gameVersion);
 
 	const resolved =
 		builds.find((candidate) => String(candidate.id) === build)
 		?? builds.find((candidate) => candidate.channel === "STABLE");
 
 	if (!resolved) {
-		throw new Error(`no stable Paper build for ${gameVersion}`);
+		throw buildUnavailable(ServerVariant.Paper, gameVersion);
 	}
 
 	const download = resolved.downloads["server:default"];
