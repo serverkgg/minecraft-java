@@ -3,6 +3,7 @@ import { pinCompanionConfigs, syncCompanions } from "../companions";
 import { launchArguments, readInstallStamp } from "../install";
 import { javaBinary } from "../shared";
 import { heapFor } from "./heap";
+import { jvmFlags } from "./jvmFlags";
 
 const READY = /Done \([\d.]+s\)! For help, type "help"/;
 
@@ -23,8 +24,7 @@ export const lifecycle: Bridge.Lifecycle = {
 
 		return [
 			javaBinary(stamp.java),
-			"-Xms128M",
-			`-Xmx${heapFor(context.server.memoryMb)}M`,
+			...jvmFlags(heapFor(context.server.memoryMb)),
 			...launchArguments(stamp.launch),
 			"nogui",
 		];
