@@ -5,6 +5,7 @@ import {
 	BridgeFormTarget,
 	BridgeIcon,
 	BridgeLayout,
+	BridgePlace,
 } from "@serverkgg/bridge";
 import { rconAccessSections } from "@serverkgg/bridge/rcon";
 import { CROSSPLAY, VERSION_COMPAT } from "../companions";
@@ -149,6 +150,10 @@ const versionTab: Bridge.Tab = {
 		{
 			layout: BridgeLayout.Form,
 			id: "version",
+			help: {
+				ar: "غيّر نوع سيرفرك أو نسخته، ونركّبه لك من جديد على اللي تختاره.",
+				en: "Change your server's type or version and we reinstall it on what you pick.",
+			},
 			target: BridgeFormTarget.Variables,
 			module: "version",
 			reinstall: true,
@@ -266,6 +271,10 @@ const settingsTab: Bridge.Tab = {
 				ar: "كروس بلاي",
 				en: "Crossplay",
 			},
+			help: {
+				ar: "خل أصحابك من الجوال أو الكونسول أو ويندوز يدخلون سيرفرك.",
+				en: "Let friends on phone, console or Windows into your server.",
+			},
 			target: BridgeFormTarget.Variables,
 			reinstall: false,
 			confirm: BridgeConfirm.Normal,
@@ -303,6 +312,10 @@ const settingsTab: Bridge.Tab = {
 				ar: "توافق النسخ",
 				en: "Version compatibility",
 			},
+			help: {
+				ar: "خل أصحابك يدخلون سيرفرك بنسخة جافا غير نسخته.",
+				en: "Let friends join your server on a Java version other than its own.",
+			},
 			target: BridgeFormTarget.Variables,
 			reinstall: false,
 			confirm: BridgeConfirm.Normal,
@@ -336,6 +349,10 @@ const settingsTab: Bridge.Tab = {
 		{
 			layout: BridgeLayout.Form,
 			id: "settings",
+			help: {
+				ar: "إعدادات اللعبة نفسها اللي تنكتب في ملف server.properties.",
+				en: "The game's own settings, written into server.properties.",
+			},
 			target: BridgeFormTarget.Settings,
 			module: "settings",
 			restartHint: true,
@@ -484,7 +501,7 @@ const settingsTab: Bridge.Tab = {
 const playersTab: Bridge.Tab = {
 	id: "players",
 	title: {
-		ar: "اللاعبون",
+		ar: "اللاعبين",
 		en: "Players",
 	},
 	icon: BridgeIcon.Users,
@@ -496,6 +513,7 @@ const playersTab: Bridge.Tab = {
 				ar: "المتصلون الحين",
 				en: "Online now",
 			},
+			place: BridgePlace.Players,
 			module: "players",
 			columns: [
 				{
@@ -522,6 +540,7 @@ const playersTab: Bridge.Tab = {
 						en: "Ban",
 					},
 					confirm: BridgeConfirm.Normal,
+					offline: true,
 				},
 				{
 					id: "op",
@@ -593,6 +612,7 @@ const playersTab: Bridge.Tab = {
 				ar: "القائمة البيضاء",
 				en: "Whitelist",
 			},
+			place: BridgePlace.Players,
 			module: "whitelist",
 			columns: [
 				{
@@ -632,6 +652,7 @@ const playersTab: Bridge.Tab = {
 				ar: "المحظورون",
 				en: "Banned players",
 			},
+			place: BridgePlace.Players,
 			module: "bans",
 			columns: [
 				{
