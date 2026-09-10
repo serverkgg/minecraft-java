@@ -104,8 +104,8 @@ const modpackStatusSection: Bridge.Section = {
 	variable: MODPACK_VARIABLE,
 	confirm: BridgeConfirm.Strong,
 	confirmText: {
-		ar: "ناخذ نسخة احتياطية أول. شيل المودباك يشيله هو وموداته والماب اللي بنيته عليه، ويرجّع سيرفرك عادي على نفس النوع والنسخة بماب جديدة. اللي ركّبته بنفسك يبقى.",
-		en: "We take a backup first. Removing the modpack takes it, its mods and the world you built on it, and leaves your server plain on the same type and version with a fresh world. Anything you installed yourself stays.",
+		ar: "شيل المودباك يشيله هو وموداته والماب اللي بنيته عليه، ويرجّع سيرفرك عادي على نفس النوع والنسخة بماب جديدة. اللي ركّبته بنفسك يبقى.",
+		en: "Removing the modpack takes it, its mods and the world you built on it, and leaves your server plain on the same type and version with a fresh world. Anything you installed yourself stays.",
 	},
 	actions: [
 		{
@@ -116,8 +116,8 @@ const modpackStatusSection: Bridge.Section = {
 			},
 			confirm: BridgeConfirm.Strong,
 			confirmText: {
-				ar: "ناخذ نسخة احتياطية أول، بعدها نركّب آخر إصدار من نفس المودباك. مابك تبقى إذا الإصدار الجديد على نفس النوع ونفس النسخة أو أحدث.",
-				en: "We take a backup first, then install the latest release of the same pack. Your world stays as long as the new release is on the same type and the same version or newer.",
+				ar: "نركّب آخر إصدار من نفس المودباك. مابك تبقى إذا الإصدار الجديد على نفس النوع ونفس النسخة أو أحدث.",
+				en: "We install the latest release of the same pack. Your world stays as long as the new release is on the same type and the same version or newer.",
 			},
 		},
 	],
@@ -159,8 +159,8 @@ const versionTab: Bridge.Tab = {
 			reinstall: true,
 			confirm: BridgeConfirm.Strong,
 			confirmText: {
-				ar: "ناخذ نسخة احتياطية أول. حسب التغيير، مابك إما تبقى مكانها، أو ننقل ملفاتها للمكان الجديد، أو يروح كل اللي أضافته المودات لها. والرجوع لنسخة أقدم يبدأ ماب جديدة دايمًا.",
-				en: "We take a backup first. Depending on the change your world may stay where it is, be moved into place, or lose what mods added to it. Going back to an older version always starts a fresh world.",
+				ar: "حسب التغيير، مابك إما تبقى مكانها، أو ننقل ملفاتها للمكان الجديد، أو يروح كل اللي أضافته المودات لها. والرجوع لنسخة أقدم يبدأ ماب جديدة دايمًا.",
+				en: "Depending on the change your world may stay where it is, be moved into place, or lose what mods added to it. Going back to an older version always starts a fresh world.",
 			},
 			preview: {
 				module: "transitionPreview",
@@ -245,8 +245,8 @@ const modpacksTab: Bridge.Tab = {
 			variable: MODPACK_VARIABLE,
 			confirm: BridgeConfirm.Strong,
 			confirmText: {
-				ar: "ناخذ نسخة احتياطية أول. تركيب المودباك يبني سيرفرك من جديد: يمسح مجلدات المودات والإعدادات كاملة، حتى المودات اللي ركّبتها بنفسك. مابك تبقى مكانها إلا إذا المودباك يبي نسخة أقدم من نسختك، وإذا كان سيرفرك على مود لودر وطلعت منه يروح كل اللي أضافته المودات لمابك. وشيل المودباك يشيله هو وموداته والماب اللي بنيته عليه، ويرجّع سيرفرك عادي بماب جديدة. تقدر ترجع للنسخة الاحتياطية متى ما تبي.",
-				en: "We take a backup first. Installing a modpack rebuilds your server: the mods and config folders are wiped, including mods you installed yourself. Your world stays unless the pack needs an older version than yours, and if you leave a mod loader everything the mods added to your world is lost. Removing the modpack takes it, its mods and the world you built on it, and leaves your server plain with a fresh world. You can restore the backup whenever you want.",
+				ar: "تركيب المودباك يبني سيرفرك من جديد: يمسح مجلدات المودات والإعدادات كاملة، حتى المودات اللي ركّبتها بنفسك. مابك تبقى مكانها إلا إذا المودباك يبي نسخة أقدم من نسختك، وإذا كان سيرفرك على مود لودر وطلعت منه يروح كل اللي أضافته المودات لمابك. وشيل المودباك يشيله هو وموداته والماب اللي بنيته عليه، ويرجّع سيرفرك عادي بماب جديدة.",
+				en: "Installing a modpack rebuilds your server: the mods and config folders are wiped, including mods you installed yourself. Your world stays unless the pack needs an older version than yours, and if you leave a mod loader everything the mods added to your world is lost. Removing the modpack takes it, its mods and the world you built on it, and leaves your server plain with a fresh world.",
 			},
 			empty: {
 				ar: "ما ركّبت أي مودباك. دوّر على واحد فوق واختره، وإحنا نجهّز سيرفرك عليه.",

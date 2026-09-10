@@ -64,3 +64,38 @@ describe("a companion brings the libraries its loader needs", () => {
 		expect(FABRIC_API.files.test("fabric-carpet-1.4.166.jar")).toBe(false);
 	});
 });
+
+describe("a mod build of a companion is pinned to the version the server runs", () => {
+	const geyser = COMPANIONS.find((companion) => companion.id === CompanionId.Geyser);
+	const floodgate = COMPANIONS.find((companion) => companion.id === CompanionId.Floodgate);
+
+	test("the fabric and neoforge builds are read from modrinth for the version the server runs", () => {
+		for (const variant of [
+			ServerVariant.Fabric,
+			ServerVariant.NeoForge,
+		]) {
+			expect(geyser?.artifacts[variant]?.modrinth?.matchGameVersion).toBe(true);
+			expect(floodgate?.artifacts[variant]?.modrinth?.matchGameVersion).toBe(true);
+		}
+	});
+
+	test("the fabric and neoforge builds of geyser never fall back to the newest build", () => {
+		for (const variant of [
+			ServerVariant.Fabric,
+			ServerVariant.NeoForge,
+		]) {
+			expect(geyser?.artifacts[variant]?.download).toBeNull();
+		}
+	});
+
+	test("the plugin builds of geyser still come from geysermc, where one jar spans versions", () => {
+		for (const variant of [
+			ServerVariant.Paper,
+			ServerVariant.Purpur,
+		]) {
+			expect(geyser?.artifacts[variant]?.download).toMatchObject({
+				project: "geyser",
+			});
+		}
+	});
+});

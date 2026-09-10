@@ -211,14 +211,11 @@ const geyser: Companion = {
 					entries: geyserEntries,
 				},
 			],
-			download: {
-				project: "geyser",
-				artifact: "fabric",
-			},
+			download: null,
 			modrinth: {
 				project: "geyser",
 				loader: "fabric",
-				matchGameVersion: false,
+				matchGameVersion: true,
 			},
 			requires: [
 				FABRIC_API,
@@ -232,14 +229,11 @@ const geyser: Companion = {
 					entries: geyserEntries,
 				},
 			],
-			download: {
-				project: "geyser",
-				artifact: "neoforge",
-			},
+			download: null,
 			modrinth: {
 				project: "geyser",
 				loader: "neoforge",
-				matchGameVersion: false,
+				matchGameVersion: true,
 			},
 			requires: [],
 		},
@@ -270,7 +264,7 @@ const floodgate: Companion = {
 			modrinth: {
 				project: "floodgate",
 				loader: "fabric",
-				matchGameVersion: false,
+				matchGameVersion: true,
 			},
 			requires: [
 				FABRIC_API,
@@ -288,7 +282,7 @@ const floodgate: Companion = {
 			modrinth: {
 				project: "floodgate",
 				loader: "neoforge",
-				matchGameVersion: false,
+				matchGameVersion: true,
 			},
 			requires: [],
 		},
