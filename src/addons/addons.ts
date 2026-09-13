@@ -1,4 +1,11 @@
-import { type Bridge, BridgeFailureCode, BridgeFailureError, BridgeKind, BridgeUserError } from "@serverkgg/bridge";
+import {
+	type Bridge,
+	BridgeConfirm,
+	BridgeFailureCode,
+	BridgeFailureError,
+	BridgeKind,
+	BridgeUserError,
+} from "@serverkgg/bridge";
 import { companionForProject, isCompanionFile } from "../companions";
 import type { AddonTarget, CatalogProvider, CatalogRelease } from "../providers";
 import {
@@ -10,13 +17,13 @@ import {
 	resolveProvider,
 	targetLoaders,
 } from "../providers";
-import { DISABLED_SUFFIX, enabledName } from "../shared";
+import { DISABLED_SUFFIX, enabledName, replaceFiles } from "../shared";
 import { readSidecar, type Sidecar, type SidecarEntry, writeSidecar } from "./addonSidecar";
 import { addonTarget } from "./addonTarget";
+import { resolveDependencies } from "./dependencies";
+import { assertInstallSafety } from "./installSafety";
 
 const PAGE_SIZE = 20;
-
-const MAX_DEPENDENCIES = 8;
 
 interface PendingFile {
 	release: CatalogRelease;
@@ -130,50 +137,20 @@ const gather = async (
 	provider: CatalogProvider,
 	target: AddonTarget,
 	project: string,
+	version: string | null = null,
 ): Promise<PendingFile[]> => {
-	const release = await provider.resolve(context, target, project);
-
-	if (!release) {
-		return [];
-	}
-
-	const pending: PendingFile[] = [
-		{
-			release,
-			project,
-		},
-	];
-
-	for (const dependency of release.dependencies) {
-		if (pending.length >= MAX_DEPENDENCIES) {
-			break;
-		}
-
-		if (pending.some((entry) => entry.project === dependency)) {
-			continue;
-		}
-
-		try {
-			const resolved = await provider.resolve(context, target, dependency);
-
-			if (resolved) {
-				pending.push({
-					release: resolved,
-					project: dependency,
-				});
-			}
-		} catch {
-			context.log("skipped a dependency we could not resolve", {
-				provider: provider.id,
-				dependency,
-			});
-		}
-	}
-
-	return pending;
+	return resolveDependencies(
+		project,
+		(dependency, version) => provider.resolve(context, target, dependency, version),
+		version,
+	);
 };
 
-const installProject = async (context: Bridge.Context, id: string): Promise<Bridge.CatalogEntry> => {
+const installProject = async (
+	context: Bridge.Context,
+	id: string,
+	releaseId?: string,
+): Promise<Bridge.CatalogEntry> => {
 	const decoded = decodeProviderRef(id);
 
 	if (!decoded) {
@@ -202,7 +179,7 @@ const installProject = async (context: Bridge.Context, id: string): Promise<Brid
 		});
 	}
 
-	const pending = await gather(context, provider, target, decoded.project);
+	const pending = await gather(context, provider, target, decoded.project, releaseId ?? null);
 	const primary = pending.at(0);
 
 	if (!primary) {
@@ -221,31 +198,59 @@ const installProject = async (context: Bridge.Context, id: string): Promise<Brid
 	const sidecar = await readSidecar(context, target.directory);
 
 	for (const entry of pending) {
-		for (const filename of findTracked(sidecar, encodeProviderRef(provider.id, entry.project))) {
-			await forget(context, target, sidecar, filename);
+		for (const dependency of entry.release.dependencies.filter((dependency) => dependency.kind === "incompatible")) {
+			if (
+				Object.values(sidecar).some(
+					(installed) =>
+						installed.provider === provider.id
+						&& installed.project === dependency.project
+						&& (!dependency.version || installed.versionId === dependency.version),
+				)
+			) {
+				throw new BridgeUserError({
+					ar: `الإضافة تتعارض مع ${dependency.project} المركّبة. شيل الإضافة المتعارضة أول.`,
+					en: `This addon conflicts with installed ${dependency.project}. Remove the conflicting addon first.`,
+				});
+			}
 		}
 	}
-
+	await assertInstallSafety(pending, provider.id, sidecar, (filename) =>
+		context.files.exists(`${target.directory}/${filename}`),
+	);
+	const removed: string[] = [];
+	const replacements = [];
 	for (const entry of pending) {
+		const names = findTracked(sidecar, encodeProviderRef(provider.id, entry.project));
+		let disabled = false;
+		for (const filename of names) {
+			disabled ||= await context.files.exists(`${target.directory}/${filename}${DISABLED_SUFFIX}`);
+			removed.push(`${target.directory}/${filename}`, `${target.directory}/${filename}${DISABLED_SUFFIX}`);
+			delete sidecar[filename];
+		}
 		const { file } = entry.release;
-
-		await context.files.download(`${target.directory}/${file.filename}`, file.url, {
-			...(file.digest === null
-				? {}
-				: {
+		replacements.push({
+			path: `${target.directory}/${file.filename}${disabled ? DISABLED_SUFFIX : ""}`,
+			url: file.url,
+			...(file.digest
+				? {
 						digest: file.digest,
-					}),
+					}
+				: {}),
 			...(file.sizeBytes === null
 				? {}
 				: {
 						sizeBytes: file.sizeBytes,
 					}),
 		});
-
 		sidecar[file.filename] = {
 			provider: provider.id,
 			project: entry.project,
 			version: entry.release.version,
+			...(entry.release.versionId
+				? {
+						versionId: entry.release.versionId,
+					}
+				: {}),
 			title: entry.release.title,
 			gameVersion: target.gameVersion,
 			gameVersions: entry.release.gameVersions,
@@ -253,8 +258,7 @@ const installProject = async (context: Bridge.Context, id: string): Promise<Brid
 			pageUrl: entry.release.pageUrl,
 		};
 	}
-
-	await writeSidecar(context, target.directory, sidecar);
+	await replaceFiles(context, replacements, removed, () => writeSidecar(context, target.directory, sidecar));
 
 	context.log("installed an addon", {
 		provider: provider.id,
@@ -326,6 +330,11 @@ const toggleEntry = async (context: Bridge.Context, id: string, enabled: boolean
 
 export const addons: Bridge.Catalog = {
 	kind: BridgeKind.Catalog,
+	protectedActions: [
+		"install",
+		"remove",
+		"toggle",
+	],
 	pageSize: PAGE_SIZE,
 
 	async search(context, query) {
@@ -392,8 +401,42 @@ export const addons: Bridge.Catalog = {
 			});
 	},
 
-	async install(context, id) {
-		return await exclusive(() => installProject(context, id));
+	async releases(context, id) {
+		const ref = decodeProviderRef(id);
+		const provider = ref ? providerById(ref.provider) : null;
+		return ref && provider?.releases ? provider.releases(context, await addonTarget(context), ref.project) : [];
+	},
+	async preview(context, id, releaseId) {
+		const ref = decodeProviderRef(id);
+		const provider = ref ? providerById(ref.provider) : null;
+		if (!ref || !provider) {
+			throw new BridgeUserError({
+				ar: "اختَر إضافة من الكتالوج.",
+				en: "Choose an addon from the catalog.",
+			});
+		}
+		const target = await addonTarget(context);
+		const pending = await gather(context, provider, target, ref.project, releaseId ?? null);
+		for (const entry of pending) {
+			assertCompatible(entry.release, target);
+		}
+		return {
+			confirm: BridgeConfirm.Normal,
+			lines: [
+				{
+					ar: "نحفظ نسخة احتياطية قبل التغيير. إذا السيرفر شغّال، نعيد تشغيله تلقائيًا.",
+					en: "We save a recovery backup before changes. A running server restarts automatically.",
+				},
+				...pending.map((entry) => ({
+					ar: `${entry.release.title}: ${entry.release.version}`,
+					en: `${entry.release.title}: ${entry.release.version}`,
+				})),
+			],
+		};
+	},
+
+	async install(context, id, releaseId) {
+		return await exclusive(() => installProject(context, id, releaseId));
 	},
 
 	async remove(context, id) {

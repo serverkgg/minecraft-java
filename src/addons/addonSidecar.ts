@@ -6,6 +6,7 @@ export interface SidecarEntry {
 	provider: string;
 	project: string;
 	version: string;
+	versionId?: string;
 	title: string;
 	gameVersion: string;
 	gameVersions?: string[] | null;

@@ -61,6 +61,7 @@ export interface ModrinthFile {
 }
 
 export interface ModrinthDependency {
+	version_id?: string | null;
 	project_id: string | null;
 	dependency_type: string;
 }

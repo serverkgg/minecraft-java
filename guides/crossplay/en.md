@@ -56,3 +56,9 @@ In the **Players** tab type your friend's name and press add. For a Java player 
 Crossplay runs an extra bridge inside the same server, and each Bedrock player costs more memory. For a comfortable game keep it at **2GB or more**; on a 1GB server expect lag.
 
 > [!note] The player counter on your server page counts Bedrock players once they join, exactly like Java players.
+
+## Check whether joining works
+
+The **Join readiness** card in the Version tab probes Java and Bedrock separately. An enabled crossplay switch does not guarantee Bedrock responds; check settings and the console if it does not. The displayed Bedrock version comes from Geyser's actual response, with a link to its current compatibility documentation.
+
+Crossplay joins the Java world. Choose native Bedrock hosting for native Bedrock worlds and addons.

@@ -42,7 +42,14 @@ export interface CatalogFile {
 	digest: string | null;
 }
 
+export interface CatalogDependency {
+	project: string;
+	version: string | null;
+	kind: string;
+}
+
 export interface CatalogRelease {
+	versionId?: string;
 	title: string;
 	version: string;
 	icon: string | null;
@@ -51,7 +58,7 @@ export interface CatalogRelease {
 	loaders: string[] | null;
 	serverSide: string | null;
 	file: CatalogFile;
-	dependencies: string[];
+	dependencies: CatalogDependency[];
 }
 
 export interface CatalogSearch {
@@ -96,5 +103,21 @@ export interface CatalogProvider {
 	supports(target: AddonTarget): boolean;
 	ready(context: Bridge.Context): boolean;
 	search(context: Bridge.Context, target: AddonTarget, search: CatalogSearch): Promise<CatalogResults>;
-	resolve(context: Bridge.Context, target: AddonTarget, project: string): Promise<CatalogRelease | null>;
+	releases?(
+		context: Bridge.Context,
+		target: AddonTarget,
+		project: string,
+	): Promise<
+		{
+			id: string;
+			label: string;
+			gameVersion?: string;
+		}[]
+	>;
+	resolve(
+		context: Bridge.Context,
+		target: AddonTarget,
+		project: string,
+		version?: string | null,
+	): Promise<CatalogRelease | null>;
 }

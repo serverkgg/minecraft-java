@@ -1,6 +1,6 @@
 import { type Bridge, BridgeKind, BridgeUserError } from "@serverkgg/bridge";
 import { installedLayout } from "../install/installLayout";
-import { formatByteSize, relativeUploadPath } from "../shared";
+import { formatByteSize, isUnder, relativeUploadPath, WORLD_STAGING } from "../shared";
 import {
 	activeWorld,
 	discoverWorlds,
@@ -11,6 +11,7 @@ import {
 	worldPaths,
 	worldSize,
 } from "./world";
+import { cloneWorld, exportWorld, inspectJavaWorld, worldNameArgument } from "./worldTools";
 
 const ACTIVE_MARK = "✓";
 
@@ -32,9 +33,12 @@ const uploadedWorldDirectory = async (context: Bridge.Context, source: string) =
 		return source;
 	}
 
-	const nested = found.at(0);
+	const main = found.filter(
+		(candidate) => !found.some((other) => candidate === `${other}_nether` || candidate === `${other}_the_end`),
+	);
+	const nested = main.at(0);
 
-	if (found.length > 1 || nested === undefined) {
+	if (main.length > 1 || nested === undefined) {
 		throw new BridgeUserError({
 			ar: "الملف فيه أكثر من ماب، ارفع كل ماب لحالها",
 			en: "the archive holds more than one world, upload them one at a time",
@@ -57,6 +61,15 @@ const refuseActiveWorld = async (context: Bridge.Context, name: string) => {
 
 export const worlds: Bridge.Collection = {
 	kind: BridgeKind.Collection,
+	protectedActions: [
+		"add",
+		"activate",
+		"clone",
+		"delete",
+		"resetNether",
+		"resetEnd",
+		"export",
+	],
 
 	async list(context) {
 		const active = await activeWorld(context);
@@ -68,7 +81,7 @@ export const worlds: Bridge.Collection = {
 				name,
 				size: formatByteSize(await worldSize(context, name)),
 				active: name === active ? ACTIVE_MARK : "",
-				path: name,
+				path: `.serverk-exports/${name}.zip`,
 			});
 		}
 
@@ -78,7 +91,7 @@ export const worlds: Bridge.Collection = {
 	async add(context, input) {
 		const source = relativeUploadPath(input);
 
-		if (source === null || !(await context.files.exists(source))) {
+		if (source === null || !isUnder(source, WORLD_STAGING) || !(await context.files.exists(source))) {
 			throw new BridgeUserError({
 				ar: "ما لقينا الملفات اللي رفعتها",
 				en: "the uploaded files were not found",
@@ -86,6 +99,7 @@ export const worlds: Bridge.Collection = {
 		}
 
 		const directory = await uploadedWorldDirectory(context, source);
+		await inspectJavaWorld(context, directory);
 		const name = safeWorldName(nameOf(directory));
 
 		if (name.length === 0) {
@@ -104,7 +118,14 @@ export const worlds: Bridge.Collection = {
 			}
 		}
 
-		await context.files.move(directory, name);
+		const sources = worldPaths(directory);
+		const destinations = worldPaths(name);
+		for (const [index, path] of sources.entries()) {
+			const destination = destinations[index];
+			if (destination && (await context.files.exists(path))) {
+				await context.files.move(path, destination);
+			}
+		}
 
 		if (directory !== source) {
 			await context.files.remove(source);
@@ -116,6 +137,12 @@ export const worlds: Bridge.Collection = {
 	},
 
 	actions: {
+		async export(context, row) {
+			await exportWorld(context, row.id);
+		},
+		async clone(context, row, args) {
+			await cloneWorld(context, row.id, worldNameArgument(args.name));
+		},
 		async activate(context, row) {
 			if ((await activeWorld(context)) === row.id) {
 				throw new BridgeUserError({

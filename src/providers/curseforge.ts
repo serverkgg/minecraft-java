@@ -29,7 +29,7 @@ const LOADER_TYPE: Partial<Record<ServerVariant, number>> = {
 	[ServerVariant.NeoForge]: 6,
 };
 
-const bestFile = async (context: Bridge.Context, target: AddonTarget, project: string) => {
+const compatibleFiles = async (context: Bridge.Context, target: AddonTarget, project: string) => {
 	const files = await curseforgeCatalog(context).modFiles(project, {
 		gameVersion: target.gameVersion,
 		modLoaderType: LOADER_TYPE[target.variant],
@@ -37,7 +37,7 @@ const bestFile = async (context: Bridge.Context, target: AddonTarget, project: s
 	});
 	const usable = files.data.filter((entry) => entry.isAvailable);
 
-	return usable.find((entry) => entry.releaseType === CurseforgeReleaseType.Release) ?? usable.at(0) ?? null;
+	return usable;
 };
 
 export const curseForgeProvider: CatalogProvider = {
@@ -239,9 +239,20 @@ export const curseForgeProvider: CatalogProvider = {
 		};
 	},
 
-	async resolve(context, target, project): Promise<CatalogRelease | null> {
+	async releases(context, target, project) {
+		return (await compatibleFiles(context, target, project)).map((file) => ({
+			id: String(file.id),
+			label: file.displayName,
+			gameVersion: target.gameVersion,
+		}));
+	},
+
+	async resolve(context, target, project, versionId): Promise<CatalogRelease | null> {
 		const details = await curseforgeCatalog(context).mod(project);
-		const entry = await bestFile(context, target, project);
+		const files = await compatibleFiles(context, target, project);
+		const entry = versionId
+			? files.find((file) => String(file.id) === versionId)
+			: (files.find((file) => file.releaseType === CurseforgeReleaseType.Release) ?? files.at(0));
 
 		if (!entry) {
 			return null;
@@ -263,6 +274,7 @@ export const curseForgeProvider: CatalogProvider = {
 		return {
 			title: details.name,
 			version: entry.displayName,
+			versionId: String(entry.id),
 			icon: details.logo?.thumbnailUrl ?? null,
 			pageUrl: details.links?.websiteUrl ?? null,
 			gameVersions: null,
@@ -271,7 +283,11 @@ export const curseForgeProvider: CatalogProvider = {
 			file,
 			dependencies: entry.dependencies
 				.filter((dependency) => dependency.relationType === CurseforgeDependency.Required)
-				.map((dependency) => String(dependency.modId)),
+				.map((dependency) => ({
+					project: String(dependency.modId),
+					version: null,
+					kind: "required",
+				})),
 		};
 	},
 };

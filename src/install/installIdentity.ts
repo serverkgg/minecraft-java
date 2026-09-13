@@ -63,7 +63,13 @@ export const resolveNext = async (
 		next: {
 			variant,
 			version,
-			build: await buildFor(context, variant, version, plan.pinnedBuild, optionalBuild),
+			build: await buildFor(
+				context,
+				variant,
+				version,
+				plan.pinnedBuild ?? (stamp?.variant === variant && stamp.version === version ? stamp.build : null),
+				optionalBuild,
+			),
 		},
 		plan,
 	};

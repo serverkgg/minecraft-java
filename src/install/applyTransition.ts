@@ -27,7 +27,6 @@ const WIPE_DIRECTORIES = [
 	"cache",
 	".cache",
 	".fabric",
-	STAGING_ROOT,
 ];
 
 export const ADDON_DIRECTORIES = [
@@ -57,6 +56,9 @@ export const wipeData = async (context: Bridge.Context) => {
 	}
 
 	for (const entry of await context.files.list("*")) {
+		if (entry.path === STAGING_ROOT || entry.path.startsWith(`${STAGING_ROOT}/`)) {
+			continue;
+		}
 		await context.files.remove(entry.path);
 	}
 

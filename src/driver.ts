@@ -1,9 +1,10 @@
 import type { BridgeDriver } from "@serverkgg/bridge";
-import { broadcast, gameplay } from "./actions";
+import { broadcast, diagnostics, gameplay } from "./actions";
 import { addons } from "./addons";
 import { announce } from "./announce";
 import { backup } from "./backup";
 import { bans, players, whitelist } from "./collections";
+import { connectionStatus } from "./companions";
 import { events } from "./events";
 import { install, transitionPreview } from "./install";
 import { lifecycle } from "./lifecycle";
@@ -16,7 +17,7 @@ import { rconAccess } from "./rcon";
 import { settings, version } from "./settings";
 import { setup } from "./setup";
 import { terminal } from "./terminal";
-import { worlds } from "./worlds";
+import { worlds, worldTools } from "./worlds";
 
 export const driver: BridgeDriver = {
 	install,
@@ -30,6 +31,7 @@ export const driver: BridgeDriver = {
 	terminal,
 	panel,
 	modules: {
+		connectionStatus,
 		serverType,
 		gameVersion,
 		loaderBuild,
@@ -40,10 +42,12 @@ export const driver: BridgeDriver = {
 		whitelist,
 		bans,
 		worlds,
+		worldTools,
 		addons,
 		modpacks,
 		modpackStatus,
 		gameplay,
+		diagnostics,
 		broadcast,
 		rconAccess,
 	},

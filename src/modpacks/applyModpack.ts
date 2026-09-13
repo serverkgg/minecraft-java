@@ -86,6 +86,7 @@ export interface StagedModpack {
 	archive: string;
 	overrides: string[];
 	excludes: string[];
+	prepared?: ModpackFile[];
 }
 
 const clearStaging = async (context: Bridge.Context) => {
@@ -453,8 +454,26 @@ export const stageModpack = async (
 		return null;
 	}
 
+	const { keep, skipped } = partitionModpackFiles(
+		staged.index.files,
+		await resolveModpackSignals(context, staged.index.files),
+	);
+	await downloadFiles(
+		context,
+		keep.map((file) => ({
+			...file,
+			path: `${PACK_STAGING}/content/${file.path}`,
+		})),
+	);
+	if (skipped.length > 0) {
+		context.log("excluded client-only modpack files", {
+			count: skipped.length,
+		});
+	}
+
 	return {
 		archive,
+		prepared: keep,
 		excludes: staged.excludes,
 		index: staged.index,
 		overrides: staged.overrides,
@@ -480,7 +499,12 @@ export const applyModpack = async (context: Bridge.Context, staged: StagedModpac
 
 	await removePaths(context, cleanup.paths);
 
-	const { keep, skipped } = partitionModpackFiles(index.files, await resolveModpackSignals(context, index.files));
+	const { keep, skipped } = staged.prepared
+		? {
+				keep: staged.prepared,
+				skipped: [],
+			}
+		: partitionModpackFiles(index.files, await resolveModpackSignals(context, index.files));
 
 	if (skipped.length > 0) {
 		context.log.warn("left out the modpack's client-side files, they cannot run on a server", {
@@ -495,7 +519,13 @@ export const applyModpack = async (context: Bridge.Context, staged: StagedModpac
 		files: keep.length,
 	});
 
-	await downloadFiles(context, keep);
+	if (staged.prepared) {
+		for (const file of keep) {
+			await context.files.move(`${PACK_STAGING}/content/${file.path}`, file.path);
+		}
+	} else {
+		await downloadFiles(context, keep);
+	}
 
 	const installed = keep.map((file) => file.path);
 

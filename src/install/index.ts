@@ -5,6 +5,7 @@ export * from "./installLayout";
 export * from "./installRcon";
 export * from "./installStamp";
 export * from "./launchPlan";
+export * from "./runtimeRecovery";
 export * from "./transition";
 export * from "./transitionPreview";
 export * from "./transitionText";

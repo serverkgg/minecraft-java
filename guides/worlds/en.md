@@ -4,11 +4,11 @@ The **Worlds** tab lists every world on your server, its size, and which one is 
 
 @[open](panel:worlds)
 
-The active world is the one your server opens on start, and its name lives in `server.properties` under `level-name`. Anything you switch from the tab applies after a restart.
+The active world is the one your server opens on start, and its name lives in `server.properties` under `level-name`. Switching worlds saves a recovery backup and automatically restarts a running server.
 
 ## Switch world
 
-Pick the world in the table and press **Activate**, then restart your server. The old world stays exactly where it is, and you can go back to it the same way whenever you want.
+Pick the world in the table and press **Activate**. A running server restarts automatically. The old world stays exactly where it is, and you can go back to it the same way whenever you want.
 
 ## Upload a world from your computer
 
@@ -16,7 +16,7 @@ A world is a zip with a folder inside it that holds `level.dat`. From the Worlds
 
 1. Press **Upload world** and pick the zip
 2. Keep the page open until the progress bar finishes — we upload the file, unpack it, and add the world for you
-3. Activate the new world and restart
+3. Activate the new world; a running server restarts automatically
 
 The world takes its name from the folder inside the zip. If a world with that name is already here we tell you, so rename the folder and upload it again.
 
@@ -24,15 +24,15 @@ The world takes its name from the folder inside the zip. If a world with that na
 
 > [!warning] Before Minecraft 26.1 a Paper or Purpur world keeps its Nether and End in sibling folders ending in `_nether` and `_the_end`, while a Vanilla, Fabric or Forge world keeps them inside itself; from 26.1 on every type keeps them inside the world. A world you upload in the other layout will not show its dimensions until the folders are rearranged. When you change the server type from the Version tab we move them for you.
 
+## Create or clone a world
+
+Use **Create world** to choose a name and optional seed. The new world becomes active and generates at the next start; your previous world stays available. Use **Clone world** on a row to copy that world and all its dimensions under a new name without activating it.
+
 ## Download a world to your computer
 
-Press the download button on the world's row. We pack the world into a zip, your browser downloads it, and we delete the temporary file from your server afterwards. It is the easiest way to take the world into single player or send it to a friend.
+Select **Prepare download** on the world's row, then **Download** after the operation finishes. The protected operation stops the server while creating the ZIP. It includes the overworld and all existing Nether and End folders, including the sibling folders used by older Paper/Purpur versions.
 
-> [!note] Download with the server off. If the world is live while you download it, its files change as we pack them and the copy you get can be incomplete.
-
-> [!warning] On Paper and Purpur before 26.1 the Nether and the End are folders next to the world, and the download takes the overworld only. If you want them too, download their folders from the files page:
-
-@[open](files)
+The export stays in `.serverk-exports` until replaced or removed from Files. Prepare it again when you want a fresh copy. Exports are excluded from backups. Import accepts Java worlds only; native Bedrock worlds belong on a native Bedrock server.
 
 ## Reset the Nether or the End
 
@@ -44,7 +44,7 @@ Press the download button on the world's row. We pack the world into a zip, your
 
 **Delete** removes the world with its Nether and its End forever. We will not let you delete the active world — activate another one first.
 
-A backup is your only way back, so take one before any delete:
+Destructive world actions require a recovery backup before they proceed. Restore that backup to undo a deletion or dimension reset:
 
 @[open](backups)
 

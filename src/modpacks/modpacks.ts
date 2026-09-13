@@ -1,4 +1,11 @@
-import { type Bridge, BridgeFailureCode, BridgeFailureError, BridgeKind, BridgeUserError } from "@serverkgg/bridge";
+import {
+	type Bridge,
+	BridgeConfirm,
+	BridgeFailureCode,
+	BridgeFailureError,
+	BridgeKind,
+	BridgeUserError,
+} from "@serverkgg/bridge";
 import { decodeProviderRef, encodeProviderRef, modpackSourceById, modpackSources } from "../providers";
 import { addonDirectory } from "../shared";
 import { MODPACK_VARIABLE } from "./applyModpack";
@@ -53,7 +60,11 @@ const declaredEntries = async (context: Bridge.Context): Promise<Bridge.CatalogE
 	];
 };
 
-export const installModpack = async (context: Bridge.Context, id: string): Promise<Bridge.CatalogEntry> => {
+export const installModpack = async (
+	context: Bridge.Context,
+	id: string,
+	releaseId?: string,
+): Promise<Bridge.CatalogEntry> => {
 	const decoded = decodeProviderRef(id);
 	const source = decoded ? modpackSourceById(decoded.provider) : null;
 
@@ -65,7 +76,7 @@ export const installModpack = async (context: Bridge.Context, id: string): Promi
 	}
 
 	const releases = await source.releases(context, decoded.project);
-	const release = serverRelease(releases);
+	const release = releaseId ? releases.find((candidate) => candidate.versionId === releaseId) : serverRelease(releases);
 
 	if (!release) {
 		throw new BridgeFailureError(
@@ -168,8 +179,39 @@ export const modpacks: Bridge.Catalog = {
 		];
 	},
 
-	async install(context, id) {
-		return await installModpack(context, id);
+	async releases(context, id) {
+		const ref = decodeProviderRef(id);
+		if (!ref) {
+			return [];
+		}
+		return (await modpackSourceById(ref.provider).releases(context, ref.project))
+			.filter((release) => variantForLoaders(release.loaders))
+			.map((release) => ({
+				id: release.versionId,
+				label: release.version,
+				gameVersion: release.gameVersions.join(", "),
+			}));
+	},
+	async preview(context, id, releaseId) {
+		const entry = await installModpack(context, id, releaseId);
+		return {
+			variables: entry.variables ?? undefined,
+			confirm: BridgeConfirm.Strong,
+			lines: [
+				{
+					ar: `${entry.title}: ${entry.version} · ${entry.gameVersion}`,
+					en: `${entry.title}: ${entry.version} · ${entry.gameVersion}`,
+				},
+				{
+					ar: "نحفظ نسخة احتياطية قبل تركيب المودباك. تغيير النوع أو الرجوع لنسخة أقدم ممكن يحذف بيانات الماب.",
+					en: "A recovery backup is required before installing. Changing loader or downgrading can remove world data.",
+				},
+			],
+		};
+	},
+
+	async install(context, id, releaseId) {
+		return await installModpack(context, id, releaseId);
 	},
 
 	async remove() {

@@ -255,7 +255,21 @@ export const hangarProvider: CatalogProvider = {
 		};
 	},
 
-	async resolve(context, target, project): Promise<CatalogRelease | null> {
+	async releases(context, target, project) {
+		const url = new URL(`${HANGAR}/projects/${projectPath(project)}/versions`);
+		url.searchParams.set("limit", "25");
+		url.searchParams.set("platform", PLATFORM);
+		url.searchParams.set("platformVersion", target.gameVersion);
+		return (await request<HangarVersions>(context, url.toString())).result
+			.filter((version) => version.downloads[PLATFORM])
+			.map((version) => ({
+				id: version.name,
+				label: version.name,
+				gameVersion: target.gameVersion,
+			}));
+	},
+
+	async resolve(context, target, project, versionId): Promise<CatalogRelease | null> {
 		const path = projectPath(project);
 		const url = new URL(`${HANGAR}/projects/${path}/versions`);
 
@@ -274,7 +288,7 @@ export const hangarProvider: CatalogProvider = {
 					file: download ? fileOf(download) : null,
 				};
 			})
-			.find((candidate) => candidate.file !== null);
+			.find((candidate) => candidate.file !== null && (!versionId || candidate.version.name === versionId));
 
 		if (!usable?.file) {
 			return null;
@@ -286,6 +300,7 @@ export const hangarProvider: CatalogProvider = {
 		return {
 			title: details.name,
 			version: usable.version.name,
+			versionId: usable.version.name,
 			icon: details.avatarUrl,
 			pageUrl: `https://hangar.papermc.io/${namespace}`,
 			gameVersions: null,
@@ -294,7 +309,11 @@ export const hangarProvider: CatalogProvider = {
 			file: usable.file,
 			dependencies: (usable.version.pluginDependencies[PLATFORM] ?? [])
 				.filter((dependency) => dependency.required && dependency.projectId !== null)
-				.map((dependency) => String(dependency.projectId)),
+				.map((dependency) => ({
+					project: String(dependency.projectId),
+					version: null,
+					kind: "required",
+				})),
 		};
 	},
 };

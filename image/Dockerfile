@@ -13,7 +13,7 @@ LABEL gg.serverk.game="minecraft"
 RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
-      tini ca-certificates util-linux tzdata; \
+      tini ca-certificates util-linux tzdata zip; \
     rm -rf /var/lib/apt/lists/*; \
     if getent passwd 1000 > /dev/null; then \
       userdel -r "$(getent passwd 1000 | cut -d: -f1)"; \

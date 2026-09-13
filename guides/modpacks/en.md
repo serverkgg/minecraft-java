@@ -80,3 +80,9 @@ Most modpacks are far smaller than that. If a pack goes over a limit you get a c
 Crossplay works with modpacks on Fabric and NeoForge. We reinstall Geyser and Floodgate on the first start after a modpack install, so there is no need to turn crossplay off and on again.
 
 > [!note] Modpacks eat more memory than a plain server. Most want **4GB or more**, and some want much more — read the pack's page on Modrinth before you install it.
+
+## Choose the release before installing
+
+Select a modpack release in the catalog and check its Minecraft version and loader in the preview. Available files are downloaded and verified before replacing the previous installation. Restricted CurseForge files still require your upload before the server can start.
+
+The **Join readiness** card in the Version tab shows the exact pack release players need on their computers. Ask friends to install the same release before joining.

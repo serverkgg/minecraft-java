@@ -8,6 +8,7 @@ export * from "./loaderBuilds";
 export * from "./mapConcurrent";
 export * from "./minecraftMeta";
 export * from "./requestPacer";
+export * from "./stagedFiles";
 export * from "./staging";
 export * from "./variant";
 export * from "./worldLayout";

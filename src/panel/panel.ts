@@ -146,6 +146,15 @@ const versionTab: Bridge.Tab = {
 	},
 	icon: BridgeIcon.Tag,
 	sections: [
+		{
+			id: "connection-status",
+			layout: BridgeLayout.Detail,
+			module: "connectionStatus",
+			empty: {
+				ar: "شغّل السيرفر عشان نفحص الدخول.",
+				en: "Start the server to check joining.",
+			},
+		},
 		modpackStatusSection,
 		{
 			layout: BridgeLayout.Form,
@@ -204,8 +213,8 @@ const versionTab: Bridge.Tab = {
 						en: "Loader build",
 					},
 					help: {
-						ar: "اتركها فاضية لأحدث نسخة مستقرة.",
-						en: "Leave empty for the latest stable build.",
+						ar: "اتركها فاضية عشان تبقى على المشغّل الحالي، أو اختَر إصدار محدد للتحديث.",
+						en: "Leave empty to keep the installed loader, or select a specific build to update.",
 					},
 					options: {
 						module: "loaderBuild",
@@ -704,6 +713,36 @@ const gameplayTab: Bridge.Tab = {
 	icon: BridgeIcon.Gamepad,
 	sections: [
 		{
+			id: "diagnostics",
+			layout: BridgeLayout.Detail,
+			module: "diagnostics",
+			actions: [
+				{
+					id: "profile",
+					label: {
+						ar: "افحص لمدة 60 ثانية",
+						en: "Profile for 60 seconds",
+					},
+					confirm: BridgeConfirm.Normal,
+					confirmText: {
+						ar: "نجمع تقرير أداء لمدة 60 ثانية ونرفعه لموقع spark. اللي معه الرابط يقدر يشوف تفاصيل الأداء والإضافات.",
+						en: "Collect 60 seconds of performance data and upload it to spark. Anyone with the link can view the performance and plugin details.",
+					},
+				},
+				{
+					id: "cancel",
+					label: {
+						ar: "إلغاء الفحص بدون رفع",
+						en: "Cancel without uploading",
+					},
+				},
+			],
+			empty: {
+				ar: "شغّل السيرفر عشان تفحص اللاق.",
+				en: "Start the server to diagnose lag.",
+			},
+		},
+		{
 			layout: BridgeLayout.Actions,
 			id: "world",
 			title: {
@@ -829,10 +868,49 @@ const worldsTab: Bridge.Tab = {
 	icon: BridgeIcon.Map,
 	sections: [
 		{
+			layout: BridgeLayout.Actions,
+			id: "world-tools",
+			module: "worldTools",
+			actions: [
+				{
+					id: "create",
+					label: {
+						ar: "ماب جديدة",
+						en: "Create world",
+					},
+					confirm: BridgeConfirm.Normal,
+					confirmText: {
+						ar: "نجهّز ماب جديدة ونفعّلها عند التشغيل. مابك الحالية تبقى محفوظة.",
+						en: "Prepare a new world and activate it on start. Your current world stays available.",
+					},
+					fields: [
+						{
+							key: "name",
+							control: BridgeControl.Text,
+							label: {
+								ar: "اسم الماب",
+								en: "World name",
+							},
+							maxLength: 32,
+						},
+						{
+							key: "seed",
+							control: BridgeControl.Text,
+							label: {
+								ar: "السيد (اختياري)",
+								en: "Seed (optional)",
+							},
+							maxLength: 64,
+						},
+					],
+				},
+			],
+		},
+
+		{
 			layout: BridgeLayout.Table,
 			id: "worlds",
 			module: "worlds",
-			restartHint: true,
 			columns: [
 				{
 					key: "name",
@@ -868,6 +946,38 @@ const worldsTab: Bridge.Tab = {
 			},
 			actions: [
 				{
+					id: "export",
+					label: {
+						ar: "تجهيز التنزيل",
+						en: "Prepare download",
+					},
+					confirm: BridgeConfirm.Normal,
+					confirmText: {
+						ar: "نوقف السيرفر ونجهّز ZIP فيه الماب والنذر والإند. بعدها اضغط تنزيل.",
+						en: "Stop the server and prepare a ZIP with the world, Nether and End. Then select Download.",
+					},
+				},
+
+				{
+					id: "clone",
+					label: {
+						ar: "نسخ الماب",
+						en: "Clone world",
+					},
+					confirm: BridgeConfirm.Normal,
+					fields: [
+						{
+							key: "name",
+							control: BridgeControl.Text,
+							label: {
+								ar: "اسم النسخة الجديدة",
+								en: "New world name",
+							},
+							maxLength: 32,
+						},
+					],
+				},
+				{
 					id: "download",
 					label: {
 						ar: "تنزيل",
@@ -883,8 +993,8 @@ const worldsTab: Bridge.Tab = {
 					},
 					confirm: BridgeConfirm.Normal,
 					confirmText: {
-						ar: "نبدّل الماب الشغّالة على هذي. التغيير ينطبق بعد إعادة التشغيل.",
-						en: "We switch the active world to this one. It applies after a restart.",
+						ar: "نحفظ نسخة احتياطية ونبدّل الماب. إذا السيرفر شغّال، نعيد تشغيله تلقائيًا.",
+						en: "We save a recovery backup and switch worlds. A running server restarts automatically.",
 					},
 				},
 				{
@@ -944,7 +1054,6 @@ const pluginsTab: Bridge.Tab = {
 			layout: BridgeLayout.Catalog,
 			id: "plugin-list",
 			module: "addons",
-			restartHint: true,
 			empty: {
 				ar: "ما ركّبت أي إضافات بعد.",
 				en: "No plugins installed yet.",
@@ -972,7 +1081,6 @@ const modsTab: Bridge.Tab = {
 			layout: BridgeLayout.Catalog,
 			id: "mod-list",
 			module: "addons",
-			restartHint: true,
 			empty: {
 				ar: "ما ركّبت أي مودات بعد.",
 				en: "No mods installed yet.",

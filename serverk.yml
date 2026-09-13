@@ -99,6 +99,7 @@ backup:
     - cache/**
     - .fabric/**
     - .serverk-staging/**
+    - .serverk-exports/**
     - server.jar
     - run.sh
     - run.bat

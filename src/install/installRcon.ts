@@ -49,8 +49,8 @@ export const rconProperties = (exposed: boolean, password: string): Bridge.Value
 	};
 };
 
-export const pinRconProperties = async (context: Bridge.Context) => {
-	const stamp = await readInstallStamp(context);
+export const pinRconProperties = async (context: Bridge.Context, identity?: InstallStamp) => {
+	const stamp = identity ?? (await readInstallStamp(context));
 
 	if (!stamp) {
 		return;
@@ -58,12 +58,12 @@ export const pinRconProperties = async (context: Bridge.Context) => {
 
 	const live = promoteRconPassword(stamp);
 
-	if (live.rconPassword !== stamp.rconPassword || stamp.rconPasswordNext !== null) {
+	await context.codec.properties.merge(PROPERTIES_FILE, rconProperties(rconExposed(context), live.rconPassword));
+
+	if (identity || live.rconPassword !== stamp.rconPassword || stamp.rconPasswordNext !== null) {
 		await writeInstallStamp(context, {
 			...stamp,
 			...live,
 		});
 	}
-
-	await context.codec.properties.merge(PROPERTIES_FILE, rconProperties(rconExposed(context), live.rconPassword));
 };

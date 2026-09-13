@@ -18,7 +18,7 @@ import {
 	targetLoaders,
 } from "./provider";
 
-const versionFor = async (context: Bridge.Context, target: AddonTarget, project: string) => {
+const versionsFor = async (context: Bridge.Context, target: AddonTarget, project: string) => {
 	const url = new URL(`${MODRINTH}/project/${encodeURIComponent(project)}/version`);
 
 	url.searchParams.set("loaders", JSON.stringify(targetLoaders(target)));
@@ -31,7 +31,7 @@ const versionFor = async (context: Bridge.Context, target: AddonTarget, project:
 
 	const versions = await modrinthRequest<ModrinthVersion[]>(context, url.toString());
 
-	return versions.find((version) => version.version_type === "release") ?? versions.at(0) ?? null;
+	return versions;
 };
 
 export const modrinthLoaderRelease = async (
@@ -77,6 +77,7 @@ export const modrinthLoaderRelease = async (
 	return {
 		title: project,
 		version: newest.version_number,
+		versionId: newest.id,
 		icon: null,
 		pageUrl: `https://modrinth.com/project/${encodeURIComponent(project)}`,
 		gameVersions: newest.game_versions,
@@ -260,12 +261,27 @@ export const modrinthProvider: CatalogProvider = {
 		} satisfies CatalogResults;
 	},
 
-	async resolve(context, target, project): Promise<CatalogRelease | null> {
+	async releases(context, target, project) {
+		return (await versionsFor(context, target, project)).map((version) => ({
+			id: version.id,
+			label: version.version_number,
+			gameVersion: version.game_versions.join(", "),
+		}));
+	},
+
+	async resolve(context, target, project, versionId): Promise<CatalogRelease | null> {
 		const details = await modrinthRequest<ModrinthProject>(
 			context,
 			`${MODRINTH}/project/${encodeURIComponent(project)}`,
 		);
-		const version = await versionFor(context, target, project);
+		const version = versionId
+			? await modrinthRequest<ModrinthVersion>(context, `${MODRINTH}/version/${encodeURIComponent(versionId)}`)
+			: ((await versionsFor(context, target, project)).find((candidate) => candidate.version_type === "release")
+				?? (await versionsFor(context, target, project)).at(0)
+				?? null);
+		if (version && version.project_id !== details.id) {
+			return null;
+		}
 
 		if (!version) {
 			return null;
@@ -277,18 +293,40 @@ export const modrinthProvider: CatalogProvider = {
 			return null;
 		}
 
+		const dependencies = await Promise.all(
+			version.dependencies.map(async (dependency) => {
+				const project =
+					dependency.project_id
+					?? (dependency.version_id
+						? (
+								await modrinthRequest<ModrinthVersion>(
+									context,
+									`${MODRINTH}/version/${encodeURIComponent(dependency.version_id)}`,
+								)
+							).project_id
+						: null);
+				if (!project && dependency.dependency_type === "required") {
+					throw new Error("A required Modrinth dependency has no project or version reference");
+				}
+				return {
+					project: project ?? "",
+					version: dependency.version_id ?? null,
+					kind: dependency.dependency_type,
+				};
+			}),
+		);
+
 		return {
 			title: details.title,
 			version: version.version_number,
+			versionId: version.id,
 			icon: details.icon_url,
 			pageUrl: `https://modrinth.com/${target.kind}/${details.slug}`,
 			gameVersions: version.game_versions,
 			loaders: version.loaders,
 			serverSide: details.server_side,
 			file,
-			dependencies: version.dependencies
-				.filter((dependency) => dependency.dependency_type === "required" && dependency.project_id !== null)
-				.map((dependency) => dependency.project_id as string),
+			dependencies: dependencies.filter((dependency) => dependency.project.length > 0),
 		};
 	},
 };

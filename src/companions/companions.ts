@@ -1,7 +1,7 @@
 import type { Bridge } from "@serverkgg/bridge";
 import { installedGameVersion } from "../install";
 import { modrinthLoaderRelease } from "../providers";
-import { addonDirectory, DISABLED_SUFFIX, enabledName, variantOf } from "../shared";
+import { addonDirectory, DISABLED_SUFFIX, enabledName, replaceFiles, variantOf } from "../shared";
 import {
 	COMPANION_FEATURES,
 	type Companion,
@@ -137,7 +137,7 @@ const resolveCompanion = async (
 const requirementPresent = async (context: Bridge.Context, requirement: CompanionRequirement, directory: string) => {
 	const entries = await context.files.list(`${directory}/*`);
 
-	return entries.some((entry) => requirement.files.test(enabledName(entry.name)));
+	return entries.some((entry) => !entry.name.endsWith(DISABLED_SUFFIX) && requirement.files.test(entry.name));
 };
 
 const resolveRequirement = async (
@@ -286,28 +286,6 @@ const writeConfigs = async (
 	};
 };
 
-const applyRequirements = async (context: Bridge.Context, requirements: ResolvedRequirement[], directory: string) => {
-	for (const entry of requirements) {
-		await context.files.download(`${directory}/${entry.requirement.filename}`, entry.url, {
-			...(entry.digest === null
-				? {}
-				: {
-						digest: entry.digest,
-					}),
-			...(entry.sizeBytes === null
-				? {}
-				: {
-						sizeBytes: entry.sizeBytes,
-					}),
-		});
-
-		context.log("installed a library a companion needs", {
-			requirement: entry.requirement.title,
-			version: entry.version,
-		});
-	}
-};
-
 const applyFeature = async (
 	context: Bridge.Context,
 	resolved: ResolvedFeature,
@@ -317,50 +295,56 @@ const applyFeature = async (
 ) => {
 	await context.files.ensure(directory);
 
-	await applyRequirements(context, resolved.requirements, directory);
-
+	const downloads = [];
+	const removed: string[] = [];
+	for (const entry of resolved.requirements) {
+		downloads.push({
+			path: `${directory}/${entry.requirement.filename}`,
+			url: entry.url,
+			...(entry.digest
+				? {
+						digest: entry.digest,
+					}
+				: {}),
+			...(entry.sizeBytes === null
+				? {}
+				: {
+						sizeBytes: entry.sizeBytes,
+					}),
+		});
+	}
 	for (const entry of resolved.companions) {
 		const path = `${directory}/${entry.artifact.filename}`;
 		const tracked = sidecar.entries[entry.companion.id];
-		const current: CompanionRecord = {
-			jar: path,
-			gameVersion: gameVersion ?? "",
-			source: entry.source,
-			version: entry.version,
-		};
-
-		await sweepDuplicates(context, entry.companion, directory, entry.artifact.filename);
-
 		const present = (await context.files.exists(path)) || (await context.files.exists(parkedPath(path)));
-		const installed = tracked?.jar === path && tracked.version === entry.version && present;
-
-		if (!installed) {
-			await context.files.remove(path);
-			await context.files.remove(parkedPath(path));
-			await context.files.download(path, entry.url, {
-				...(entry.digest === null
-					? {}
-					: {
+		if (!(tracked?.jar === path && tracked.version === entry.version && present)) {
+			downloads.push({
+				path,
+				url: entry.url,
+				...(entry.digest
+					? {
 							digest: entry.digest,
-						}),
+						}
+					: {}),
 				...(entry.sizeBytes === null
 					? {}
 					: {
 							sizeBytes: entry.sizeBytes,
 						}),
 			});
-
-			context.log("installed a companion", {
-				feature: entry.companion.feature.id,
-				companion: entry.companion.id,
-				source: entry.source,
-				version: entry.version,
-			});
+			removed.push(parkedPath(path));
 		}
-
-		await unpark(context, path);
-
-		sidecar.entries[entry.companion.id] = current;
+		sidecar.entries[entry.companion.id] = {
+			jar: path,
+			gameVersion: gameVersion ?? "",
+			source: entry.source,
+			version: entry.version,
+		} satisfies CompanionRecord;
+	}
+	await replaceFiles(context, downloads, removed, () => writeCompanionSidecar(context, sidecar));
+	for (const entry of resolved.companions) {
+		await sweepDuplicates(context, entry.companion, directory, entry.artifact.filename);
+		await unpark(context, `${directory}/${entry.artifact.filename}`);
 	}
 
 	for (const entry of resolved.companions) {
@@ -373,6 +357,17 @@ const applyFeature = async (
 			});
 		}
 	}
+};
+
+const preserveFeature = async (context: Bridge.Context, members: Companion[], sidecar: CompanionSidecar) => {
+	const version = await installedGameVersion(context);
+	for (const member of members) {
+		const tracked = sidecar.entries[member.id];
+		if (!tracked || tracked.gameVersion !== version || !(await context.files.exists(tracked.jar))) {
+			return false;
+		}
+	}
+	return true;
 };
 
 const syncFeature = async (context: Bridge.Context, feature: CompanionFeature) => {
@@ -392,19 +387,24 @@ const syncFeature = async (context: Bridge.Context, feature: CompanionFeature) =
 		const resolved = await resolveFeature(context, members, directory, gameVersion);
 
 		if (!resolved) {
-			await parkFeature(context, members, directory);
+			if (!(await preserveFeature(context, members, sidecar))) {
+				await parkFeature(context, members, directory);
+			}
 
 			return;
 		}
 
 		await applyFeature(context, resolved, directory, sidecar, gameVersion);
 	} catch (error) {
-		context.log.warn("could not set up a companion feature, starting without it", {
+		context.log.warn("could not update a companion feature, keeping compatible installed files when available", {
 			feature: feature.id,
 			reason: error instanceof Error ? error.message : String(error),
 		});
 
-		await parkFeature(context, members, directory);
+		if (!(await preserveFeature(context, members, await readCompanionSidecar(context)))) {
+			await parkFeature(context, members, directory);
+		}
+		return;
 	}
 
 	if (JSON.stringify(sidecar) !== before) {

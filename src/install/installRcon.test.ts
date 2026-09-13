@@ -1,6 +1,17 @@
 import { describe, expect, test } from "bun:test";
+import type { Bridge } from "@serverkgg/bridge";
 import { RCON_PASSWORD_LENGTH } from "@serverkgg/bridge/rcon";
-import { generateRconPassword, promoteRconPassword, RCON_PORT, rconPasswordOf, rconProperties } from "./installRcon";
+import { ServerVariant } from "../shared";
+import {
+	generateRconPassword,
+	pinRconProperties,
+	promoteRconPassword,
+	RCON_PORT,
+	rconPasswordOf,
+	rconProperties,
+} from "./installRcon";
+import type { InstallStamp } from "./installStamp";
+import { LaunchKind } from "./launchPlan";
 
 const generate = () => "generated";
 
@@ -116,5 +127,47 @@ describe("pinning rcon into server.properties", () => {
 
 	test("listens on the port the manifest publishes", () => {
 		expect(RCON_PORT).toBe(25_575);
+	});
+});
+
+test("a fresh install commits its password only after writing RCON properties", async () => {
+	const calls: string[] = [];
+	const stamp: InstallStamp = {
+		variant: ServerVariant.Paper,
+		version: "1.21.4",
+		build: "123",
+		java: 21,
+		launch: {
+			kind: LaunchKind.Jar,
+			target: "server.jar",
+		},
+		rconPassword: null,
+		rconPasswordNext: null,
+	};
+	let stored: InstallStamp | null = null;
+	const context = {
+		variable: () => null,
+		files: {
+			write: async (_path: string, text: string) => {
+				calls.push("stamp");
+				stored = JSON.parse(text);
+			},
+		},
+		codec: {
+			properties: {
+				merge: async () => {
+					calls.push("properties");
+				},
+			},
+		},
+	} as unknown as Bridge.Context;
+	await pinRconProperties(context, stamp);
+	expect(calls).toEqual([
+		"properties",
+		"stamp",
+	]);
+	expect(stored).toMatchObject({
+		version: "1.21.4",
+		rconPasswordNext: null,
 	});
 });
