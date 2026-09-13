@@ -4,11 +4,11 @@ The **Worlds** tab lists every world on your server, its size, and which one is 
 
 @[open](panel:worlds)
 
-The active world is the one your server opens on start, and its name lives in `server.properties` under `level-name`. Switching worlds saves a recovery backup and automatically restarts a running server.
+The active world is the one your server opens on start, and its name lives in `server.properties` under `level-name`. Switching worlds writes the new name there, and the world only opens after you restart the server.
 
 ## Switch world
 
-Pick the world in the table and press **Activate**. A running server restarts automatically. The old world stays exactly where it is, and you can go back to it the same way whenever you want.
+Pick the world in the table and press **Activate**. Restart a running server to open the new world. The old world stays exactly where it is, and you can go back to it the same way whenever you want.
 
 ## Upload a world from your computer
 
@@ -16,7 +16,7 @@ A world is a zip with a folder inside it that holds `level.dat`. From the Worlds
 
 1. Press **Upload world** and pick the zip
 2. Keep the page open until the progress bar finishes — we upload the file, unpack it, and add the world for you
-3. Activate the new world; a running server restarts automatically
+3. Activate the new world, then restart the server if it is running
 
 The world takes its name from the folder inside the zip. If a world with that name is already here we tell you, so rename the folder and upload it again.
 
@@ -30,7 +30,7 @@ Use **Create world** to choose a name and optional seed. The new world becomes a
 
 ## Download a world to your computer
 
-Select **Prepare download** on the world's row, then **Download** after the operation finishes. The protected operation stops the server while creating the ZIP. It includes the overworld and all existing Nether and End folders, including the sibling folders used by older Paper/Purpur versions.
+Select **Prepare download** on the world's row, then **Download** after it finishes. Stop the server first if you want a clean copy, because a running world writes its files at any moment. The ZIP includes the overworld and all existing Nether and End folders, including the sibling folders used by older Paper/Purpur versions.
 
 The export stays in `.serverk-exports` until replaced or removed from Files. Prepare it again when you want a fresh copy. Exports are excluded from backups. Import accepts Java worlds only; native Bedrock worlds belong on a native Bedrock server.
 

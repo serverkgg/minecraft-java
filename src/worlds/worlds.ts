@@ -62,13 +62,9 @@ const refuseActiveWorld = async (context: Bridge.Context, name: string) => {
 export const worlds: Bridge.Collection = {
 	kind: BridgeKind.Collection,
 	protectedActions: [
-		"add",
-		"activate",
-		"clone",
 		"delete",
 		"resetNether",
 		"resetEnd",
-		"export",
 	],
 
 	async list(context) {

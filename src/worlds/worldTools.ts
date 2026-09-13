@@ -140,9 +140,6 @@ export const cloneWorld = async (context: Bridge.Context, source: string, name: 
 
 export const worldTools: Bridge.Actions = {
 	kind: BridgeKind.Actions,
-	protectedActions: [
-		"create",
-	],
 	actions: {
 		async create(context, args) {
 			const name = worldNameArgument(args.name);

@@ -14,6 +14,7 @@ import {
 	curseforgeCatalog,
 	curseforgeCatalogFile,
 	curseforgeCategoryOf,
+	curseforgeSearchPage,
 	curseforgeSortOf,
 } from "./curseforgeApi";
 import { AddonKind, type AddonTarget, type CatalogProvider, CatalogProviderId, type CatalogRelease } from "./provider";
@@ -210,7 +211,7 @@ export const curseForgeProvider: CatalogProvider = {
 			};
 		}
 
-		const result = await curseforgeCatalog(context).search({
+		const result = await curseforgeSearchPage(curseforgeCatalog(context), {
 			query: search.query,
 			classId: CLASS_ID[target.kind],
 			gameVersion: target.gameVersion,

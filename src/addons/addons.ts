@@ -330,11 +330,6 @@ const toggleEntry = async (context: Bridge.Context, id: string, enabled: boolean
 
 export const addons: Bridge.Catalog = {
 	kind: BridgeKind.Catalog,
-	protectedActions: [
-		"install",
-		"remove",
-		"toggle",
-	],
 	pageSize: PAGE_SIZE,
 
 	async search(context, query) {
@@ -424,8 +419,8 @@ export const addons: Bridge.Catalog = {
 			confirm: BridgeConfirm.Normal,
 			lines: [
 				{
-					ar: "نحفظ نسخة احتياطية قبل التغيير. إذا السيرفر شغّال، نعيد تشغيله تلقائيًا.",
-					en: "We save a recovery backup before changes. A running server restarts automatically.",
+					ar: "التغيير ما يبان إلا بعد ما تعيد تشغيل سيرفرك.",
+					en: "The change only shows after you restart your server.",
 				},
 				...pending.map((entry) => ({
 					ar: `${entry.release.title}: ${entry.release.version}`,

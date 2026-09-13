@@ -953,8 +953,8 @@ const worldsTab: Bridge.Tab = {
 					},
 					confirm: BridgeConfirm.Normal,
 					confirmText: {
-						ar: "نوقف السيرفر ونجهّز ZIP فيه الماب والنذر والإند. بعدها اضغط تنزيل.",
-						en: "Stop the server and prepare a ZIP with the world, Nether and End. Then select Download.",
+						ar: "نجهّز ZIP فيه الماب والنذر والإند. بعدها اضغط تنزيل. وقّف سيرفرك قبل إذا تبي نسخة مضمونة.",
+						en: "We prepare a ZIP with the world, Nether and End, then select Download. Stop the server first if you want a clean copy.",
 					},
 				},
 
@@ -993,8 +993,8 @@ const worldsTab: Bridge.Tab = {
 					},
 					confirm: BridgeConfirm.Normal,
 					confirmText: {
-						ar: "نحفظ نسخة احتياطية ونبدّل الماب. إذا السيرفر شغّال، نعيد تشغيله تلقائيًا.",
-						en: "We save a recovery backup and switch worlds. A running server restarts automatically.",
+						ar: "نبدّل الماب في إعدادات السيرفر. إذا كان شغّال، الماب الجديدة ما تفتح إلا بعد ما تعيد تشغيله.",
+						en: "We switch the world in the server settings. If it is running, the new world only opens after you restart it.",
 					},
 				},
 				{

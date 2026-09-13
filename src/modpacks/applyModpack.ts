@@ -12,6 +12,7 @@ import { CLIENT_ONLY_DIRECTORIES, isClientOnlyFilename } from "./clientMods";
 import { modpackCleanup } from "./modpackCleanup";
 import {
 	MODPACK_INDEX,
+	MODS_DIRECTORY,
 	type ModpackFile,
 	type ModpackIndex,
 	modPath,
@@ -257,6 +258,20 @@ const downloadFiles = async (context: Bridge.Context, files: ModpackFile[]) => {
 		sizeBytes: totalBytes,
 		seconds: Math.round((Date.now() - started) / 1000),
 	});
+};
+
+export const parentDirectoriesOf = (paths: string[]) => {
+	return [
+		...new Set(paths.map((path) => path.split("/").slice(0, -1).join("/")).filter((directory) => directory.length > 0)),
+	];
+};
+
+export const placePreparedFiles = async (context: Bridge.Context, files: ModpackFile[]) => {
+	await context.files.ensure(MODS_DIRECTORY, ...parentDirectoriesOf(files.map((file) => file.path)));
+
+	for (const file of files) {
+		await context.files.move(`${PACK_STAGING}/content/${file.path}`, file.path);
+	}
 };
 
 export const detachPinnedBuild = (sidecar: ModpackSidecar | null, variant: ServerVariant) => {
@@ -520,9 +535,7 @@ export const applyModpack = async (context: Bridge.Context, staged: StagedModpac
 	});
 
 	if (staged.prepared) {
-		for (const file of keep) {
-			await context.files.move(`${PACK_STAGING}/content/${file.path}`, file.path);
-		}
+		await placePreparedFiles(context, keep);
 	} else {
 		await downloadFiles(context, keep);
 	}

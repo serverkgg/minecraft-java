@@ -15,6 +15,7 @@ import {
 	curseforgeCatalog,
 	curseforgeCatalogFile,
 	curseforgeCategoryOf,
+	curseforgeSearchPage,
 	curseforgeSortOf,
 } from "./curseforgeApi";
 import type { CatalogFile, CatalogResults, CatalogSearch, ModpackProject, ModpackRelease } from "./provider";
@@ -209,7 +210,7 @@ export const searchCurseforgeModpacks = async (
 		};
 	}
 
-	const result = await curseforgeCatalog(context).search({
+	const result = await curseforgeSearchPage(curseforgeCatalog(context), {
 		query: search.query,
 		classId: CURSEFORGE_CLASS_MODPACKS,
 		sort: curseforgeSortOf(search.sort),
