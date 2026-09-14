@@ -704,36 +704,6 @@ const gameplayTab: Bridge.Tab = {
 	icon: BridgeIcon.Gamepad,
 	sections: [
 		{
-			id: "diagnostics",
-			layout: BridgeLayout.Detail,
-			module: "diagnostics",
-			actions: [
-				{
-					id: "profile",
-					label: {
-						ar: "افحص لمدة 60 ثانية",
-						en: "Profile for 60 seconds",
-					},
-					confirm: BridgeConfirm.Normal,
-					confirmText: {
-						ar: "نجمع تقرير أداء لمدة 60 ثانية ونرفعه لموقع spark. اللي معه الرابط يقدر يشوف تفاصيل الأداء والإضافات.",
-						en: "Collect 60 seconds of performance data and upload it to spark. Anyone with the link can view the performance and plugin details.",
-					},
-				},
-				{
-					id: "cancel",
-					label: {
-						ar: "إلغاء الفحص بدون رفع",
-						en: "Cancel without uploading",
-					},
-				},
-			],
-			empty: {
-				ar: "شغّل السيرفر عشان تفحص اللاق.",
-				en: "Start the server to diagnose lag.",
-			},
-		},
-		{
 			layout: BridgeLayout.Actions,
 			id: "world",
 			title: {

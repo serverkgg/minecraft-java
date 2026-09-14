@@ -1,5 +1,5 @@
 import type { BridgeDriver } from "@serverkgg/bridge";
-import { broadcast, diagnostics, gameplay } from "./actions";
+import { broadcast, gameplay } from "./actions";
 import { addons } from "./addons";
 import { announce } from "./announce";
 import { backup } from "./backup";
@@ -45,7 +45,6 @@ export const driver: BridgeDriver = {
 		modpacks,
 		modpackStatus,
 		gameplay,
-		diagnostics,
 		broadcast,
 		rconAccess,
 	},
