@@ -146,15 +146,6 @@ const versionTab: Bridge.Tab = {
 	},
 	icon: BridgeIcon.Tag,
 	sections: [
-		{
-			id: "connection-status",
-			layout: BridgeLayout.Detail,
-			module: "connectionStatus",
-			empty: {
-				ar: "شغّل السيرفر عشان نفحص الدخول.",
-				en: "Start the server to check joining.",
-			},
-		},
 		modpackStatusSection,
 		{
 			layout: BridgeLayout.Form,

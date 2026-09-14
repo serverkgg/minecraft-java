@@ -4,7 +4,6 @@ import { addons } from "./addons";
 import { announce } from "./announce";
 import { backup } from "./backup";
 import { bans, players, whitelist } from "./collections";
-import { connectionStatus } from "./companions";
 import { events } from "./events";
 import { install, transitionPreview } from "./install";
 import { lifecycle } from "./lifecycle";
@@ -31,7 +30,6 @@ export const driver: BridgeDriver = {
 	terminal,
 	panel,
 	modules: {
-		connectionStatus,
 		serverType,
 		gameVersion,
 		loaderBuild,

@@ -85,4 +85,4 @@ Crossplay works with modpacks on Fabric and NeoForge. We reinstall Geyser and Fl
 
 Select a modpack release in the catalog and check its Minecraft version and loader in the preview. Available files are downloaded and verified before replacing the previous installation. Restricted CurseForge files still require your upload before the server can start.
 
-The **Join readiness** card in the Version tab shows the exact pack release players need on their computers. Ask friends to install the same release before joining.
+The Modpacks tab shows the exact pack release players need on their computers. Ask friends to install the same release before joining.

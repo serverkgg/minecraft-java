@@ -44,7 +44,7 @@ const finalize = async (context: Bridge.Context, stamp?: InstallStamp) => {
 	await context.files.write("eula.txt", "eula=true\n");
 
 	if (!(await context.files.exists("server.properties"))) {
-		await context.codec.properties.merge("server.properties", SEEDED_PROPERTIES);
+		await context.codec.javaProperties.merge("server.properties", SEEDED_PROPERTIES);
 	}
 
 	await context.files.ensure(addonDirectory(context), "logs");

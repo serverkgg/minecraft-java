@@ -58,7 +58,7 @@ export const pinRconProperties = async (context: Bridge.Context, identity?: Inst
 
 	const live = promoteRconPassword(stamp);
 
-	await context.codec.properties.merge(PROPERTIES_FILE, rconProperties(rconExposed(context), live.rconPassword));
+	await context.codec.javaProperties.merge(PROPERTIES_FILE, rconProperties(rconExposed(context), live.rconPassword));
 
 	if (identity || live.rconPassword !== stamp.rconPassword || stamp.rconPasswordNext !== null) {
 		await writeInstallStamp(context, {

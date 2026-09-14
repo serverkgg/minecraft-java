@@ -5,9 +5,9 @@ const PROPERTIES_FILE = "server.properties";
 export const settings: Bridge.Settings = {
 	kind: BridgeKind.Settings,
 	async read(context) {
-		return await context.codec.properties.read(PROPERTIES_FILE);
+		return await context.codec.javaProperties.read(PROPERTIES_FILE);
 	},
 	async write(context, values) {
-		await context.codec.properties.merge(PROPERTIES_FILE, values);
+		await context.codec.javaProperties.merge(PROPERTIES_FILE, values);
 	},
 };

@@ -5,9 +5,13 @@ import {
 	activeWorld,
 	discoverWorlds,
 	findLevelDirectories,
-	safeWorldName,
+	freeWorldName,
+	mainLevelDirectories,
 	setActiveWorld,
+	type WorldImport,
+	worldBaseName,
 	worldDimensions,
+	worldImportNotice,
 	worldPaths,
 	worldSize,
 } from "./world";
@@ -19,7 +23,7 @@ const nameOf = (path: string) => {
 	return path.split("/").at(-1) ?? "";
 };
 
-const uploadedWorldDirectory = async (context: Bridge.Context, source: string) => {
+const uploadedWorldDirectories = async (context: Bridge.Context, source: string) => {
 	const found = await findLevelDirectories(context, source);
 
 	if (found.length === 0) {
@@ -30,22 +34,12 @@ const uploadedWorldDirectory = async (context: Bridge.Context, source: string) =
 	}
 
 	if (found.includes(source)) {
-		return source;
+		return [
+			source,
+		];
 	}
 
-	const main = found.filter(
-		(candidate) => !found.some((other) => candidate === `${other}_nether` || candidate === `${other}_the_end`),
-	);
-	const nested = main.at(0);
-
-	if (main.length > 1 || nested === undefined) {
-		throw new BridgeUserError({
-			ar: "الملف فيه أكثر من ماب، ارفع كل ماب لحالها",
-			en: "the archive holds more than one world, upload them one at a time",
-		});
-	}
-
-	return nested;
+	return mainLevelDirectories(found);
 };
 
 const refuseActiveWorld = async (context: Bridge.Context, name: string) => {
@@ -94,42 +88,49 @@ export const worlds: Bridge.Collection = {
 			});
 		}
 
-		const directory = await uploadedWorldDirectory(context, source);
-		await inspectJavaWorld(context, directory);
-		const name = safeWorldName(nameOf(directory));
+		const directories = await uploadedWorldDirectories(context, source);
 
-		if (name.length === 0) {
-			throw new BridgeUserError({
-				ar: "سمّ مجلد الماب بأحرف إنجليزية وأرقام وارفعه مرة ثانية",
-				en: "name the world folder with latin letters and digits and upload it again",
+		for (const directory of directories) {
+			await inspectJavaWorld(context, directory);
+		}
+
+		const imported: WorldImport[] = [];
+
+		for (const directory of directories) {
+			const folder = nameOf(directory);
+			const name = await freeWorldName(context, worldBaseName(folder));
+
+			const sources = worldPaths(directory);
+			const destinations = worldPaths(name);
+			for (const [index, path] of sources.entries()) {
+				const destination = destinations[index];
+				if (destination && (await context.files.exists(path))) {
+					await context.files.move(path, destination);
+				}
+			}
+
+			imported.push({
+				folder,
+				name,
+			});
+
+			context.log("added a world", {
+				folder,
+				world: name,
 			});
 		}
 
-		for (const path of worldPaths(name)) {
-			if (await context.files.exists(path)) {
-				throw new BridgeUserError({
-					ar: `عندك ماب اسمها "${name}"، غيّر اسم المجلد وارفعه`,
-					en: `a world named "${name}" is already here`,
-				});
-			}
-		}
-
-		const sources = worldPaths(directory);
-		const destinations = worldPaths(name);
-		for (const [index, path] of sources.entries()) {
-			const destination = destinations[index];
-			if (destination && (await context.files.exists(path))) {
-				await context.files.move(path, destination);
-			}
-		}
-
-		if (directory !== source) {
+		if (!directories.includes(source)) {
 			await context.files.remove(source);
 		}
 
-		context.log("added a world", {
-			world: name,
-		});
+		const notice = worldImportNotice(imported);
+
+		return notice
+			? {
+					notice,
+				}
+			: undefined;
 	},
 
 	actions: {

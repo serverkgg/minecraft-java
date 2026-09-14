@@ -59,6 +59,6 @@ Crossplay runs an extra bridge inside the same server, and each Bedrock player c
 
 ## Check whether joining works
 
-The **Join readiness** card in the Version tab probes Java and Bedrock separately. An enabled crossplay switch does not guarantee Bedrock responds; check settings and the console if it does not. The displayed Bedrock version comes from Geyser's actual response, with a link to its current compatibility documentation.
+An enabled crossplay switch does not guarantee Bedrock responds. Watch the console for Geyser's startup line, and if a Bedrock player cannot join, check the settings and the console. The versions Geyser supports are listed in its documentation at https://geysermc.org/wiki/geyser/supported-versions/.
 
 Crossplay joins the Java world. Choose native Bedrock hosting for native Bedrock worlds and addons.

@@ -48,7 +48,7 @@ test("create preserves the old world and changes only generation settings", asyn
 			exists: async () => false,
 		},
 		codec: {
-			properties: {
+			javaProperties: {
 				merge: async (_path: string, values: unknown) => {
 					writes.push(values);
 				},

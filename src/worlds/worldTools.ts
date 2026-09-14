@@ -156,7 +156,7 @@ export const worldTools: Bridge.Actions = {
 					en: "Use a seed of at most 64 characters without line breaks.",
 				});
 			}
-			await context.codec.properties.merge("server.properties", {
+			await context.codec.javaProperties.merge("server.properties", {
 				"level-seed": seed,
 			});
 			await setActiveWorld(context, name);

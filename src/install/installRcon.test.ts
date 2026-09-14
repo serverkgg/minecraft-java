@@ -154,7 +154,7 @@ test("a fresh install commits its password only after writing RCON properties", 
 			},
 		},
 		codec: {
-			properties: {
+			javaProperties: {
 				merge: async () => {
 					calls.push("properties");
 				},

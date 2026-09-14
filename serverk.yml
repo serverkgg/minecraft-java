@@ -104,6 +104,8 @@ backup:
     - run.sh
     - run.bat
     - user_jvm_args.txt
+    - backups/**
+    - plugins/dynmap/web/tiles/**
 
 secrets:
   - key: MODRINTH_API_KEY
