@@ -3,7 +3,7 @@ schemaVersion: serverk.gg/v1
 kind: GamePackage
 
 metadata:
-  id: minecraft
+  id: minecraft-java
   name:
     ar: ماينكرافت
     en: Minecraft
@@ -24,7 +24,7 @@ resources:
   playersPerMemoryGb: 5
 
 container:
-  image: serverkgg/minecraft
+  image: serverkgg/minecraft-java
   runtime:
     platform: linux
     installBudgetMinutes: 15

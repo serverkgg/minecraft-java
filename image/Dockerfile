@@ -7,8 +7,8 @@ ARG BRIDGE_VERSION
 
 LABEL gg.serverk.bridge.version="${BRIDGE_VERSION}"
 
-LABEL org.opencontainers.image.source="https://github.com/serverkgg/minecraft"
-LABEL gg.serverk.game="minecraft"
+LABEL org.opencontainers.image.source="https://github.com/serverkgg/minecraft-java"
+LABEL gg.serverk.game="minecraft-java"
 
 RUN set -eux; \
     apt-get update; \

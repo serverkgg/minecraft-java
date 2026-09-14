@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "@serverkgg/minecraft",
+      "name": "@serverkgg/minecraft-java",
       "dependencies": {
         "@serverkgg/bridge": "0.0.17",
       },
