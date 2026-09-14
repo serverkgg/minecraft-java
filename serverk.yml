@@ -5,8 +5,8 @@ kind: GamePackage
 metadata:
   id: minecraft-java
   name:
-    ar: ماينكرافت
-    en: Minecraft
+    ar: ماينكرافت جافا
+    en: Minecraft Java
   description:
     ar: سيرفر ماينكرافت (جافا) — نسخة أصلية، يشتغل على طول بدون أي إعداد.
     en: Minecraft Java Edition — vanilla, running the moment your order completes.
