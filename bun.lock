@@ -5,7 +5,7 @@
     "": {
       "name": "@serverkgg/minecraft-java",
       "dependencies": {
-        "@serverkgg/bridge": "0.0.19",
+        "@serverkgg/bridge": "0.0.20",
       },
       "devDependencies": {
         "@biomejs/biome": "2.5.7",
@@ -34,7 +34,7 @@
 
     "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@2.5.7", "", { "os": "win32", "cpu": "x64" }, "sha512-V+0wu/nrj2S+MhP4EQ0uHNolP0IALEsz45pg0WoKkHfDeh0+ItHwP/p7bX5RPoMOl9NkpHYWdYPhIcy2mACHvQ=="],
 
-    "@serverkgg/bridge": ["@serverkgg/bridge@0.0.19", "", { "dependencies": { "zod": "4.6.4" }, "bin": { "serverk-bridge": "src/cli/main.ts" } }, "sha512-ydVcxnv+snzURQnDVImgypmPcR7mGzMuk+bDquc13G8ylricAClFYQFq4tPzac/8Whd02uEgIp4avuFBUzt3yA=="],
+    "@serverkgg/bridge": ["@serverkgg/bridge@0.0.20", "", { "dependencies": { "zod": "4.6.4" }, "bin": { "serverk-bridge": "src/cli/main.ts" } }, "sha512-pwUKzaUG1A3CacsAAxJVK11Fk4VBxc3sc+/43nVGdc0W72qcTA6RLKUzn5SxBE9CN0UFnw0S5FJBvSAmxqK35g=="],
 
     "@types/bun": ["@types/bun@1.3.14", "", { "dependencies": { "bun-types": "1.3.14" } }, "sha512-h1hFqFVcvAvD9j9K7ZW7vd82aSA+rTdznZa+5bwvCwqSB1jmmfLcbIWhOLx1/+boy/xmjgCs/OMUL8hRJSmnPw=="],
 
