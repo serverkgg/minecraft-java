@@ -7,11 +7,14 @@ import { jvmFlags } from "./jvmFlags";
 
 const READY = /Done \([\d.]+s\)! For help, type "help"/;
 
+const FAILED = /Failed to start the minecraft server/;
+
 const STOPPING = /Stopping the server/;
 
 export const lifecycle: Bridge.Lifecycle = {
 	kind: BridgeKind.Lifecycle,
 	ready: READY,
+	failed: FAILED,
 	stopTimeoutSeconds: 60,
 	async command(context) {
 		await syncCompanions(context);
