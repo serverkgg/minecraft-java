@@ -1,6 +1,8 @@
 const LARGE_HEAP_MB = 12 * 1024;
 
-const AIKARS_FLAGS = "https://mcflags.emc.gs";
+const INITIAL_HEAP_DIVISOR = 4;
+
+const INITIAL_HEAP_FLOOR_MB = 256;
 
 interface HeapProfile {
 	newSizePercent: number;
@@ -26,18 +28,21 @@ const LARGE_HEAP: HeapProfile = {
 	initiatingHeapOccupancyPercent: 20,
 };
 
+const initialHeapMb = (heapMb: number) => {
+	return Math.min(heapMb, Math.max(INITIAL_HEAP_FLOOR_MB, Math.floor(heapMb / INITIAL_HEAP_DIVISOR)));
+};
+
 export const jvmFlags = (heapMb: number) => {
 	const profile = heapMb > LARGE_HEAP_MB ? LARGE_HEAP : BASE_HEAP;
 
 	return [
-		`-Xms${heapMb}M`,
+		`-Xms${initialHeapMb(heapMb)}M`,
 		`-Xmx${heapMb}M`,
 		"-XX:+UseG1GC",
 		"-XX:+ParallelRefProcEnabled",
 		"-XX:MaxGCPauseMillis=200",
 		"-XX:+UnlockExperimentalVMOptions",
 		"-XX:+DisableExplicitGC",
-		"-XX:+AlwaysPreTouch",
 		`-XX:G1NewSizePercent=${profile.newSizePercent}`,
 		`-XX:G1MaxNewSizePercent=${profile.maxNewSizePercent}`,
 		`-XX:G1HeapRegionSize=${profile.regionSizeMb}M`,
@@ -50,7 +55,5 @@ export const jvmFlags = (heapMb: number) => {
 		"-XX:SurvivorRatio=32",
 		"-XX:+PerfDisableSharedMem",
 		"-XX:MaxTenuringThreshold=1",
-		`-Dusing.aikars.flags=${AIKARS_FLAGS}`,
-		"-Daikars.new.flags=true",
 	];
 };

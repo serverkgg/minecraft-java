@@ -1,4 +1,4 @@
-const HEAP_FRACTION = 0.8;
+const HEAP_FRACTION = 0.75;
 
 const HEAP_FLOOR_MB = 512;
 
