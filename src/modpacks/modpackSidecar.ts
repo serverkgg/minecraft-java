@@ -4,7 +4,7 @@ import type { BlockedFile } from "./modpackIndex";
 
 export const MODPACK_SIDECAR = ".serverk-modpack.json";
 
-const IDENTITY_SEPARATOR = " · ";
+export const IDENTITY_SEPARATOR = " · ";
 
 const MOD_JAR_PREFIX = "mods/";
 

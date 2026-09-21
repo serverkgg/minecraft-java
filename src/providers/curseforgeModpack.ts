@@ -22,7 +22,7 @@ import type { CatalogFile, CatalogResults, CatalogSearch, ModpackProject, Modpac
 
 const MAX_FILE_PAGES = 20;
 
-const VERSION_PATTERN = /^\d+(\.\d+)*$/;
+export const VERSION_PATTERN = /^\d+(\.\d+)*$/;
 
 const LOADER_TAGS = [
 	"fabric",

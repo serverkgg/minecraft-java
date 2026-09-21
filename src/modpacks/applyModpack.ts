@@ -1,4 +1,4 @@
-import { type Bridge, BridgeDownloadError } from "@serverkgg/bridge";
+import { type Bridge, BridgeDownloadError, BridgeUserError } from "@serverkgg/bridge";
 import { CatalogProviderId, type ModpackProject, type ModpackRelease, modpackSourceById } from "../providers";
 import {
 	createRequestPacer,
@@ -7,6 +7,7 @@ import {
 	type RequestPacer,
 	type ServerVariant,
 	STAGING_ROOT,
+	VARIANT_LABELS,
 } from "../shared";
 import { CLIENT_ONLY_DIRECTORIES, isClientOnlyFilename } from "./clientMods";
 import { modpackCleanup } from "./modpackCleanup";
@@ -25,12 +26,15 @@ import { decodeModpackRef, type ModpackRef } from "./modpackRef";
 import { rescueFromServerPack } from "./modpackServerPack";
 import {
 	clearModpackSidecar,
+	IDENTITY_SEPARATOR,
 	type ModpackSidecar,
+	modpackIdentity,
 	type PendingFile,
 	readModpackSidecar,
 	writeModpackSidecar,
 } from "./modpackSidecar";
 import { partitionModpackFiles, resolveModpackSignals } from "./modpackSideness";
+import { pickModpackVersion } from "./modpackVersion";
 
 export const MODPACK_VARIABLE = "MODPACK";
 
@@ -397,6 +401,48 @@ const stageCurseforge = async (context: Bridge.Context, archive: string) => {
 	};
 };
 
+const UNKNOWN_VERSION: Bridge.Text = {
+	ar: "نسخة ما نعرفها",
+	en: "an unknown version",
+};
+
+const UNKNOWN_LOADER: Bridge.Text = {
+	ar: "مشغّل ما نعرفه",
+	en: "an unknown loader",
+};
+
+const sameText = (value: string): Bridge.Text => {
+	return {
+		ar: value,
+		en: value,
+	};
+};
+
+const textOf = (value: string, fallback: Bridge.Text): Bridge.Text => {
+	return value.length === 0 ? fallback : sameText(value);
+};
+
+export const releaseIdentity = (release: ModpackRelease, version: string): Bridge.Text => {
+	const variant = variantForLoaders(release.loaders);
+	const mcVersion = textOf(
+		pickModpackVersion(release.gameVersions, version) ?? release.gameVersions.join(" / "),
+		UNKNOWN_VERSION,
+	);
+	const loader = textOf(variant === null ? release.loaders.join(" / ") : VARIANT_LABELS[variant], UNKNOWN_LOADER);
+
+	return {
+		ar: `${mcVersion.ar}${IDENTITY_SEPARATOR}${loader.ar}`,
+		en: `${mcVersion.en}${IDENTITY_SEPARATOR}${loader.en}`,
+	};
+};
+
+const modpackMismatch = (wants: Bridge.Text, server: string) => {
+	return new BridgeUserError({
+		ar: `المودباك يشتغل على ${wants.ar} وسيرفرك على ${server} الحين. اختَر النوع والنسخة من تبويب النسخة وركّب المودباك مرة ثانية.`,
+		en: `This modpack runs on ${wants.en}, and your server is set to ${server}. Pick that type and version in the Version tab, then install the modpack again.`,
+	});
+};
+
 export const stageModpack = async (
 	context: Bridge.Context,
 	ref: ModpackRef,
@@ -439,7 +485,13 @@ export const stageModpack = async (
 			server: `${variant} ${version}`,
 		});
 
-		return null;
+		throw modpackMismatch(
+			releaseIdentity(release, version),
+			modpackIdentity({
+				mcVersion: version,
+				variant,
+			}),
+		);
 	}
 
 	const project = await source.project(context, ref.project);
@@ -466,7 +518,13 @@ export const stageModpack = async (
 
 		await clearStaging(context);
 
-		return null;
+		throw modpackMismatch(
+			sameText(modpackIdentity(staged.index)),
+			modpackIdentity({
+				mcVersion: version,
+				variant,
+			}),
+		);
 	}
 
 	const { keep, skipped } = partitionModpackFiles(

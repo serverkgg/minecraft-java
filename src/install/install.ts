@@ -68,8 +68,8 @@ export const install: Bridge.Install = {
 
 		if (mismatched) {
 			throw new BridgeUserError({
-				ar: "المودباك المختار مو متاح أو ما يناسب نوع السيرفر ونسخته. اختَر إصدار متوافق؛ ما غيّرنا ملفاتك.",
-				en: "The selected modpack is unavailable or incompatible with this server type and version. Choose a compatible release; your files were not changed.",
+				ar: "ما لقينا إصدار المودباك هذا عند مصدره. اختَر المودباك مرة ثانية من تبويب المودباكات؛ ما غيّرنا ملفاتك.",
+				en: "We could not find this modpack release at its source. Pick the modpack again from the Modpacks tab; your files were not changed.",
 			});
 		}
 

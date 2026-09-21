@@ -7,12 +7,13 @@ import {
 	BridgeUserError,
 } from "@serverkgg/bridge";
 import { decodeProviderRef, encodeProviderRef, modpackSourceById, modpackSources } from "../providers";
-import { addonDirectory } from "../shared";
+import { addonDirectory, requestedGameVersion } from "../shared";
 import { MODPACK_VARIABLE } from "./applyModpack";
 import { describeProject, identityMismatched, outdated, serverRelease } from "./modpackFreshness";
 import { usesQuilt, variantForLoaders } from "./modpackIndex";
 import { decodeModpackRef, encodeModpackRef } from "./modpackRef";
 import { MODPACK_SIDECAR, modpackIdentity, readModpackSidecar } from "./modpackSidecar";
+import { pickModpackVersion } from "./modpackVersion";
 
 const PAGE_SIZE = 20;
 
@@ -88,7 +89,7 @@ export const installModpack = async (
 	}
 
 	const variant = variantForLoaders(release.loaders);
-	const mcVersion = release.gameVersions.at(-1) ?? "";
+	const mcVersion = pickModpackVersion(release.gameVersions, requestedGameVersion(context)) ?? "";
 
 	if (!variant || mcVersion.length === 0) {
 		throw new BridgeFailureError(

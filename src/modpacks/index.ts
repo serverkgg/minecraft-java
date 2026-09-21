@@ -11,3 +11,4 @@ export * from "./modpackSidecar";
 export * from "./modpackSideness";
 export * from "./modpackStatus";
 export * from "./modpacks";
+export * from "./modpackVersion";
