@@ -181,7 +181,8 @@
 										"type": "string",
 										"enum": [
 											"tcp",
-											"udp"
+											"udp",
+											"tcp+udp"
 										]
 									},
 									"hostRange": {
@@ -329,6 +330,13 @@
 											"key",
 											"offset"
 										]
+									},
+									"count": {
+										"default": 1,
+										"description": "Reserves this many contiguous host ports, bound one to one from containerPort upward. A block is infrastructure, never a player address: it takes no name, hint, join, srv or follows.",
+										"type": "integer",
+										"minimum": 1,
+										"maximum": 64
 									}
 								},
 								"required": [
@@ -817,6 +825,736 @@
 							}
 						}
 					}
+				}
+			},
+			"required": [
+				"schemaVersion",
+				"kind",
+				"metadata",
+				"resources",
+				"container"
+			]
+		},
+		{
+			"type": "object",
+			"properties": {
+				"schemaVersion": {
+					"type": "string",
+					"const": "serverk.gg/v1"
+				},
+				"kind": {
+					"type": "string",
+					"const": "BotPackage"
+				},
+				"metadata": {
+					"type": "object",
+					"properties": {
+						"id": {
+							"type": "string",
+							"minLength": 1,
+							"maxLength": 64,
+							"pattern": "^[a-z0-9][a-z0-9-]*$",
+							"description": "Slug for the game. Also the catalogue URL segment and the image name."
+						},
+						"name": {
+							"type": "object",
+							"properties": {
+								"ar": {
+									"type": "string",
+									"minLength": 1,
+									"maxLength": 64
+								},
+								"en": {
+									"type": "string",
+									"minLength": 1,
+									"maxLength": 64
+								}
+							},
+							"required": [
+								"ar",
+								"en"
+							]
+						},
+						"description": {
+							"type": "object",
+							"properties": {
+								"ar": {
+									"type": "string",
+									"minLength": 1,
+									"maxLength": 600
+								},
+								"en": {
+									"type": "string",
+									"minLength": 1,
+									"maxLength": 600
+								}
+							},
+							"required": [
+								"ar",
+								"en"
+							]
+						},
+						"tagline": {
+							"type": "object",
+							"properties": {
+								"ar": {
+									"type": "string",
+									"minLength": 1,
+									"maxLength": 120
+								},
+								"en": {
+									"type": "string",
+									"minLength": 1,
+									"maxLength": 120
+								}
+							},
+							"required": [
+								"ar",
+								"en"
+							]
+						},
+						"logo": {
+							"type": "string",
+							"minLength": 1,
+							"maxLength": 256,
+							"pattern": "^[a-zA-Z0-9][a-zA-Z0-9/_-]*\\.webp$"
+						},
+						"banner": {
+							"type": "string",
+							"minLength": 1,
+							"maxLength": 256,
+							"pattern": "^[a-zA-Z0-9][a-zA-Z0-9/_-]*\\.webp$"
+						}
+					},
+					"required": [
+						"id",
+						"name",
+						"description",
+						"tagline",
+						"logo",
+						"banner"
+					]
+				},
+				"resources": {
+					"type": "object",
+					"properties": {
+						"minMemoryMb": {
+							"type": "integer",
+							"minimum": 128,
+							"maximum": 1048576
+						},
+						"recommendedMemoryMb": {
+							"type": "integer",
+							"minimum": 128,
+							"maximum": 1048576
+						},
+						"minDiskMb": {
+							"type": "integer",
+							"minimum": 512,
+							"maximum": 9007199254740991
+						},
+						"playersPerMemoryGb": {
+							"type": "integer",
+							"minimum": 1,
+							"maximum": 1024
+						},
+						"maxRecommendedPlayers": {
+							"type": "integer",
+							"minimum": 1,
+							"maximum": 100000
+						}
+					},
+					"required": [
+						"minMemoryMb",
+						"recommendedMemoryMb",
+						"minDiskMb"
+					]
+				},
+				"container": {
+					"type": "object",
+					"properties": {
+						"image": {
+							"type": "string",
+							"pattern": "^serverkgg\\/[a-z0-9][a-z0-9-]*$",
+							"description": "Image repository, always \"serverkgg/\" followed by metadata.id."
+						},
+						"ports": {
+							"default": [],
+							"description": "A bot listens on nothing. Declare a port only when a webhook needs a public address.",
+							"maxItems": 8,
+							"type": "array",
+							"items": {
+								"type": "object",
+								"properties": {
+									"key": {
+										"type": "string",
+										"minLength": 1,
+										"maxLength": 32,
+										"pattern": "^[a-z][a-z0-9-]*$"
+									},
+									"containerPort": {
+										"type": "integer",
+										"minimum": 1,
+										"maximum": 65535
+									},
+									"protocol": {
+										"default": "tcp",
+										"type": "string",
+										"enum": [
+											"tcp",
+											"udp",
+											"tcp+udp"
+										]
+									},
+									"hostRange": {
+										"type": "object",
+										"properties": {
+											"default": {
+												"type": "integer",
+												"minimum": 1024,
+												"maximum": 65535
+											},
+											"min": {
+												"type": "integer",
+												"minimum": 1024,
+												"maximum": 65535
+											},
+											"max": {
+												"type": "integer",
+												"minimum": 1024,
+												"maximum": 65535
+											}
+										},
+										"required": [
+											"default",
+											"min",
+											"max"
+										]
+									},
+									"name": {
+										"description": "Player-facing name of this port, such as Java or Bedrock. The key is shown when omitted.",
+										"type": "object",
+										"properties": {
+											"ar": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 48
+											},
+											"en": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 48
+											}
+										},
+										"required": [
+											"ar",
+											"en"
+										]
+									},
+									"hint": {
+										"description": "One short line telling the player where this address goes in the game client.",
+										"type": "object",
+										"properties": {
+											"ar": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 160
+											},
+											"en": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 160
+											}
+										},
+										"required": [
+											"ar",
+											"en"
+										]
+									},
+									"join": {
+										"default": "combined",
+										"description": "How the game client takes the address: combined as host:port, or separate address and port fields.",
+										"type": "string",
+										"enum": [
+											"combined",
+											"separate"
+										]
+									},
+									"srv": {
+										"description": "Publishes this port as an SRV record under the server hostname, so players join by name with no port.",
+										"type": "object",
+										"properties": {
+											"service": {
+												"type": "string",
+												"pattern": "^_[a-z0-9-]{1,15}$"
+											}
+										},
+										"required": [
+											"service"
+										]
+									},
+									"activeWhen": {
+										"default": [],
+										"description": "Conditions on the server's variables that must all hold for this port to be published. The host port stays allocated either way; while a condition fails the container does not publish it and the panel hides the address.",
+										"maxItems": 4,
+										"type": "array",
+										"items": {
+											"type": "object",
+											"properties": {
+												"variable": {
+													"type": "string",
+													"minLength": 2,
+													"maxLength": 32,
+													"pattern": "^[A-Z][A-Z0-9_]*$"
+												},
+												"values": {
+													"minItems": 1,
+													"maxItems": 16,
+													"type": "array",
+													"items": {
+														"type": "string",
+														"minLength": 1,
+														"maxLength": 128
+													}
+												},
+												"empty": {
+													"type": "boolean"
+												}
+											},
+											"required": [
+												"variable"
+											]
+										}
+									},
+									"mirror": {
+										"default": false,
+										"description": "Binds the allocated host port as the container port too, so the game advertises the number players dial. Declare it when the game reports its own port to a master server or an A2S client.",
+										"type": "boolean"
+									},
+									"follows": {
+										"description": "Allocates this port at the named port's host port plus the offset, for games that derive one port from another. The named port must use the same protocol.",
+										"type": "object",
+										"properties": {
+											"key": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 32,
+												"pattern": "^[a-z][a-z0-9-]*$"
+											},
+											"offset": {
+												"type": "integer",
+												"minimum": 1,
+												"maximum": 16
+											}
+										},
+										"required": [
+											"key",
+											"offset"
+										]
+									},
+									"count": {
+										"default": 1,
+										"description": "Reserves this many contiguous host ports, bound one to one from containerPort upward. A block is infrastructure, never a player address: it takes no name, hint, join, srv or follows.",
+										"type": "integer",
+										"minimum": 1,
+										"maximum": 64
+									}
+								},
+								"required": [
+									"key",
+									"containerPort",
+									"hostRange"
+								]
+							}
+						},
+						"runtime": {
+							"description": "How the container is built and how long the platform waits for it.",
+							"default": {},
+							"type": "object",
+							"properties": {
+								"platform": {
+									"default": "linux",
+									"description": "Whether the game binary is a Linux executable or a Windows one the image runs through Wine or Proton.",
+									"type": "string",
+									"enum": [
+										"linux",
+										"wine"
+									]
+								},
+								"installBudgetMinutes": {
+									"default": 15,
+									"description": "How long the first install may take before the platform gives up on it, in minutes.",
+									"type": "integer",
+									"minimum": 5,
+									"maximum": 180
+								},
+								"bootBudgetMinutes": {
+									"default": 12,
+									"description": "How long the game may take to report itself running after the install, in minutes.",
+									"type": "integer",
+									"minimum": 2,
+									"maximum": 60
+								},
+								"shmMb": {
+									"default": 64,
+									"description": "Size of /dev/shm inside the container, in MB. Wine and Proton games need at least 256.",
+									"type": "integer",
+									"minimum": 64,
+									"maximum": 4096
+								},
+								"pidsLimit": {
+									"default": 512,
+									"description": "How many processes and threads the container may hold at once.",
+									"type": "integer",
+									"minimum": 128,
+									"maximum": 4096
+								},
+								"capabilities": {
+									"default": [],
+									"description": "Linux capabilities added back on top of the dropped set, from the allow-list this schema declares.",
+									"maxItems": 3,
+									"type": "array",
+									"items": {
+										"type": "string",
+										"enum": [
+											"SYS_NICE",
+											"IPC_LOCK",
+											"SYS_PTRACE"
+										]
+									}
+								}
+							}
+						}
+					},
+					"required": [
+						"image"
+					]
+				},
+				"guideTags": {
+					"default": [],
+					"maxItems": 16,
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"id": {
+								"type": "string",
+								"minLength": 1,
+								"maxLength": 32,
+								"pattern": "^[a-z0-9][a-z0-9._-]*$"
+							},
+							"name": {
+								"type": "object",
+								"properties": {
+									"ar": {
+										"type": "string",
+										"minLength": 1,
+										"maxLength": 48
+									},
+									"en": {
+										"type": "string",
+										"minLength": 1,
+										"maxLength": 48
+									}
+								},
+								"required": [
+									"ar",
+									"en"
+								]
+							}
+						},
+						"required": [
+							"id",
+							"name"
+						]
+					}
+				},
+				"guides": {
+					"default": [],
+					"maxItems": 64,
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"id": {
+								"type": "string",
+								"minLength": 1,
+								"maxLength": 64,
+								"pattern": "^[a-z0-9][a-z0-9-]*$"
+							},
+							"title": {
+								"type": "object",
+								"properties": {
+									"ar": {
+										"type": "string",
+										"minLength": 1,
+										"maxLength": 120
+									},
+									"en": {
+										"type": "string",
+										"minLength": 1,
+										"maxLength": 120
+									}
+								},
+								"required": [
+									"ar",
+									"en"
+								]
+							},
+							"summary": {
+								"type": "object",
+								"properties": {
+									"ar": {
+										"type": "string",
+										"minLength": 1,
+										"maxLength": 300
+									},
+									"en": {
+										"type": "string",
+										"minLength": 1,
+										"maxLength": 300
+									}
+								},
+								"required": [
+									"ar",
+									"en"
+								]
+							},
+							"tags": {
+								"default": [],
+								"maxItems": 8,
+								"type": "array",
+								"items": {
+									"type": "string",
+									"minLength": 1,
+									"maxLength": 32,
+									"pattern": "^[a-z0-9][a-z0-9._-]*$"
+								}
+							},
+							"surfaces": {
+								"default": [],
+								"maxItems": 8,
+								"type": "array",
+								"items": {
+									"type": "string",
+									"enum": [
+										"overview",
+										"console",
+										"files",
+										"backups",
+										"panel",
+										"setup"
+									]
+								}
+							},
+							"video": {
+								"type": "string",
+								"pattern": "^[A-Za-z0-9_-]{11}$"
+							},
+							"bodyPath": {
+								"type": "object",
+								"properties": {
+									"ar": {
+										"type": "string",
+										"minLength": 1,
+										"maxLength": 256,
+										"pattern": "^[a-zA-Z0-9][a-zA-Z0-9/_-]*\\.md$"
+									},
+									"en": {
+										"type": "string",
+										"minLength": 1,
+										"maxLength": 256,
+										"pattern": "^[a-zA-Z0-9][a-zA-Z0-9/_-]*\\.md$"
+									}
+								},
+								"required": [
+									"ar",
+									"en"
+								]
+							}
+						},
+						"required": [
+							"id",
+							"title",
+							"summary",
+							"bodyPath"
+						]
+					}
+				},
+				"backup": {
+					"default": {},
+					"type": "object",
+					"properties": {
+						"only": {
+							"default": [],
+							"description": "When set, only these paths are archived. Empty means the whole game directory.",
+							"maxItems": 32,
+							"type": "array",
+							"items": {
+								"type": "string",
+								"minLength": 1,
+								"maxLength": 256,
+								"pattern": "^[^/\\\\][^\\\\]*$"
+							}
+						},
+						"except": {
+							"default": [],
+							"description": "Paths excluded from the archive, applied after only.",
+							"maxItems": 64,
+							"type": "array",
+							"items": {
+								"type": "string",
+								"minLength": 1,
+								"maxLength": 256,
+								"pattern": "^[^/\\\\][^\\\\]*$"
+							}
+						}
+					}
+				},
+				"reset": {
+					"default": {},
+					"type": "object",
+					"properties": {
+						"keep": {
+							"default": [],
+							"description": "Paths that survive a server reset. Everything else is deleted.",
+							"maxItems": 32,
+							"type": "array",
+							"items": {
+								"type": "string",
+								"minLength": 1,
+								"maxLength": 256,
+								"pattern": "^[^/\\\\][^\\\\]*$"
+							}
+						}
+					}
+				},
+				"files": {
+					"default": {},
+					"type": "object",
+					"properties": {
+						"protected": {
+							"default": [],
+							"description": "Paths the player cannot edit, rename or delete from the file manager.",
+							"maxItems": 64,
+							"type": "array",
+							"items": {
+								"type": "string",
+								"minLength": 1,
+								"maxLength": 256,
+								"pattern": "^[^/\\\\][^\\\\]*$"
+							}
+						},
+						"notable": {
+							"default": [],
+							"description": "Paths the file manager annotates with a label, note and icon.",
+							"maxItems": 32,
+							"type": "array",
+							"items": {
+								"type": "object",
+								"properties": {
+									"match": {
+										"type": "string",
+										"minLength": 1,
+										"maxLength": 256,
+										"pattern": "^[^/\\\\][^\\\\]*$"
+									},
+									"label": {
+										"type": "object",
+										"properties": {
+											"ar": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 48
+											},
+											"en": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 48
+											}
+										},
+										"required": [
+											"ar",
+											"en"
+										]
+									},
+									"note": {
+										"type": "object",
+										"properties": {
+											"ar": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 400
+											},
+											"en": {
+												"type": "string",
+												"minLength": 1,
+												"maxLength": 400
+											}
+										},
+										"required": [
+											"ar",
+											"en"
+										]
+									},
+									"icon": {
+										"type": "string",
+										"enum": [
+											"box",
+											"chart",
+											"command",
+											"download",
+											"gamepad",
+											"globe",
+											"map",
+											"puzzle",
+											"rocket",
+											"settings",
+											"shield",
+											"sword",
+											"tag",
+											"users",
+											"wrench"
+										]
+									},
+									"color": {
+										"type": "string",
+										"format": "hexColor",
+										"pattern": "^#[0-9a-fA-F]{6}$"
+									},
+									"restart": {
+										"default": false,
+										"description": "Whether editing this path needs a server restart to take effect.",
+										"type": "boolean"
+									}
+								},
+								"required": [
+									"match",
+									"label",
+									"note"
+								]
+							}
+						}
+					}
+				},
+				"environment": {
+					"default": {},
+					"type": "object",
+					"properties": {
+						"vault": {
+							"default": false,
+							"description": "Whether the customer keeps their own environment variables for this package. The platform stores them, hides sensitive values after saving, and delivers them to the process.",
+							"type": "boolean"
+						}
+					}
+				},
+				"secrets": {
+					"description": "Not declared by a bot package. Per-bot values live in the environment vault.",
+					"not": {}
+				},
+				"presence": {
+					"description": "Not declared by a bot package. A bot has no player presence.",
+					"not": {}
 				}
 			},
 			"required": [

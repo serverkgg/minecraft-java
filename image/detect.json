@@ -1,0 +1,124 @@
+{
+	"version": 1,
+	"procfile": {
+		"file": "Procfile",
+		"line": "^(worker|bot)\\s*:\\s*(.+)$",
+		"processes": [
+			"worker",
+			"bot"
+		]
+	},
+	"serverkJson": {
+		"file": "serverk.json",
+		"commandLengthLimit": 1024,
+		"runtimes": [
+			"node",
+			"python"
+		],
+		"platforms": [
+			"discord",
+			"telegram"
+		],
+		"frameworks": [
+			"discord-js",
+			"eris",
+			"oceanic-js",
+			"grammy",
+			"telegraf",
+			"node-telegram-bot-api",
+			"discord-py",
+			"py-cord",
+			"nextcord",
+			"disnake",
+			"hikari",
+			"python-telegram-bot",
+			"aiogram",
+			"pyrogram",
+			"telethon"
+		],
+		"envLimit": 100,
+		"envKey": "^[A-Za-z_][A-Za-z0-9_]*$",
+		"envKeyLengthLimit": 64,
+		"exampleLengthLimit": 256
+	},
+	"node": {
+		"manifest": "package.json",
+		"startFiles": [
+			"index.js",
+			"src/index.js",
+			"bot.js",
+			"src/bot.js",
+			"index.ts"
+		],
+		"lockfiles": [
+			{
+				"file": "package-lock.json",
+				"manager": "npm"
+			},
+			{
+				"file": "npm-shrinkwrap.json",
+				"manager": "npm"
+			},
+			{
+				"file": "pnpm-lock.yaml",
+				"manager": "pnpm"
+			},
+			{
+				"file": "yarn.lock",
+				"manager": "yarn"
+			}
+		],
+		"installCommands": {
+			"npm": [
+				"npm",
+				"ci"
+			],
+			"pnpm": [
+				"corepack",
+				"pnpm",
+				"install",
+				"--frozen-lockfile"
+			],
+			"yarn": [
+				"corepack",
+				"yarn",
+				"install"
+			],
+			"npm-install": [
+				"npm",
+				"install"
+			]
+		},
+		"unlockedManager": "npm-install"
+	},
+	"python": {
+		"startFiles": [
+			"main.py",
+			"bot.py",
+			"app.py",
+			"src/main.py",
+			"src/bot.py"
+		],
+		"manifests": [
+			{
+				"file": "requirements.txt",
+				"manager": "requirements"
+			},
+			{
+				"file": "pyproject.toml",
+				"manager": "project"
+			}
+		],
+		"installArguments": {
+			"requirements": [
+				"install",
+				"-r",
+				"requirements.txt"
+			],
+			"project": [
+				"install",
+				"."
+			]
+		}
+	}
+}
