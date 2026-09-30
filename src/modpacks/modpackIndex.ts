@@ -1,3 +1,4 @@
+import { type Bridge, BridgeUserError } from "@serverkgg/bridge";
 import { MODRINTH_UNSUPPORTED, modrinthProjectId } from "../providers";
 import { ServerVariant } from "../shared";
 
@@ -7,6 +8,13 @@ export const MODS_DIRECTORY = "mods";
 
 export const modPath = (fileName: string) => {
 	return `${MODS_DIRECTORY}/${fileName}`;
+};
+
+export const refuseModpack = (reason: Bridge.Text) => {
+	return new BridgeUserError({
+		ar: `${reason.ar} اختَر مودباك ثاني أو إصدار ثاني منه.`,
+		en: `${reason.en} Pick another modpack or another release of it.`,
+	});
 };
 
 const FORMAT_VERSION = 1;
@@ -150,19 +158,28 @@ const readFile = (value: RawIndexFile): ModpackFile | null => {
 	const path = readPath(value.path);
 
 	if (!path) {
-		throw new Error(`the modpack lists a file we cannot install ("${String(value.path)}")`);
+		throw refuseModpack({
+			ar: `المودباك فيه ملف ما نقدر نثبّته ("${String(value.path)}").`,
+			en: `The modpack lists a file we cannot install ("${String(value.path)}").`,
+		});
 	}
 
 	const url = readUrl(value.downloads);
 
 	if (!url) {
-		throw new Error(`the modpack downloads "${path}" from a host we do not install from`);
+		throw refuseModpack({
+			ar: `المودباك ينزّل "${path}" من موقع ما ننزّل منه.`,
+			en: `The modpack downloads "${path}" from a host we do not install from.`,
+		});
 	}
 
 	const sha512 = typeof value.hashes?.sha512 === "string" ? value.hashes.sha512.toLowerCase() : "";
 
 	if (!SHA512_PATTERN.test(sha512)) {
-		throw new Error(`the modpack lists "${path}" with no checksum we can verify`);
+		throw refuseModpack({
+			ar: `المودباك فيه "${path}" بدون بصمة نقدر نتأكد منها.`,
+			en: `The modpack lists "${path}" with no checksum we can verify.`,
+		});
 	}
 
 	const sizeBytes = typeof value.fileSize === "number" && value.fileSize > 0 ? value.fileSize : null;
@@ -179,7 +196,10 @@ const readFile = (value: RawIndexFile): ModpackFile | null => {
 const readLoader = (dependencies: Record<string, unknown>) => {
 	for (const [key, value] of Object.entries(dependencies)) {
 		if (QUILT_LOADERS.includes(key)) {
-			throw new Error("this modpack runs on quilt, and serverk has no quilt server type");
+			throw refuseModpack({
+				ar: "هذا المودباك يشتغل على Quilt، وسيرفرك ما عنده نوع سيرفر Quilt.",
+				en: "This modpack runs on quilt, and serverk has no quilt server type.",
+			});
 		}
 
 		const variant = DEPENDENCY_VARIANTS[key];
@@ -192,7 +212,10 @@ const readLoader = (dependencies: Record<string, unknown>) => {
 		}
 	}
 
-	throw new Error("this modpack declares no server loader we can install");
+	throw refuseModpack({
+		ar: "هذا المودباك ما يحدد مشغّل سيرفر نقدر نثبّته.",
+		en: "This modpack declares no server loader we can install.",
+	});
 };
 
 export const parseModpackIndex = (raw: string): ModpackIndex => {
@@ -201,33 +224,51 @@ export const parseModpackIndex = (raw: string): ModpackIndex => {
 	try {
 		parsed = JSON.parse(raw) as RawIndex;
 	} catch {
-		throw new Error(`the modpack ${MODPACK_INDEX} is not valid json`);
+		throw refuseModpack({
+			ar: `ملف ${MODPACK_INDEX} في المودباك خربان.`,
+			en: `The modpack ${MODPACK_INDEX} is not valid json.`,
+		});
 	}
 
 	if (parsed.formatVersion !== FORMAT_VERSION) {
-		throw new Error(`this modpack uses format version ${String(parsed.formatVersion)}, which we do not read yet`);
+		throw refuseModpack({
+			ar: `هذا المودباك على صيغة رقم ${String(parsed.formatVersion)}، وما نقرأها لين الحين.`,
+			en: `This modpack uses format version ${String(parsed.formatVersion)}, which we do not read yet.`,
+		});
 	}
 
 	if (parsed.game !== GAME) {
-		throw new Error(`this modpack is built for "${String(parsed.game)}", not minecraft`);
+		throw refuseModpack({
+			ar: `هذا المودباك مسوّى للعبة "${String(parsed.game)}"، مو ماينكرافت.`,
+			en: `This modpack is built for "${String(parsed.game)}", not minecraft.`,
+		});
 	}
 
 	const dependencies = parsed.dependencies;
 
 	if (dependencies === undefined || dependencies === null || typeof dependencies !== "object") {
-		throw new Error(`the modpack ${MODPACK_INDEX} declares no dependencies`);
+		throw refuseModpack({
+			ar: `ملف ${MODPACK_INDEX} في المودباك ما يحدد النسخة ولا المشغّل.`,
+			en: `The modpack ${MODPACK_INDEX} declares no dependencies.`,
+		});
 	}
 
 	const mcVersion = dependencies.minecraft;
 
 	if (typeof mcVersion !== "string" || mcVersion.length === 0) {
-		throw new Error("this modpack declares no minecraft version");
+		throw refuseModpack({
+			ar: "هذا المودباك ما يحدد نسخة ماينكرافت.",
+			en: "This modpack declares no minecraft version.",
+		});
 	}
 
 	const entries = Array.isArray(parsed.files) ? (parsed.files as RawIndexFile[]) : [];
 
 	if (entries.length > MAX_FILES) {
-		throw new Error(`this modpack lists ${entries.length} files, more than the ${MAX_FILES} we install`);
+		throw refuseModpack({
+			ar: `هذا المودباك فيه ${entries.length} ملف، أكثر من ${MAX_FILES} اللي نثبّتها.`,
+			en: `This modpack lists ${entries.length} files, more than the ${MAX_FILES} we install.`,
+		});
 	}
 
 	const { variant, loaderVersion } = readLoader(dependencies);

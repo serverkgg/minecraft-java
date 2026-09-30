@@ -19,7 +19,7 @@ import {
 } from "../providers";
 import { ServerVariant } from "../shared";
 import { isClientOnlyFilename, isServerSafeFilename } from "./clientMods";
-import { type BlockedFile, type ModpackFile, type ModpackIndex, modPath } from "./modpackIndex";
+import { type BlockedFile, type ModpackFile, type ModpackIndex, modPath, refuseModpack } from "./modpackIndex";
 
 export const MODPACK_MANIFEST = "manifest.json";
 
@@ -87,20 +87,29 @@ const readLoaderId = (id: string, mcVersion: string) => {
 	const provider = parts.at(0)?.toLowerCase() ?? "";
 
 	if (QUILT_LOADERS.includes(provider)) {
-		throw new Error("this modpack runs on quilt, and serverk has no quilt server type");
+		throw refuseModpack({
+			ar: "هذا المودباك يشتغل على Quilt، وسيرفرك ما عنده نوع سيرفر Quilt.",
+			en: "This modpack runs on quilt, and serverk has no quilt server type.",
+		});
 	}
 
 	const variant = LOADER_VARIANTS[provider];
 
 	if (!variant || parts.length < 2) {
-		throw new Error(`this modpack asks for the "${id}" loader, which serverk cannot install`);
+		throw refuseModpack({
+			ar: `هذا المودباك يبي المشغّل "${id}"، وما نقدر نثبّته.`,
+			en: `This modpack asks for the "${id}" loader, which serverk cannot install.`,
+		});
 	}
 
 	const rest = parts.slice(1);
 	const loaderVersion = rest.at(0) === mcVersion ? rest.slice(1).join("-") : rest.join("-");
 
 	if (loaderVersion.length === 0) {
-		throw new Error(`this modpack asks for the "${id}" loader, which serverk cannot install`);
+		throw refuseModpack({
+			ar: `هذا المودباك يبي المشغّل "${id}"، وما نقدر نثبّته.`,
+			en: `This modpack asks for the "${id}" loader, which serverk cannot install.`,
+		});
 	}
 
 	return {
@@ -114,7 +123,10 @@ const readModLoader = (value: unknown, mcVersion: string) => {
 	const primary = loaders.find((loader) => loader.primary === true) ?? loaders.at(0);
 
 	if (!primary || typeof primary.id !== "string" || primary.id.length === 0) {
-		throw new Error("this modpack declares no server loader we can install");
+		throw refuseModpack({
+			ar: "هذا المودباك ما يحدد مشغّل سيرفر نقدر نثبّته.",
+			en: "This modpack declares no server loader we can install.",
+		});
 	}
 
 	return readLoaderId(primary.id, mcVersion);
@@ -142,27 +154,42 @@ export const parseCurseforgeManifest = (raw: string): ModpackManifest => {
 	try {
 		parsed = JSON.parse(raw) as RawManifest;
 	} catch {
-		throw new Error(`the modpack ${MODPACK_MANIFEST} is not valid json`);
+		throw refuseModpack({
+			ar: `ملف ${MODPACK_MANIFEST} في المودباك خربان.`,
+			en: `The modpack ${MODPACK_MANIFEST} is not valid json.`,
+		});
 	}
 
 	if (parsed.manifestType !== MANIFEST_TYPE) {
-		throw new Error(`this modpack is built for "${String(parsed.manifestType)}", not minecraft`);
+		throw refuseModpack({
+			ar: `هذا المودباك مسوّى لـ "${String(parsed.manifestType)}"، مو ماينكرافت.`,
+			en: `This modpack is built for "${String(parsed.manifestType)}", not minecraft.`,
+		});
 	}
 
 	if (parsed.manifestVersion !== MANIFEST_VERSION) {
-		throw new Error(`this modpack uses manifest version ${String(parsed.manifestVersion)}, which we do not read yet`);
+		throw refuseModpack({
+			ar: `هذا المودباك على صيغة رقم ${String(parsed.manifestVersion)}، وما نقرأها لين الحين.`,
+			en: `This modpack uses manifest version ${String(parsed.manifestVersion)}, which we do not read yet.`,
+		});
 	}
 
 	const mcVersion = parsed.minecraft?.version;
 
 	if (typeof mcVersion !== "string" || mcVersion.length === 0) {
-		throw new Error("this modpack declares no minecraft version");
+		throw refuseModpack({
+			ar: "هذا المودباك ما يحدد نسخة ماينكرافت.",
+			en: "This modpack declares no minecraft version.",
+		});
 	}
 
 	const entries = Array.isArray(parsed.files) ? (parsed.files as RawManifestFile[]) : [];
 
 	if (entries.length > MAX_FILES) {
-		throw new Error(`this modpack lists ${entries.length} files, more than the ${MAX_FILES} we install`);
+		throw refuseModpack({
+			ar: `هذا المودباك فيه ${entries.length} ملف، أكثر من ${MAX_FILES} اللي نثبّتها.`,
+			en: `This modpack lists ${entries.length} files, more than the ${MAX_FILES} we install.`,
+		});
 	}
 
 	const { variant, loaderVersion } = readModLoader(parsed.minecraft?.modLoaders, mcVersion);
