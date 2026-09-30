@@ -1,4 +1,4 @@
-import type { Bridge } from "@serverkgg/bridge";
+import { type Bridge, BridgeUserError } from "@serverkgg/bridge";
 import {
 	IMMUTABLE_CACHE_SECONDS,
 	MANIFEST_CACHE_SECONDS,
@@ -17,7 +17,10 @@ export const installVanilla = async (context: Bridge.Context, gameVersion: strin
 	const entry = manifest.versions.find((candidate) => candidate.id === gameVersion);
 
 	if (!entry) {
-		throw new Error(`unknown minecraft version "${gameVersion}"`);
+		throw new BridgeUserError({
+			ar: `ماينكرافت ما فيها نسخة اسمها ${gameVersion}. اختَر نسخة ثانية من تبويب النسخة.`,
+			en: `Minecraft has no version called ${gameVersion}. Pick another version in the Version tab.`,
+		});
 	}
 
 	const version = await context.net.json<MojangVersion>(entry.url, {

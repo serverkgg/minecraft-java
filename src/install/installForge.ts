@@ -1,4 +1,4 @@
-import type { Bridge } from "@serverkgg/bridge";
+import { type Bridge, BridgeUserError } from "@serverkgg/bridge";
 import { FORGE_MAVEN, SERVER_JAR, ServerVariant } from "../shared";
 import { buildUnavailable } from "./buildUnavailable";
 import { jarLaunch, type LaunchPlan } from "./launchPlan";
@@ -44,5 +44,8 @@ export const installForge = async (
 		}
 	}
 
-	throw new Error(`the Forge installer produced no server launcher for ${release}`);
+	throw new BridgeUserError({
+		ar: `أداة تثبيت Forge خلصت بدون ما تجهّز ملف تشغيل السيرفر للإصدار ${release}. اختَر إصدار Forge ثاني أو نسخة ماينكرافت ثانية من تبويب النسخة.`,
+		en: `The Forge installer finished without a server launcher for ${release}. Pick another Forge build or Minecraft version in the Version tab.`,
+	});
 };

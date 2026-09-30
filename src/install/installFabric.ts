@@ -1,4 +1,4 @@
-import type { Bridge } from "@serverkgg/bridge";
+import { type Bridge, BridgeUserError } from "@serverkgg/bridge";
 import { FABRIC_META, type FabricEntry, MANIFEST_CACHE_SECONDS, SERVER_JAR, ServerVariant } from "../shared";
 import { buildUnavailable } from "./buildUnavailable";
 import { jarLaunch } from "./launchPlan";
@@ -15,7 +15,10 @@ export const installFabric = async (context: Bridge.Context, gameVersion: string
 	}
 
 	if (!installer) {
-		throw new Error(`no stable Fabric loader for minecraft ${gameVersion}`);
+		throw new BridgeUserError({
+			ar: "Fabric ما عنده أداة تثبيت مستقرة الحين. جرّب بعد شوي أو اختَر نوع سيرفر ثاني من تبويب النسخة.",
+			en: "Fabric has no stable installer right now. Try again in a bit or pick another server type in the Version tab.",
+		});
 	}
 
 	await context.files.download(SERVER_JAR, `${FABRIC_META}/loader/${gameVersion}/${build}/${installer}/server/jar`);

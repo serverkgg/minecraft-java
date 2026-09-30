@@ -1,4 +1,4 @@
-import type { Bridge } from "@serverkgg/bridge";
+import { type Bridge, BridgeUserError } from "@serverkgg/bridge";
 import { NEOFORGE_MAVEN, ServerVariant } from "../shared";
 import { buildUnavailable } from "./buildUnavailable";
 import type { LaunchPlan } from "./launchPlan";
@@ -24,7 +24,10 @@ export const installNeoForge = async (
 	await context.files.ensure("mods");
 
 	if (!plan) {
-		throw new Error(`the NeoForge installer produced no server launcher for ${build}`);
+		throw new BridgeUserError({
+			ar: `أداة تثبيت NeoForge خلصت بدون ما تجهّز ملف تشغيل السيرفر للإصدار ${build}. اختَر إصدار NeoForge ثاني أو نسخة ماينكرافت ثانية من تبويب النسخة.`,
+			en: `The NeoForge installer finished without a server launcher for ${build}. Pick another NeoForge build or Minecraft version in the Version tab.`,
+		});
 	}
 
 	return plan;

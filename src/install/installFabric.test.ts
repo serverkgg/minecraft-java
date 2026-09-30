@@ -31,3 +31,28 @@ describe("installing Fabric on a version it has no loader build for", () => {
 		expect((error as BridgeUserError).text.ar).toContain("1.99");
 	});
 });
+
+describe("installing Fabric while it has no stable installer", () => {
+	test("the customer is told to wait or pick another type", async () => {
+		const unstable = {
+			net: {
+				json: async () => [
+					{
+						version: "1.2.0",
+						stable: false,
+					},
+				],
+			},
+		} as unknown as Bridge.Context;
+
+		const error = await installFabric(unstable, "1.21.1", "0.16.0").then(
+			() => null,
+			(thrown: unknown) => thrown,
+		);
+
+		expect(error).toBeInstanceOf(BridgeUserError);
+		expect((error as BridgeUserError).text.en).toBe(
+			"Fabric has no stable installer right now. Try again in a bit or pick another server type in the Version tab.",
+		);
+	});
+});

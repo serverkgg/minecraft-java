@@ -1,4 +1,5 @@
-import type { Bridge } from "@serverkgg/bridge";
+import { type Bridge, BridgeUserError } from "@serverkgg/bridge";
+import { describeExecFailure } from "@serverkgg/bridge/utils";
 import { javaBinary, mavenDigest } from "../shared";
 import { detectLoaderLaunch, type LaunchPlan } from "./launchPlan";
 
@@ -50,7 +51,9 @@ export const runLoaderInstaller = async (
 	if (result.code !== 0) {
 		const detail = (result.stderr || result.stdout).slice(-ERROR_TAIL).trim();
 
-		throw new Error(`the ${install.name} installer exited ${result.code}: ${detail}`);
+		throw new BridgeUserError(describeExecFailure(result, install.name), {
+			cause: new Error(`the ${install.name} installer exited ${result.code}: ${detail}`),
+		});
 	}
 
 	return await detectLoaderLaunch(context);
