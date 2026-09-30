@@ -1,4 +1,5 @@
 import { BridgeUserError } from "@serverkgg/bridge";
+import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { createRconAccess } from "@serverkgg/bridge/rcon";
 import { generateRconPassword, rconPasswordOf, readInstallStamp, writeInstallStamp } from "../install";
 
@@ -23,6 +24,18 @@ export const rconAccess = createRconAccess({
 		await writeInstallStamp(context, {
 			...stamp,
 			rconPasswordNext: generateRconPassword(),
+		});
+
+		context.activity.report({
+			name: BridgeEventName.SecretRotated,
+			text: {
+				ar: "تم تغيير كلمة مرور RCON",
+				en: "Changed the RCON password",
+			},
+			subject: "RCON",
+			details: {
+				target: "rcon",
+			},
 		});
 	},
 });

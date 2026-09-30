@@ -1,4 +1,5 @@
 import { type Bridge, BridgeKind } from "@serverkgg/bridge";
+import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { parseBanList } from "../shared";
 
 const BANLIST_COMMAND = "banlist players";
@@ -52,6 +53,18 @@ export const bans: Bridge.Collection = {
 	actions: {
 		async remove(context, row) {
 			await context.command(`pardon ${row.id}`);
+
+			context.activity.report({
+				name: BridgeEventName.PlayerUnbanned,
+				text: {
+					ar: `تم فك الحظر عن ${row.id}`,
+					en: `Unbanned ${row.id}`,
+				},
+				subject: row.id,
+				details: {
+					player: row.id,
+				},
+			});
 		},
 	},
 };

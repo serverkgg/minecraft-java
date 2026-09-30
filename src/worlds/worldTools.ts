@@ -1,4 +1,5 @@
 import { type Bridge, BridgeKind, BridgeUserError } from "@serverkgg/bridge";
+import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { safeWorldName, setActiveWorld, worldPaths } from "./world";
 
 export const worldNameArgument = (value: unknown) => {
@@ -162,6 +163,22 @@ export const worldTools: Bridge.Actions = {
 			await setActiveWorld(context, name);
 			context.log("a new world will generate on the next start", {
 				world: name,
+			});
+			context.activity.report({
+				name: BridgeEventName.WorldCreated,
+				text: {
+					ar: `تم إنشاء ماب جديد ${name}، ويتولّد مع التشغيل الجاي`,
+					en: `Created world ${name}, it generates on the next start`,
+				},
+				subject: name,
+				details: {
+					world: name,
+					...(seed.length > 0
+						? {
+								seed,
+							}
+						: {}),
+				},
 			});
 		},
 	},

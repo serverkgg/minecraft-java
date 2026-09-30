@@ -1,4 +1,5 @@
 import { type Bridge, BridgeKind, BridgeUserError } from "@serverkgg/bridge";
+import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import {
 	matchPendingFile,
 	modPath,
@@ -87,13 +88,14 @@ export const pending: Bridge.Pending = {
 		}
 
 		const path = modPath(file.fileName);
+		const remaining = sidecar.pending.filter((entry) => entry.fileId !== file.fileId);
 
 		await context.files.move(source, path);
 
 		await writeModpackSidecar(
 			context,
 			settlePendingSidecar(sidecar, {
-				pending: sidecar.pending.filter((entry) => entry.fileId !== file.fileId),
+				pending: remaining,
 				present: [
 					path,
 				],
@@ -103,6 +105,22 @@ export const pending: Bridge.Pending = {
 		context.log("added a pending modpack file", {
 			file: file.fileName,
 			mod: file.name,
+		});
+
+		context.activity.report({
+			name: BridgeEventName.ModInstalled,
+			text: {
+				ar: `تم رفع ${file.fileName} الناقص لمودباك ${sidecar.title}`,
+				en: `Uploaded the missing ${file.fileName} for modpack ${sidecar.title}`,
+			},
+			subject: file.name,
+			details: {
+				kind: "mod",
+				file: file.fileName,
+				title: file.name,
+				modpack: sidecar.title,
+				remaining: remaining.length,
+			},
 		});
 	},
 };

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { Bridge } from "@serverkgg/bridge";
+import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { WORLD_STAGING } from "../shared";
 import { worlds } from "./worlds";
 
@@ -10,6 +11,7 @@ interface Stage {
 	moves: string[][];
 	removed: string[];
 	added: string[][];
+	reported: Bridge.Activity[];
 }
 
 const stage = (present: string[], found: string[]): Stage => {
@@ -21,6 +23,7 @@ const stage = (present: string[], found: string[]): Stage => {
 	const moves: string[][] = [];
 	const removed: string[] = [];
 	const added: string[][] = [];
+	const reported: Bridge.Activity[] = [];
 
 	const context = {
 		files: {
@@ -60,6 +63,11 @@ const stage = (present: string[], found: string[]): Stage => {
 				fields.world ?? "",
 			]);
 		},
+		activity: {
+			report: (entry: Bridge.Activity) => {
+				reported.push(entry);
+			},
+		},
 	} as unknown as Bridge.Context;
 
 	return {
@@ -67,6 +75,7 @@ const stage = (present: string[], found: string[]): Stage => {
 		moves,
 		removed,
 		added,
+		reported,
 	};
 };
 
@@ -85,7 +94,7 @@ describe("importing an uploaded world", () => {
 	});
 
 	test("a world keeps its folder name when nothing is in the way", async () => {
-		const { context, moves, removed, added } = stage(
+		const { context, moves, removed, added, reported } = stage(
 			[],
 			[
 				`${UPLOAD}/creative`,
@@ -109,6 +118,20 @@ describe("importing an uploaded world", () => {
 				"creative",
 				"creative",
 			],
+		]);
+		expect(reported).toEqual([
+			{
+				name: BridgeEventName.WorldImported,
+				text: {
+					ar: "تم استيراد ماب creative",
+					en: "Imported world creative",
+				},
+				subject: "creative",
+				details: {
+					world: "creative",
+					folder: "creative",
+				},
+			},
 		]);
 	});
 
@@ -241,5 +264,167 @@ describe("importing an uploaded world", () => {
 
 		await expect(worlds.add?.(context, UPLOAD)).rejects.toThrow();
 		expect(moves).toEqual([]);
+	});
+});
+
+const STAMP = JSON.stringify({
+	variant: "vanilla",
+	version: "1.21.4",
+	build: null,
+	java: 21,
+	launch: {
+		kind: "jar",
+		target: "server.jar",
+	},
+});
+
+const managed = (active: string) => {
+	const reported: Bridge.Activity[] = [];
+	const removed: string[] = [];
+	const properties: Record<string, string> = {
+		"level-name": active,
+	};
+
+	const context = {
+		variable: () => null,
+		files: {
+			exists: async (path: string) => path === ".serverk-install.json",
+			read: async () => STAMP,
+			remove: async (path: string) => {
+				removed.push(path);
+			},
+		},
+		codec: {
+			javaProperties: {
+				read: async () => properties,
+				merge: async (_path: string, values: Record<string, string>) => {
+					Object.assign(properties, values);
+				},
+			},
+		},
+		net: {
+			json: async () => {
+				throw new Error("offline");
+			},
+		},
+		log: () => {},
+		activity: {
+			report: (entry: Bridge.Activity) => {
+				reported.push(entry);
+			},
+		},
+	} as unknown as Bridge.Context;
+
+	return {
+		context,
+		reported,
+		removed,
+	};
+};
+
+const ROW = {
+	id: "creative",
+	name: "creative",
+};
+
+describe("reporting a large world upload", () => {
+	test("more than five worlds become one entry with the count and the first names", async () => {
+		const names = [
+			"alpha",
+			"bravo",
+			"charlie",
+			"delta",
+			"echo",
+			"foxtrot",
+			"golf",
+		];
+		const { context, reported } = stage(
+			[],
+			names.map((name) => `${UPLOAD}/${name}`),
+		);
+
+		await worlds.add?.(context, UPLOAD);
+
+		expect(reported).toEqual([
+			{
+				name: BridgeEventName.WorldImported,
+				text: {
+					ar: "تم استيراد مابات alpha، bravo، charlie، delta، echo وغيرها (7)",
+					en: "Imported worlds alpha, bravo, charlie, delta, echo and more (7)",
+				},
+				details: {
+					count: 7,
+					worlds: "alpha, bravo, charlie, delta, echo",
+				},
+			},
+		]);
+	});
+});
+
+describe("what the world actions report", () => {
+	test("activating a world names it and the world it replaced", async () => {
+		const { context, reported } = managed("world");
+
+		await worlds.actions?.activate?.(context, ROW, {});
+
+		expect(reported).toEqual([
+			{
+				name: BridgeEventName.WorldActivated,
+				text: {
+					ar: "تم تفعيل ماب creative بدل world",
+					en: "Activated world creative in place of world",
+				},
+				subject: "creative",
+				details: {
+					world: "creative",
+					previous: "world",
+				},
+			},
+		]);
+	});
+
+	test("deleting a world reports it only once it is gone", async () => {
+		const { context, reported, removed } = managed("world");
+
+		await worlds.actions?.delete?.(context, ROW, {});
+
+		expect(removed.length).toBeGreaterThan(0);
+		expect(reported.map((entry) => entry.name)).toEqual([
+			BridgeEventName.WorldDeleted,
+		]);
+		expect(reported.at(0)?.subject).toBe("creative");
+	});
+
+	test("the active world is refused and nothing is reported", async () => {
+		const { context, reported } = managed("creative");
+
+		await expect(worlds.actions?.delete?.(context, ROW, {})).rejects.toThrow();
+		expect(reported).toEqual([]);
+	});
+
+	test("resetting the nether and the end each say which dimension was wiped", async () => {
+		const { context, reported } = managed("world");
+
+		await worlds.actions?.resetNether?.(context, ROW, {});
+		await worlds.actions?.resetEnd?.(context, ROW, {});
+
+		expect(
+			reported.map((entry) => [
+				entry.name,
+				entry.subject,
+				entry.details?.scope,
+			]),
+		).toEqual([
+			[
+				BridgeEventName.WorldWiped,
+				"creative",
+				"nether",
+			],
+			[
+				BridgeEventName.WorldWiped,
+				"creative",
+				"end",
+			],
+		]);
 	});
 });

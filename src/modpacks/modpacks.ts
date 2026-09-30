@@ -6,7 +6,8 @@ import {
 	BridgeKind,
 	BridgeUserError,
 } from "@serverkgg/bridge";
-import { decodeProviderRef, encodeProviderRef, modpackSourceById, modpackSources } from "../providers";
+import { BridgeEventName } from "@serverkgg/bridge/protocol";
+import { decodeProviderRef, encodeProviderRef, explainLookup, modpackSourceById, modpackSources } from "../providers";
 import { addonDirectory, requestedGameVersion } from "../shared";
 import { MODPACK_VARIABLE } from "./applyModpack";
 import { describeProject, identityMismatched, outdated, serverRelease } from "./modpackFreshness";
@@ -16,6 +17,16 @@ import { MODPACK_SIDECAR, modpackIdentity, readModpackSidecar } from "./modpackS
 import { pickModpackVersion } from "./modpackVersion";
 
 const PAGE_SIZE = 20;
+
+const MODPACK_MISSING: Bridge.Text = {
+	ar: "ما لقينا هذا المودباك عند مصدره. دوّر عليه مرة ثانية أو اختَر مودباك ثاني.",
+	en: "We could not find this modpack at its source. Search for it again or pick another modpack.",
+};
+
+const MODPACK_SUBJECT: Bridge.Text = {
+	ar: "المودباك",
+	en: "the modpack",
+};
 
 const sources = (context: Bridge.Context): Bridge.CatalogProvider[] => {
 	return modpackSources().map((source) => {
@@ -76,7 +87,11 @@ export const installModpack = async (
 		});
 	}
 
-	const releases = await source.releases(context, decoded.project);
+	const releases = await explainLookup(
+		() => source.releases(context, decoded.project),
+		MODPACK_MISSING,
+		MODPACK_SUBJECT,
+	);
 	const release = releaseId ? releases.find((candidate) => candidate.versionId === releaseId) : serverRelease(releases);
 
 	if (!release) {
@@ -98,7 +113,7 @@ export const installModpack = async (
 		);
 	}
 
-	const project = await source.project(context, decoded.project);
+	const project = await explainLookup(() => source.project(context, decoded.project), MODPACK_MISSING, MODPACK_SUBJECT);
 
 	return {
 		id: encodeProviderRef(source.id, project.id),
@@ -212,7 +227,25 @@ export const modpacks: Bridge.Catalog = {
 	},
 
 	async install(context, id, releaseId) {
-		return await installModpack(context, id, releaseId);
+		const entry = await installModpack(context, id, releaseId);
+		const label = entry.version === null ? entry.title : `${entry.title} (${entry.version})`;
+
+		context.activity.report({
+			name: BridgeEventName.ModpackSelected,
+			text: {
+				ar: `تم اختيار مودباك ${label} للتثبيت`,
+				en: `Selected modpack ${label} to install`,
+			},
+			subject: entry.title,
+			details: {
+				title: entry.title,
+				version: entry.version,
+				provider: entry.provider,
+				server: entry.gameVersion,
+			},
+		});
+
+		return entry;
 	},
 
 	async remove() {

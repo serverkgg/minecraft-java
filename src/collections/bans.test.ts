@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { Bridge } from "@serverkgg/bridge";
+import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { bans } from "./bans";
 
 const HEADER = "[00:08:49 INFO]: There are 1 ban(s):";
@@ -12,7 +13,12 @@ const REPLY = [
 	"[12:06:41] [Server thread/INFO]: Alex was banned by Notch: griefing the spawn twice",
 ];
 
-const contextWith = (options: { count?: string; printed?: string[][]; sent?: string[] }) => {
+const contextWith = (options: {
+	count?: string;
+	printed?: string[][];
+	sent?: string[];
+	reported?: Bridge.Activity[];
+}) => {
 	const printed = options.printed ?? [];
 
 	let read = 0;
@@ -39,6 +45,11 @@ const contextWith = (options: { count?: string; printed?: string[][]; sent?: str
 				read += 1;
 
 				return answer;
+			},
+		},
+		activity: {
+			report: (entry: Bridge.Activity) => {
+				options.reported?.push(entry);
 			},
 		},
 	} as unknown as Bridge.Context;
@@ -129,12 +140,14 @@ describe("reading who is banned from the server", () => {
 });
 
 describe("lifting a ban", () => {
-	test("pardons the player by name", async () => {
+	test("pardons the player by name and reports who was unbanned", async () => {
 		const sent: string[] = [];
+		const reported: Bridge.Activity[] = [];
 
 		await bans.actions?.remove?.(
 			contextWith({
 				sent,
+				reported,
 			}),
 			{
 				id: "Steve",
@@ -145,6 +158,19 @@ describe("lifting a ban", () => {
 
 		expect(sent).toEqual([
 			"pardon Steve",
+		]);
+		expect(reported).toEqual([
+			{
+				name: BridgeEventName.PlayerUnbanned,
+				text: {
+					ar: "تم فك الحظر عن Steve",
+					en: "Unbanned Steve",
+				},
+				subject: "Steve",
+				details: {
+					player: "Steve",
+				},
+			},
 		]);
 	});
 });

@@ -1,16 +1,18 @@
-import { type Bridge, BridgeKind, BridgeUserError } from "@serverkgg/bridge";
+import { type Bridge, BridgeKind } from "@serverkgg/bridge";
+import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { reportModCrash } from "../events";
 import {
 	applyModpack,
 	detachModpack,
 	ModpackPlanKind,
+	modpackRemovedActivity,
 	type PendingFile,
 	pendingHold,
 	settlePendingFiles,
 	stageModpack,
 } from "../modpacks";
 import { SEEDED_PROPERTIES } from "../settings";
-import { addonDirectory, javaMajorFor, ServerVariant } from "../shared";
+import { addonDirectory, javaMajorFor, ServerVariant, VARIANT_LABELS } from "../shared";
 import { applyTransition, transitionFor, wipeData } from "./applyTransition";
 import { installFabric } from "./installFabric";
 import { installForge } from "./installForge";
@@ -19,10 +21,12 @@ import { installNeoForge } from "./installNeoForge";
 import { installPaper } from "./installPaper";
 import { installPurpur } from "./installPurpur";
 import { pinRconProperties } from "./installRcon";
-import { type InstallStamp, matchesStamp, readInstallStamp } from "./installStamp";
+import { type InstallIdentity, type InstallStamp, matchesStamp, readInstallStamp } from "./installStamp";
 import { installVanilla } from "./installVanilla";
 import type { LaunchPlan } from "./launchPlan";
 import { LOADER_ARTIFACTS, preserveRuntime, recoverRuntime } from "./runtimeRecovery";
+import type { TransitionPlan } from "./transition";
+import { transitionActivityText } from "./transitionText";
 
 type Installer = (
 	context: Bridge.Context,
@@ -51,6 +55,48 @@ const finalize = async (context: Bridge.Context, stamp?: InstallStamp) => {
 	await pinRconProperties(context, stamp);
 };
 
+const reportInstalled = (
+	context: Bridge.Context,
+	stamp: InstallStamp | null,
+	next: InstallIdentity,
+	build: string | null,
+	javaMajor: number,
+	transition: TransitionPlan | null,
+) => {
+	const name = `${VARIANT_LABELS[next.variant]} ${next.version}`;
+
+	context.activity.report({
+		name: BridgeEventName.GameInstalled,
+		text: {
+			ar: `تم تثبيت ماينكرافت ${name}`,
+			en: `Installed Minecraft ${name}`,
+		},
+		subject: name,
+		details: {
+			variant: next.variant,
+			version: next.version,
+			build,
+			java: javaMajor,
+		},
+	});
+
+	if (!stamp || !transition || (stamp.variant === next.variant && stamp.version === next.version)) {
+		return;
+	}
+
+	context.activity.report({
+		name: BridgeEventName.ServerUpdated,
+		text: transitionActivityText(stamp, next, transition),
+		subject: name,
+		details: {
+			from: `${VARIANT_LABELS[stamp.variant]} ${stamp.version}`,
+			to: name,
+			world: transition.world,
+			addons: transition.addons,
+		},
+	});
+};
+
 export const install: Bridge.Install = {
 	kind: BridgeKind.Install,
 	async run(context) {
@@ -64,14 +110,7 @@ export const install: Bridge.Install = {
 		const staged =
 			plan.kind === ModpackPlanKind.Apply && plan.ref ? await stageModpack(context, plan.ref, variant, version) : null;
 
-		const mismatched = plan.kind === ModpackPlanKind.Apply && staged === null;
-
-		if (mismatched) {
-			throw new BridgeUserError({
-				ar: "ما لقينا إصدار المودباك هذا عند مصدره. اختَر المودباك مرة ثانية من تبويب المودباكات؛ ما غيّرنا ملفاتك.",
-				en: "We could not find this modpack release at its source. Pick the modpack again from the Modpacks tab; your files were not changed.",
-			});
-		}
+		let transition: TransitionPlan | null = null;
 
 		if (
 			stamp
@@ -105,7 +144,7 @@ export const install: Bridge.Install = {
 				target: stamp.launch.target,
 			});
 		} else if (stamp) {
-			const transition = await transitionFor(context, stamp, next);
+			transition = await transitionFor(context, stamp, next);
 
 			context.log("reinstalling", {
 				from: `${stamp.variant} ${stamp.version}`,
@@ -136,11 +175,17 @@ export const install: Bridge.Install = {
 		const launch = await INSTALL_BY_VARIANT[variant](context, version, build, javaMajor);
 
 		let pending: PendingFile[] = [];
+		let modpackActivity: Bridge.Activity | null = null;
 
 		if (staged) {
-			pending = await applyModpack(context, staged);
+			const applied = await applyModpack(context, staged);
+
+			pending = applied.pending;
+			modpackActivity = applied.activity;
 		} else if (detaching) {
 			await detachModpack(context);
+
+			modpackActivity = modpackRemovedActivity(plan.sidecar?.title ?? "");
 		} else {
 			pending = await settlePendingFiles(context);
 		}
@@ -161,6 +206,12 @@ export const install: Bridge.Install = {
 			build,
 			launch: launch.kind,
 		});
+
+		reportInstalled(context, stamp, next, build, javaMajor, transition);
+
+		if (modpackActivity) {
+			context.activity.report(modpackActivity);
+		}
 
 		return pendingHold(pending);
 	},

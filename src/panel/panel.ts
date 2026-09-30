@@ -10,7 +10,14 @@ import {
 import { rconAccessSections } from "@serverkgg/bridge/rcon";
 import { CROSSPLAY, VERSION_COMPAT } from "../companions";
 import { MODPACK_UPDATE_ACTION, MODPACK_VARIABLE } from "../modpacks";
-import { CHAT_MESSAGE_LENGTH, WORLD_STAGING, XP_MAX_LEVELS, XP_MIN_LEVELS } from "../shared";
+import {
+	CHAT_MESSAGE_LENGTH,
+	DIFFICULTY_OPTIONS,
+	GAME_MODE_OPTIONS,
+	WORLD_STAGING,
+	XP_MAX_LEVELS,
+	XP_MIN_LEVELS,
+} from "../shared";
 
 const LOADER_TYPES = [
 	"paper",
@@ -18,68 +25,6 @@ const LOADER_TYPES = [
 	"fabric",
 	"forge",
 	"neoforge",
-];
-
-const GAME_MODE_OPTIONS: Bridge.Option[] = [
-	{
-		value: "survival",
-		label: {
-			ar: "البقاء",
-			en: "Survival",
-		},
-	},
-	{
-		value: "creative",
-		label: {
-			ar: "الإبداع",
-			en: "Creative",
-		},
-	},
-	{
-		value: "adventure",
-		label: {
-			ar: "المغامرة",
-			en: "Adventure",
-		},
-	},
-	{
-		value: "spectator",
-		label: {
-			ar: "المشاهدة",
-			en: "Spectator",
-		},
-	},
-];
-
-const DIFFICULTY_OPTIONS: Bridge.Option[] = [
-	{
-		value: "peaceful",
-		label: {
-			ar: "مسالم",
-			en: "Peaceful",
-		},
-	},
-	{
-		value: "easy",
-		label: {
-			ar: "سهل",
-			en: "Easy",
-		},
-	},
-	{
-		value: "normal",
-		label: {
-			ar: "عادي",
-			en: "Normal",
-		},
-	},
-	{
-		value: "hard",
-		label: {
-			ar: "صعب",
-			en: "Hard",
-		},
-	},
 ];
 
 const MESSAGE_FIELD: Bridge.Field = {

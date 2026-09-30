@@ -14,6 +14,68 @@ export const GAME_MODES: readonly string[] = [
 	"spectator",
 ];
 
+export const GAME_MODE_OPTIONS: Bridge.Option[] = [
+	{
+		value: "survival",
+		label: {
+			ar: "البقاء",
+			en: "Survival",
+		},
+	},
+	{
+		value: "creative",
+		label: {
+			ar: "الإبداع",
+			en: "Creative",
+		},
+	},
+	{
+		value: "adventure",
+		label: {
+			ar: "المغامرة",
+			en: "Adventure",
+		},
+	},
+	{
+		value: "spectator",
+		label: {
+			ar: "المشاهدة",
+			en: "Spectator",
+		},
+	},
+];
+
+export const DIFFICULTY_OPTIONS: Bridge.Option[] = [
+	{
+		value: "peaceful",
+		label: {
+			ar: "مسالم",
+			en: "Peaceful",
+		},
+	},
+	{
+		value: "easy",
+		label: {
+			ar: "سهل",
+			en: "Easy",
+		},
+	},
+	{
+		value: "normal",
+		label: {
+			ar: "عادي",
+			en: "Normal",
+		},
+	},
+	{
+		value: "hard",
+		label: {
+			ar: "صعب",
+			en: "Hard",
+		},
+	},
+];
+
 export const XP_MIN_LEVELS = 1;
 
 export const XP_MAX_LEVELS = 100;
@@ -42,4 +104,13 @@ export const levelsArgument = (args: Bridge.Values) => {
 	}
 
 	return levels;
+};
+
+export const optionLabel = (options: readonly Bridge.Option[], value: string): Bridge.Text => {
+	return (
+		options.find((option) => option.value === value)?.label ?? {
+			ar: value,
+			en: value,
+		}
+	);
 };

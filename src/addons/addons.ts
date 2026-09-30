@@ -6,12 +6,15 @@ import {
 	BridgeKind,
 	BridgeUserError,
 } from "@serverkgg/bridge";
+import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { companionForProject, isCompanionFile } from "../companions";
 import type { AddonTarget, CatalogProvider, CatalogRelease } from "../providers";
 import {
+	AddonKind,
 	decodeProviderRef,
 	describeProviders,
 	encodeProviderRef,
+	explainLookup,
 	MODRINTH_UNSUPPORTED,
 	providerById,
 	resolveProvider,
@@ -119,6 +122,60 @@ const findTracked = (sidecar: Sidecar, id: string) => {
 		.map(([filename]) => filename);
 };
 
+const KIND_TEXT: Record<AddonKind, Bridge.Text> = {
+	[AddonKind.Mod]: {
+		ar: "مود",
+		en: "mod",
+	},
+	[AddonKind.Plugin]: {
+		ar: "إضافة",
+		en: "plugin",
+	},
+};
+
+const MISSING_TEXT: Record<AddonKind, Bridge.Text> = {
+	[AddonKind.Mod]: {
+		ar: "ما لقينا المود أو واحد من متطلباته عند مصدره. دوّر عليه مرة ثانية أو اختَر مود ثاني.",
+		en: "We could not find this mod or one of its dependencies at its source. Search for it again or pick another mod.",
+	},
+	[AddonKind.Plugin]: {
+		ar: "ما لقينا الإضافة أو وحدة من متطلباتها عند مصدرها. دوّر عليها مرة ثانية أو اختَر إضافة ثانية.",
+		en: "We could not find this plugin or one of its dependencies at its source. Search for it again or pick another plugin.",
+	},
+};
+
+const SUBJECT_TEXT: Record<AddonKind, Bridge.Text> = {
+	[AddonKind.Mod]: {
+		ar: "المود",
+		en: "the mod",
+	},
+	[AddonKind.Plugin]: {
+		ar: "الإضافة",
+		en: "the plugin",
+	},
+};
+
+const titleOf = (sidecar: Sidecar, tracked: string[], id: string) => {
+	const first = tracked.at(0);
+	const entry = first === undefined ? undefined : sidecar[first];
+
+	return entry?.title ?? enabledName(id);
+};
+
+const dependenciesText = (count: number): Bridge.Text => {
+	if (count === 0) {
+		return {
+			ar: "",
+			en: "",
+		};
+	}
+
+	return {
+		ar: count === 1 ? " مع متطلب واحد" : ` مع ${count} من متطلباته`,
+		en: count === 1 ? " with 1 dependency" : ` with ${count} dependencies`,
+	};
+};
+
 const forget = async (context: Bridge.Context, target: AddonTarget, sidecar: Sidecar, filename: string) => {
 	for (const candidate of [
 		filename,
@@ -139,10 +196,15 @@ const gather = async (
 	project: string,
 	version: string | null = null,
 ): Promise<PendingFile[]> => {
-	return resolveDependencies(
-		project,
-		(dependency, version) => provider.resolve(context, target, dependency, version),
-		version,
+	return await explainLookup(
+		() =>
+			resolveDependencies(
+				project,
+				(dependency, version) => provider.resolve(context, target, dependency, version),
+				version,
+			),
+		MISSING_TEXT[target.kind],
+		SUBJECT_TEXT[target.kind],
 	);
 };
 
@@ -267,6 +329,25 @@ const installProject = async (
 		files: pending.length,
 	});
 
+	const kind = KIND_TEXT[target.kind];
+	const dependencies = dependenciesText(pending.length - 1);
+
+	context.activity.report({
+		name: BridgeEventName.ModInstalled,
+		text: {
+			ar: `تم تثبيت ${kind.ar} ${primary.release.title} (${primary.release.version})${dependencies.ar}`,
+			en: `Installed ${kind.en} ${primary.release.title} (${primary.release.version})${dependencies.en}`,
+		},
+		subject: primary.release.title,
+		details: {
+			kind: target.kind,
+			title: primary.release.title,
+			version: primary.release.version,
+			provider: provider.id,
+			dependencies: pending.length - 1,
+		},
+	});
+
 	return entryFor(
 		primary.release.file.filename,
 		sidecar[primary.release.file.filename],
@@ -275,17 +356,38 @@ const installProject = async (
 	);
 };
 
+const reportRemoved = (context: Bridge.Context, target: AddonTarget, title: string) => {
+	const kind = KIND_TEXT[target.kind];
+
+	context.activity.report({
+		name: BridgeEventName.ModRemoved,
+		text: {
+			ar: `تمت إزالة ${kind.ar} ${title}`,
+			en: `Removed ${kind.en} ${title}`,
+		},
+		subject: title,
+		details: {
+			kind: target.kind,
+			title,
+		},
+	});
+};
+
 const removeEntry = async (context: Bridge.Context, id: string) => {
 	const target = await addonTarget(context);
 	const sidecar = await readSidecar(context, target.directory);
 	const tracked = findTracked(sidecar, id);
 
 	if (tracked.length > 0) {
+		const title = titleOf(sidecar, tracked, id);
+
 		for (const filename of tracked) {
 			await forget(context, target, sidecar, filename);
 		}
 
 		await writeSidecar(context, target.directory, sidecar);
+
+		reportRemoved(context, target, title);
 
 		return;
 	}
@@ -301,6 +403,8 @@ const removeEntry = async (context: Bridge.Context, id: string) => {
 
 	await forget(context, target, sidecar, name);
 	await writeSidecar(context, target.directory, sidecar);
+
+	reportRemoved(context, target, name);
 };
 
 const toggleEntry = async (context: Bridge.Context, id: string, enabled: boolean) => {
@@ -314,18 +418,49 @@ const toggleEntry = async (context: Bridge.Context, id: string, enabled: boolean
 					enabledName(id),
 				];
 
+	let moved = false;
+
 	for (const name of names) {
 		const active = `${target.directory}/${name}`;
 		const parked = `${active}${DISABLED_SUFFIX}`;
 
 		if (enabled && (await context.files.exists(parked))) {
 			await context.files.move(parked, active);
+
+			moved = true;
 		}
 
 		if (!enabled && (await context.files.exists(active))) {
 			await context.files.move(active, parked);
+
+			moved = true;
 		}
 	}
+
+	if (!moved) {
+		return;
+	}
+
+	const kind = KIND_TEXT[target.kind];
+	const title = titleOf(sidecar, tracked, id);
+
+	context.activity.report({
+		name: enabled ? BridgeEventName.ModEnabled : BridgeEventName.ModDisabled,
+		text: enabled
+			? {
+					ar: `تم تفعيل ${kind.ar} ${title}`,
+					en: `Enabled ${kind.en} ${title}`,
+				}
+			: {
+					ar: `تم إيقاف ${kind.ar} ${title}`,
+					en: `Disabled ${kind.en} ${title}`,
+				},
+		subject: title,
+		details: {
+			kind: target.kind,
+			title,
+		},
+	});
 };
 
 export const addons: Bridge.Catalog = {

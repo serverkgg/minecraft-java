@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
 import type { Bridge } from "@serverkgg/bridge";
+import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { cloneWorld, inspectJavaWorld, worldNameArgument, worldTools } from "./worldTools";
 
 test("world names reject traversal and shell punctuation", () => {
@@ -41,8 +42,9 @@ test("invalid Java headers are rejected and gzip Java metadata accepted", async 
 	await expect(inspectJavaWorld(context("1f 8b 08"), "world")).resolves.toBeUndefined();
 });
 
-test("create preserves the old world and changes only generation settings", async () => {
+test("create preserves the old world, changes only generation settings and reports the new world", async () => {
 	const writes: unknown[] = [];
+	const reported: Bridge.Activity[] = [];
 	const context = {
 		files: {
 			exists: async () => false,
@@ -55,6 +57,11 @@ test("create preserves the old world and changes only generation settings", asyn
 			},
 		},
 		log: () => {},
+		activity: {
+			report: (entry: Bridge.Activity) => {
+				reported.push(entry);
+			},
+		},
 	} as unknown as Bridge.Context;
 	await worldTools.actions.create?.(context, {
 		name: "new-world",
@@ -66,6 +73,20 @@ test("create preserves the old world and changes only generation settings", asyn
 		},
 		{
 			"level-name": "new-world",
+		},
+	]);
+	expect(reported).toEqual([
+		{
+			name: BridgeEventName.WorldCreated,
+			text: {
+				ar: "تم إنشاء ماب جديد new-world، ويتولّد مع التشغيل الجاي",
+				en: "Created world new-world, it generates on the next start",
+			},
+			subject: "new-world",
+			details: {
+				world: "new-world",
+				seed: "123",
+			},
 		},
 	]);
 });

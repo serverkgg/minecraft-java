@@ -1,4 +1,5 @@
 import { type Bridge, BridgeDetailFormat, BridgeDetailTone, BridgeKind, BridgeUserError } from "@serverkgg/bridge";
+import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { encodeProviderRef, modpackSourceById } from "../providers";
 import { addonDirectory, VARIANT_LABELS } from "../shared";
 import { MODPACK_VARIABLE } from "./applyModpack";
@@ -257,6 +258,22 @@ export const modpackStatus: Bridge.Detail = {
 			}
 
 			const entry = await installModpack(context, encodeProviderRef(sidecar.provider, sidecar.project));
+			const to = entry.version ?? latest.version;
+
+			context.activity.report({
+				name: BridgeEventName.ModpackSelected,
+				text: {
+					ar: `تم اختيار تحديث مودباك ${sidecar.title} من ${sidecar.version} إلى ${to}`,
+					en: `Selected the update of modpack ${sidecar.title} from ${sidecar.version} to ${to}`,
+				},
+				subject: sidecar.title,
+				details: {
+					title: sidecar.title,
+					provider: sidecar.provider,
+					from: sidecar.version,
+					to,
+				},
+			});
 
 			return {
 				variables: entry.variables ?? null,

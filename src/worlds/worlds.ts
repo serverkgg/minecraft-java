@@ -1,4 +1,5 @@
 import { type Bridge, BridgeKind, BridgeUserError } from "@serverkgg/bridge";
+import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { installedLayout } from "../install/installLayout";
 import { formatByteSize, isUnder, relativeUploadPath, WORLD_STAGING } from "../shared";
 import {
@@ -18,6 +19,8 @@ import {
 import { cloneWorld, exportWorld, inspectJavaWorld, worldNameArgument } from "./worldTools";
 
 const ACTIVE_MARK = "✓";
+
+const IMPORT_REPORT_LIMIT = 5;
 
 const nameOf = (path: string) => {
 	return path.split("/").at(-1) ?? "";
@@ -40,6 +43,53 @@ const uploadedWorldDirectories = async (context: Bridge.Context, source: string)
 	}
 
 	return mainLevelDirectories(found);
+};
+
+const reportWiped = (context: Bridge.Context, world: string, scope: string, text: Bridge.Text) => {
+	context.activity.report({
+		name: BridgeEventName.WorldWiped,
+		text,
+		subject: world,
+		details: {
+			world,
+			scope,
+		},
+	});
+};
+
+const reportImported = (context: Bridge.Context, imported: WorldImport[]) => {
+	if (imported.length <= IMPORT_REPORT_LIMIT) {
+		for (const { folder, name } of imported) {
+			context.activity.report({
+				name: BridgeEventName.WorldImported,
+				text: {
+					ar: `تم استيراد ماب ${name}`,
+					en: `Imported world ${name}`,
+				},
+				subject: name,
+				details: {
+					world: name,
+					folder,
+				},
+			});
+		}
+
+		return;
+	}
+
+	const named = imported.slice(0, IMPORT_REPORT_LIMIT).map((world) => world.name);
+
+	context.activity.report({
+		name: BridgeEventName.WorldImported,
+		text: {
+			ar: `تم استيراد مابات ${named.join("، ")} وغيرها (${imported.length})`,
+			en: `Imported worlds ${named.join(", ")} and more (${imported.length})`,
+		},
+		details: {
+			count: imported.length,
+			worlds: named.join(", "),
+		},
+	});
 };
 
 const refuseActiveWorld = async (context: Bridge.Context, name: string) => {
@@ -120,6 +170,8 @@ export const worlds: Bridge.Collection = {
 			});
 		}
 
+		reportImported(context, imported);
+
 		if (!directories.includes(source)) {
 			await context.files.remove(source);
 		}
@@ -138,10 +190,27 @@ export const worlds: Bridge.Collection = {
 			await exportWorld(context, row.id);
 		},
 		async clone(context, row, args) {
-			await cloneWorld(context, row.id, worldNameArgument(args.name));
+			const name = worldNameArgument(args.name);
+
+			await cloneWorld(context, row.id, name);
+
+			context.activity.report({
+				name: BridgeEventName.WorldCloned,
+				text: {
+					ar: `تم نسخ ماب ${row.id} باسم ${name}`,
+					en: `Cloned world ${row.id} as ${name}`,
+				},
+				subject: name,
+				details: {
+					world: name,
+					source: row.id,
+				},
+			});
 		},
 		async activate(context, row) {
-			if ((await activeWorld(context)) === row.id) {
+			const previous = await activeWorld(context);
+
+			if (previous === row.id) {
 				throw new BridgeUserError({
 					ar: "هذي الماب شغّالة أصلًا",
 					en: "this world is already the active one",
@@ -152,6 +221,19 @@ export const worlds: Bridge.Collection = {
 
 			context.log("switched the active world", {
 				world: row.id,
+			});
+
+			context.activity.report({
+				name: BridgeEventName.WorldActivated,
+				text: {
+					ar: `تم تفعيل ماب ${row.id} بدل ${previous}`,
+					en: `Activated world ${row.id} in place of ${previous}`,
+				},
+				subject: row.id,
+				details: {
+					world: row.id,
+					previous,
+				},
 			});
 		},
 
@@ -165,6 +247,18 @@ export const worlds: Bridge.Collection = {
 			context.log("deleted a world", {
 				world: row.id,
 			});
+
+			context.activity.report({
+				name: BridgeEventName.WorldDeleted,
+				text: {
+					ar: `تم حذف ماب ${row.id}`,
+					en: `Deleted world ${row.id}`,
+				},
+				subject: row.id,
+				details: {
+					world: row.id,
+				},
+			});
 		},
 
 		async resetNether(context, row) {
@@ -176,6 +270,11 @@ export const worlds: Bridge.Collection = {
 				world: row.id,
 				path: nether,
 			});
+
+			reportWiped(context, row.id, "nether", {
+				ar: `تم تصفير النذر في ماب ${row.id}`,
+				en: `Reset the Nether of world ${row.id}`,
+			});
 		},
 
 		async resetEnd(context, row) {
@@ -186,6 +285,11 @@ export const worlds: Bridge.Collection = {
 			context.log("reset the end", {
 				world: row.id,
 				path: end,
+			});
+
+			reportWiped(context, row.id, "end", {
+				ar: `تم تصفير الإند في ماب ${row.id}`,
+				en: `Reset the End of world ${row.id}`,
 			});
 		},
 	},

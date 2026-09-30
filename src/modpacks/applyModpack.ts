@@ -1,5 +1,15 @@
-import { type Bridge, BridgeDownloadError, BridgeUserError } from "@serverkgg/bridge";
-import { CatalogProviderId, type ModpackProject, type ModpackRelease, modpackSourceById } from "../providers";
+import { type Bridge, BridgeDownloadError, BridgeUserError, describeDownloadFailure } from "@serverkgg/bridge";
+import { BridgeEventName } from "@serverkgg/bridge/protocol";
+import {
+	CatalogProviderId,
+	describeLookupFailure,
+	LookupFailure,
+	lookupFailureOf,
+	type ModpackProject,
+	type ModpackRelease,
+	type ModpackSource,
+	modpackSourceById,
+} from "../providers";
 import {
 	createRequestPacer,
 	fileNameOf,
@@ -92,6 +102,7 @@ export interface StagedModpack {
 	overrides: string[];
 	excludes: string[];
 	prepared?: ModpackFile[];
+	skipped?: number;
 }
 
 const clearStaging = async (context: Bridge.Context) => {
@@ -167,6 +178,14 @@ const isThrottled = (error: unknown) => {
 	return error instanceof BridgeDownloadError && error.status === THROTTLED_STATUS;
 };
 
+export const downloadFailure = (error: unknown, subject: string) => {
+	return error instanceof BridgeDownloadError
+		? new BridgeUserError(describeDownloadFailure(error, subject), {
+				cause: error,
+			})
+		: error;
+};
+
 const wait = (ms: number) => {
 	return new Promise((resolve) => {
 		setTimeout(resolve, ms);
@@ -194,7 +213,7 @@ const downloadFile = async (context: Bridge.Context, file: ModpackFile, pacer: R
 			return;
 		} catch (error) {
 			if (!isThrottled(error) || Date.now() + THROTTLE_WAIT_MS >= deadline) {
-				throw error;
+				throw downloadFailure(error, fileNameOf(file.path));
 			}
 
 			context.log.warn("the download limit was reached, waiting before carrying on", {
@@ -350,21 +369,31 @@ export const modpackPlan = async (
 	};
 };
 
-const downloadArchive = async (context: Bridge.Context, archive: string, release: ModpackRelease) => {
+const downloadArchive = async (
+	context: Bridge.Context,
+	archive: string,
+	release: ModpackRelease,
+	project: ModpackProject,
+) => {
 	await clearStaging(context);
-	await context.files.download(archive, release.file.url, {
-		cache: true,
-		...(release.file.digest === null
-			? {}
-			: {
-					digest: release.file.digest,
-				}),
-		...(release.file.sizeBytes === null
-			? {}
-			: {
-					sizeBytes: release.file.sizeBytes,
-				}),
-	});
+
+	try {
+		await context.files.download(archive, release.file.url, {
+			cache: true,
+			...(release.file.digest === null
+				? {}
+				: {
+						digest: release.file.digest,
+					}),
+			...(release.file.sizeBytes === null
+				? {}
+				: {
+						sizeBytes: release.file.sizeBytes,
+					}),
+		});
+	} catch (error) {
+		throw downloadFailure(error, `${project.title} ${release.version}`);
+	}
 };
 
 const stageModrinth = async (context: Bridge.Context, archive: string) => {
@@ -443,39 +472,108 @@ const modpackMismatch = (wants: Bridge.Text, server: string) => {
 	});
 };
 
+const sourceUnavailable = (source: ModpackSource, cause?: unknown) => {
+	return new BridgeUserError(
+		{
+			ar: `مصدر المودباك ${source.label.ar} مو متاح الحين. جرّب بعد شوي أو اختَر مودباك من مصدر ثاني؛ ما غيّرنا ملفاتك.`,
+			en: `The modpack source ${source.label.en} is not available right now. Try again in a bit or pick a modpack from another source; your files were not changed.`,
+		},
+		{
+			cause,
+		},
+	);
+};
+
+const releaseMissing = (cause?: unknown) => {
+	return new BridgeUserError(
+		{
+			ar: "ما لقينا إصدار المودباك هذا عند مصدره. اختَر المودباك مرة ثانية من تبويب المودباكات؛ ما غيّرنا ملفاتك.",
+			en: "We could not find this modpack release at its source. Pick the modpack again from the Modpacks tab; your files were not changed.",
+		},
+		{
+			cause,
+		},
+	);
+};
+
+const MODPACK_SUBJECT: Bridge.Text = {
+	ar: "المودباك",
+	en: "the modpack",
+};
+
+const lookUp = async <Result>(
+	context: Bridge.Context,
+	source: ModpackSource,
+	ref: ModpackRef,
+	run: () => Promise<Result>,
+): Promise<Result> => {
+	try {
+		return await run();
+	} catch (error) {
+		const failure = lookupFailureOf(error);
+
+		if (failure === null) {
+			throw error;
+		}
+
+		context.log.warn("could not look up this modpack at its source", {
+			provider: ref.provider,
+			project: ref.project,
+			version: ref.versionId,
+			failure,
+			error: error instanceof Error ? error.message : String(error),
+		});
+
+		if (failure === LookupFailure.Missing) {
+			throw releaseMissing(error);
+		}
+
+		if (failure === LookupFailure.Refused) {
+			throw sourceUnavailable(source, error);
+		}
+
+		throw new BridgeUserError(describeLookupFailure(error, MODPACK_SUBJECT), {
+			cause: error,
+		});
+	}
+};
+
 export const stageModpack = async (
 	context: Bridge.Context,
 	ref: ModpackRef,
 	variant: ServerVariant,
 	version: string,
-): Promise<StagedModpack | null> => {
+): Promise<StagedModpack> => {
 	const source = modpackSourceById(ref.provider);
 
 	if (source.id !== ref.provider) {
-		context.log.warn("this modpack comes from a source we cannot install, skipping it", {
+		context.log.warn("this modpack comes from a source we cannot install", {
 			provider: ref.provider,
 		});
 
-		return null;
+		throw new BridgeUserError({
+			ar: "هذا المودباك من مصدر ما نثبّت منه. اختَر مودباك ثاني من تبويب المودباكات؛ ما غيّرنا ملفاتك.",
+			en: "This modpack comes from a source we cannot install from. Pick another modpack from the Modpacks tab; your files were not changed.",
+		});
 	}
 
 	if (!source.ready(context)) {
-		context.log.warn("this modpack's source is not configured, skipping it", {
+		context.log.warn("this modpack's source is not configured", {
 			provider: ref.provider,
 		});
 
-		return null;
+		throw sourceUnavailable(source);
 	}
 
-	const release = await source.release(context, ref.project, ref.versionId);
+	const release = await lookUp(context, source, ref, () => source.release(context, ref.project, ref.versionId));
 
 	if (!release) {
-		context.log.warn("could not find this modpack version, skipping it", {
+		context.log.warn("could not find this modpack version", {
 			project: ref.project,
 			version: ref.versionId,
 		});
 
-		return null;
+		throw releaseMissing();
 	}
 
 	if (variantForLoaders(release.loaders) !== variant || !release.gameVersions.includes(version)) {
@@ -494,7 +592,7 @@ export const stageModpack = async (
 		);
 	}
 
-	const project = await source.project(context, ref.project);
+	const project = await lookUp(context, source, ref, () => source.project(context, ref.project));
 	const archive = ref.provider === CatalogProviderId.CurseForge ? CURSEFORGE_ARCHIVE : MODRINTH_ARCHIVE;
 
 	context.log("downloading the modpack", {
@@ -503,7 +601,7 @@ export const stageModpack = async (
 		sizeBytes: release.file.sizeBytes,
 	});
 
-	await downloadArchive(context, archive, release);
+	await downloadArchive(context, archive, release, project);
 
 	const staged =
 		ref.provider === CatalogProviderId.CurseForge
@@ -547,6 +645,7 @@ export const stageModpack = async (
 	return {
 		archive,
 		prepared: keep,
+		skipped: skipped.length,
 		excludes: staged.excludes,
 		index: staged.index,
 		overrides: staged.overrides,
@@ -556,7 +655,28 @@ export const stageModpack = async (
 	};
 };
 
-export const applyModpack = async (context: Bridge.Context, staged: StagedModpack): Promise<PendingFile[]> => {
+export interface AppliedModpack {
+	pending: PendingFile[];
+	activity: Bridge.Activity;
+}
+
+export const modpackInstalledText = (title: string, version: string, pending: number): Bridge.Text => {
+	const installed = {
+		ar: `تم تثبيت مودباك ${title} (${version})`,
+		en: `Installed modpack ${title} (${version})`,
+	};
+
+	if (pending === 0) {
+		return installed;
+	}
+
+	return {
+		ar: `${installed.ar}، وناقص ${pending === 1 ? "ملف واحد لازم ترفعه" : pending === 2 ? "ملفين لازم ترفعهم" : pending <= 10 ? `${pending} ملفات لازم ترفعها` : `${pending} ملف لازم ترفعها`} بنفسك`,
+		en: `${installed.en}, ${pending === 1 ? "1 file is" : `${pending} files are`} missing and must be uploaded by you`,
+	};
+};
+
+export const applyModpack = async (context: Bridge.Context, staged: StagedModpack): Promise<AppliedModpack> => {
 	const { index, project, release, ref } = staged;
 	const previous = await readModpackSidecar(context);
 	const cleanup = modpackCleanup(previous?.files ?? null);
@@ -578,6 +698,7 @@ export const applyModpack = async (context: Bridge.Context, staged: StagedModpac
 				skipped: [],
 			}
 		: partitionModpackFiles(index.files, await resolveModpackSignals(context, index.files));
+	const skippedCount = staged.skipped ?? skipped.length;
 
 	if (skipped.length > 0) {
 		context.log.warn("left out the modpack's client-side files, they cannot run on a server", {
@@ -652,7 +773,22 @@ export const applyModpack = async (context: Bridge.Context, staged: StagedModpac
 		version: release.version,
 	});
 
-	return rescue.missing;
+	return {
+		pending: rescue.missing,
+		activity: {
+			name: BridgeEventName.ModpackInstalled,
+			text: modpackInstalledText(project.title, release.version, rescue.missing.length),
+			subject: project.title,
+			details: {
+				title: project.title,
+				version: release.version,
+				provider: ref.provider,
+				files: keep.length,
+				skipped: skippedCount,
+				pending: rescue.missing.length,
+			},
+		},
+	};
 };
 
 export const detachModpack = async (context: Bridge.Context) => {
@@ -667,4 +803,24 @@ export const detachModpack = async (context: Bridge.Context) => {
 
 	await clearModpackSidecar(context);
 	await clearStaging(context);
+};
+
+export const modpackRemovedActivity = (title: string): Bridge.Activity => {
+	const named = title.length > 0;
+
+	return {
+		name: BridgeEventName.ModpackRemoved,
+		text: {
+			ar: `تمت إزالة ${named ? `مودباك ${title}` : "المودباك"} وموداته، وبدأ السيرفر بماب جديد`,
+			en: `Removed ${named ? `modpack ${title}` : "the modpack"} and its mods, and the server started over with a fresh world`,
+		},
+		...(named
+			? {
+					subject: title,
+					details: {
+						title,
+					},
+				}
+			: {}),
+	};
 };

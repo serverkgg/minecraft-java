@@ -1,8 +1,26 @@
 import { describe, expect, test } from "bun:test";
-import type { Bridge } from "@serverkgg/bridge";
-import type { ModpackRelease } from "../providers";
-import { STAGING_ROOT } from "../shared";
-import { parentDirectoriesOf, placePreparedFiles, releaseIdentity } from "./applyModpack";
+import {
+	type Bridge,
+	BridgeDownloadError,
+	BridgeFailureCode,
+	BridgeFailureError,
+	BridgeNetError,
+	BridgeSecretError,
+	BridgeUserError,
+	describeDownloadFailure,
+} from "@serverkgg/bridge";
+import { BridgeEventName } from "@serverkgg/bridge/protocol";
+import { CatalogProviderId, type ModpackRelease } from "../providers";
+import { ServerVariant, STAGING_ROOT } from "../shared";
+import {
+	downloadFailure,
+	modpackInstalledText,
+	modpackRemovedActivity,
+	parentDirectoriesOf,
+	placePreparedFiles,
+	releaseIdentity,
+	stageModpack,
+} from "./applyModpack";
 import type { ModpackFile } from "./modpackIndex";
 
 const file = (path: string): ModpackFile => ({
@@ -179,5 +197,267 @@ describe("naming the type and version a modpack release runs on", () => {
 			ar: "نسخة ما نعرفها · مشغّل ما نعرفه",
 			en: "an unknown version · an unknown loader",
 		});
+	});
+});
+
+const stagingContext = (release: unknown) => {
+	return {
+		secret: () => null,
+		variable: () => null,
+		net: {
+			json: async () => release,
+		},
+		log: Object.assign(() => {}, {
+			warn: () => {},
+			error: () => {},
+		}),
+	} as unknown as Bridge.Context;
+};
+
+const refusalOf = async (run: Promise<unknown>) => {
+	try {
+		await run;
+	} catch (error) {
+		return error;
+	}
+
+	return null;
+};
+
+describe("why a modpack cannot be staged", () => {
+	test("a source we do not install from is named as such", async () => {
+		const error = await refusalOf(
+			stageModpack(
+				stagingContext(null),
+				{
+					provider: "somewhere",
+					project: "pack",
+					versionId: "v1",
+				},
+				ServerVariant.Fabric,
+				"1.21.1",
+			),
+		);
+
+		expect(error).toBeInstanceOf(BridgeUserError);
+		expect((error as BridgeUserError).text.en).toBe(
+			"This modpack comes from a source we cannot install from. Pick another modpack from the Modpacks tab; your files were not changed.",
+		);
+		expect((error as BridgeUserError).text.ar).toContain("مصدر ما نثبّت منه");
+	});
+
+	test("a source that is not set up names the source", async () => {
+		const error = await refusalOf(
+			stageModpack(
+				stagingContext(null),
+				{
+					provider: CatalogProviderId.CurseForge,
+					project: "123",
+					versionId: "456",
+				},
+				ServerVariant.Forge,
+				"1.20.1",
+			),
+		);
+
+		expect(error).toBeInstanceOf(BridgeUserError);
+		expect((error as BridgeUserError).text.en).toBe(
+			"The modpack source CurseForge is not available right now. Try again in a bit or pick a modpack from another source; your files were not changed.",
+		);
+		expect((error as BridgeUserError).text.ar).toContain("كيرس فورج");
+	});
+
+	test("a release the source no longer has asks for the modpack again", async () => {
+		const error = await refusalOf(
+			stageModpack(
+				stagingContext({
+					id: "v1",
+					version_number: "0.3.2",
+					files: [],
+				}),
+				{
+					provider: CatalogProviderId.Modrinth,
+					project: "pack",
+					versionId: "v1",
+				},
+				ServerVariant.Fabric,
+				"1.21.1",
+			),
+		);
+
+		expect(error).toBeInstanceOf(BridgeUserError);
+		expect((error as BridgeUserError).text.en).toBe(
+			"We could not find this modpack release at its source. Pick the modpack again from the Modpacks tab; your files were not changed.",
+		);
+	});
+});
+
+describe("a modpack download that fails", () => {
+	for (const status of [
+		404,
+		410,
+		401,
+		403,
+		503,
+		null,
+	]) {
+		test(`answering ${String(status)} becomes the customer's reason and keeps the original`, () => {
+			const original = new BridgeDownloadError(status, "cdn.modrinth.com answered");
+			const mapped = downloadFailure(original, "All the Mods 9 0.3.2");
+
+			expect(mapped).toBeInstanceOf(BridgeUserError);
+			expect((mapped as BridgeUserError).text).toEqual(describeDownloadFailure(original, "All the Mods 9 0.3.2"));
+			expect((mapped as BridgeUserError).cause).toBe(original);
+		});
+	}
+
+	test("anything that is not a download answer passes through untouched", () => {
+		const original = new Error("digest mismatch");
+
+		expect(downloadFailure(original, "mod.jar")).toBe(original);
+	});
+});
+
+describe("what installing a modpack reports", () => {
+	test("names the modpack and its version", () => {
+		expect(modpackInstalledText("All the Mods 9", "0.3.2", 0)).toEqual({
+			ar: "تم تثبيت مودباك All the Mods 9 (0.3.2)",
+			en: "Installed modpack All the Mods 9 (0.3.2)",
+		});
+	});
+
+	test("says how many files the owner still has to upload", () => {
+		expect(modpackInstalledText("All the Mods 9", "0.3.2", 1).en).toBe(
+			"Installed modpack All the Mods 9 (0.3.2), 1 file is missing and must be uploaded by you",
+		);
+		expect(modpackInstalledText("All the Mods 9", "0.3.2", 3).ar).toBe(
+			"تم تثبيت مودباك All the Mods 9 (0.3.2)، وناقص 3 ملفات لازم ترفعها بنفسك",
+		);
+	});
+
+	test("removing the modpack names it", () => {
+		expect(modpackRemovedActivity("All the Mods 9")).toEqual({
+			name: BridgeEventName.ModpackRemoved,
+			text: {
+				ar: "تمت إزالة مودباك All the Mods 9 وموداته، وبدأ السيرفر بماب جديد",
+				en: "Removed modpack All the Mods 9 and its mods, and the server started over with a fresh world",
+			},
+			subject: "All the Mods 9",
+			details: {
+				title: "All the Mods 9",
+			},
+		});
+		expect(modpackRemovedActivity("").subject).toBeUndefined();
+	});
+});
+
+const failingContext = (error: unknown, key: string | null = null) => {
+	return {
+		secret: () => key,
+		variable: () => null,
+		net: {
+			json: async () => {
+				throw error;
+			},
+		},
+		log: Object.assign(() => {}, {
+			warn: () => {},
+			error: () => {},
+		}),
+	} as unknown as Bridge.Context;
+};
+
+const MODRINTH_REF = {
+	provider: CatalogProviderId.Modrinth,
+	project: "Aa5L6RtV",
+	versionId: "NoSuchRel",
+};
+
+const CURSEFORGE_REF = {
+	provider: CatalogProviderId.CurseForge,
+	project: "123",
+	versionId: "456",
+};
+
+const RELEASE_MISSING =
+	"We could not find this modpack release at its source. Pick the modpack again from the Modpacks tab; your files were not changed.";
+
+const stagingFailure = (context: Bridge.Context, ref: typeof MODRINTH_REF) => {
+	return refusalOf(stageModpack(context, ref, ServerVariant.Fabric, "1.21.1"));
+};
+
+describe("a modpack source that answers with an error", () => {
+	for (const status of [
+		404,
+		410,
+	]) {
+		test(`modrinth answering ${status} for the release is release not found, and staff keep the answer`, async () => {
+			const original = new BridgeNetError(status, `api.modrinth.com answered ${status}`);
+			const error = await stagingFailure(failingContext(original), MODRINTH_REF);
+
+			expect(error).toBeInstanceOf(BridgeUserError);
+			expect((error as BridgeUserError).text.en).toBe(RELEASE_MISSING);
+			expect((error as BridgeUserError).cause).toBe(original);
+		});
+	}
+
+	test("modrinth refusing us is the source not being available", async () => {
+		const error = await stagingFailure(failingContext(new BridgeNetError(401, "answered 401")), MODRINTH_REF);
+
+		expect((error as BridgeUserError).text.en).toBe(
+			"The modpack source Modrinth is not available right now. Try again in a bit or pick a modpack from another source; your files were not changed.",
+		);
+	});
+
+	test("modrinth failing on its side is never read as not found", async () => {
+		const original = new BridgeNetError(500, "api.modrinth.com answered 500");
+		const error = await stagingFailure(failingContext(original), MODRINTH_REF);
+
+		expect((error as BridgeUserError).text).toEqual({
+			ar: "مصدر المودباك فيه عطل الحين. جرّب بعد شوي.",
+			en: "The source of the modpack is down right now. Try again in a bit.",
+		});
+		expect((error as BridgeUserError).cause).toBe(original);
+	});
+
+	test("an unreachable modrinth says so", async () => {
+		const error = await stagingFailure(failingContext(new BridgeNetError(null, "connection refused")), MODRINTH_REF);
+
+		expect((error as BridgeUserError).text.en).toBe(
+			"We could not reach the source to download the modpack. Try again.",
+		);
+	});
+
+	test("a modrinth rate limit keeps its failure code", async () => {
+		const error = await stagingFailure(failingContext(new BridgeNetError(429, "answered 429")), MODRINTH_REF);
+
+		expect(error).toBeInstanceOf(BridgeFailureError);
+		expect((error as BridgeFailureError).code).toBe(BridgeFailureCode.CatalogRateLimited);
+	});
+
+	test("curseforge answering 404 for the file is release not found", async () => {
+		const error = await stagingFailure(
+			failingContext(new BridgeNetError(404, "api.curseforge.com answered 404"), "key"),
+			CURSEFORGE_REF,
+		);
+
+		expect((error as BridgeUserError).text.en).toBe(RELEASE_MISSING);
+	});
+
+	test("curseforge rejecting the key is the source not being available", async () => {
+		const error = await stagingFailure(
+			failingContext(new BridgeNetError(403, "api.curseforge.com answered 403"), "key"),
+			CURSEFORGE_REF,
+		);
+
+		expect(error).toBeInstanceOf(BridgeUserError);
+		expect((error as BridgeUserError).text.en).toContain("The modpack source CurseForge is not available right now");
+		expect((error as BridgeUserError).cause).toBeInstanceOf(BridgeSecretError);
+	});
+
+	test("a curseforge rate limit keeps its failure code", async () => {
+		const error = await stagingFailure(failingContext(new BridgeNetError(429, "answered 429"), "key"), CURSEFORGE_REF);
+
+		expect((error as BridgeFailureError).code).toBe(BridgeFailureCode.CatalogRateLimited);
 	});
 });

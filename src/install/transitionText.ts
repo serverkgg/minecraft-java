@@ -125,3 +125,33 @@ export const transitionLines = (from: InstallIdentity, to: InstallIdentity, plan
 
 	return lines;
 };
+
+export const transitionActivityText = (
+	from: InstallIdentity,
+	to: InstallIdentity,
+	plan: TransitionPlan,
+): Bridge.Text => {
+	const moved = {
+		ar: `تم نقل السيرفر من ${nameOf(from)} إلى ${nameOf(to)}`,
+		en: `Moved the server from ${nameOf(from)} to ${nameOf(to)}`,
+	};
+
+	if (plan.world === WorldOutcome.Wiped) {
+		return {
+			ar: `${moved.ar}، وبما إن ${to.version} أقدم من ${from.version} تم حذف الماب والإضافات والمودات والإعدادات وبدأ سيرفر جديد`,
+			en: `${moved.en}, and since ${to.version} is older than ${from.version} the world, plugins, mods and settings were deleted and a fresh server started`,
+		};
+	}
+
+	if (plan.addons === AddonOutcome.Removed) {
+		return {
+			ar: `${moved.ar}، والماب باقي، وتمت إزالة الإضافات والمودات لأنها ما تشتغل على ${VARIANT_LABELS[to.variant]}`,
+			en: `${moved.en}, the world was kept, and plugins and mods were removed because they do not run on ${VARIANT_LABELS[to.variant]}`,
+		};
+	}
+
+	return {
+		ar: `${moved.ar}، والماب باقي زي ما هو`,
+		en: `${moved.en}, the world was kept`,
+	};
+};

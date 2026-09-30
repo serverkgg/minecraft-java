@@ -2,6 +2,7 @@ export * from "./curseforge";
 export * from "./curseforgeApi";
 export * from "./curseforgeModpack";
 export * from "./hangar";
+export * from "./lookupFailure";
 export * from "./modpackSource";
 export * from "./modrinth";
 export * from "./modrinthApi";
