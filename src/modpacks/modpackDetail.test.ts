@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { ServerVariant } from "../shared";
 import { detachPinnedBuild } from "./applyModpack";
+import { ModpackFreshness } from "./modpackFreshness";
 import { type ModpackSidecar, modpackModCount, type PendingFile, parseModpackSidecar } from "./modpackSidecar";
-import { pendingBadges } from "./modpackStatus";
+import { MODPACK_UPDATE_ACTION, modpackUpdateOf, pendingBadges } from "./modpackStatus";
 
 const pending = (overrides: Partial<PendingFile> = {}): PendingFile => ({
 	fileId: 6_620_555,
@@ -254,5 +255,51 @@ describe("showing the files a held modpack waits for", () => {
 			ar: "ناقص 2 ملفات",
 			en: "2 files missing",
 		});
+	});
+});
+
+describe("when a modpack can be updated", () => {
+	test("offers the update whenever a newer release exists, even on a pack that no longer matches the server", () => {
+		for (const mismatched of [
+			false,
+			true,
+		]) {
+			expect(modpackUpdateOf(mismatched, ModpackFreshness.Behind)).toEqual({
+				actions: [
+					MODPACK_UPDATE_ACTION,
+				],
+			});
+		}
+	});
+
+	test("a pack on its latest release says so in the words the update refusal uses", () => {
+		expect(modpackUpdateOf(false, ModpackFreshness.Current)).toEqual({
+			actions: [],
+			unavailable: {
+				[MODPACK_UPDATE_ACTION]: {
+					ar: "المودباك على آخر إصدار.",
+					en: "This modpack is already on its latest release.",
+				},
+			},
+		});
+	});
+
+	test("a pack on its latest release that no longer matches the server points to installing it again", () => {
+		expect(modpackUpdateOf(true, ModpackFreshness.Current).unavailable?.[MODPACK_UPDATE_ACTION]?.en).toBe(
+			"This modpack is on its latest release but does not match your server's type or version. Install it again from the Modpacks tab.",
+		);
+	});
+
+	test("leaves the update to the handler when the provider could not say which release is latest", () => {
+		for (const mismatched of [
+			false,
+			true,
+		]) {
+			expect(modpackUpdateOf(mismatched, ModpackFreshness.Unknown)).toEqual({
+				actions: [
+					MODPACK_UPDATE_ACTION,
+				],
+			});
+		}
 	});
 });

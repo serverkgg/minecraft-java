@@ -14,14 +14,29 @@ export const latestRelease = async (context: Bridge.Context, source: ModpackSour
 	return serverRelease(await source.releases(context, project));
 };
 
-export const outdated = async (context: Bridge.Context, source: ModpackSource, project: string, versionId: string) => {
+export enum ModpackFreshness {
+	Behind = "behind",
+	Current = "current",
+	Unknown = "unknown",
+}
+
+export const freshnessOf = async (
+	context: Bridge.Context,
+	source: ModpackSource,
+	project: string,
+	versionId: string,
+): Promise<ModpackFreshness> => {
 	try {
 		const latest = await latestRelease(context, source, project);
 
-		return latest !== null && latest.versionId !== versionId;
+		return latest !== null && latest.versionId !== versionId ? ModpackFreshness.Behind : ModpackFreshness.Current;
 	} catch {
-		return false;
+		return ModpackFreshness.Unknown;
 	}
+};
+
+export const outdated = async (context: Bridge.Context, source: ModpackSource, project: string, versionId: string) => {
+	return (await freshnessOf(context, source, project, versionId)) === ModpackFreshness.Behind;
 };
 
 export const describeProject = async (

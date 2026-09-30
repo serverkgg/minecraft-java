@@ -3,7 +3,7 @@ import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { encodeProviderRef, modpackSourceById } from "../providers";
 import { addonDirectory, VARIANT_LABELS } from "../shared";
 import { MODPACK_VARIABLE } from "./applyModpack";
-import { describeProject, identityMismatched, latestRelease, outdated } from "./modpackFreshness";
+import { describeProject, freshnessOf, identityMismatched, latestRelease, ModpackFreshness } from "./modpackFreshness";
 import { decodeModpackRef } from "./modpackRef";
 import {
 	type ModpackSidecar,
@@ -19,6 +19,21 @@ export const MODPACK_UPDATE_ACTION = "update";
 const PAGE_LINK: Bridge.Text = {
 	ar: "صفحة المودباك",
 	en: "Modpack page",
+};
+
+const NOTHING_TO_UPDATE: Bridge.Text = {
+	ar: "ما فيه مودباك مركّب، فما فيه شي نحدّثه.",
+	en: "No modpack is installed, so there is nothing to update.",
+};
+
+const ALREADY_LATEST: Bridge.Text = {
+	ar: "المودباك على آخر إصدار.",
+	en: "This modpack is already on its latest release.",
+};
+
+const LATEST_MISMATCHED: Bridge.Text = {
+	ar: "المودباك على آخر إصدار، بس ما يطابق نوع سيرفرك أو نسخته. ركّبه من جديد من تبويب المودباك.",
+	en: "This modpack is on its latest release but does not match your server's type or version. Install it again from the Modpacks tab.",
 };
 
 const NOT_INSTALLED_BADGE: Bridge.DetailBadge = {
@@ -105,6 +120,29 @@ const declaredDetail = async (context: Bridge.Context, declared: string): Promis
 		links: linksOf(project?.pageUrl ?? null),
 		stale: true,
 		actions: [],
+		unavailable: {
+			[MODPACK_UPDATE_ACTION]: NOTHING_TO_UPDATE,
+		},
+	};
+};
+
+export const modpackUpdateOf = (
+	mismatched: boolean,
+	freshness: ModpackFreshness,
+): Pick<Bridge.DetailResult, "actions" | "unavailable"> => {
+	if (freshness !== ModpackFreshness.Current) {
+		return {
+			actions: [
+				MODPACK_UPDATE_ACTION,
+			],
+		};
+	}
+
+	return {
+		actions: [],
+		unavailable: {
+			[MODPACK_UPDATE_ACTION]: mismatched ? LATEST_MISMATCHED : ALREADY_LATEST,
+		},
 	};
 };
 
@@ -197,7 +235,8 @@ const statsOf = (sidecar: ModpackSidecar, sizeBytes: number | null): Bridge.Deta
 const installedDetail = async (context: Bridge.Context, sidecar: ModpackSidecar): Promise<Bridge.DetailResult> => {
 	const source = modpackSourceById(sidecar.provider);
 	const mismatched = await identityMismatched(context, sidecar);
-	const behind = !mismatched && (await outdated(context, source, sidecar.project, sidecar.versionId));
+	const freshness = await freshnessOf(context, source, sidecar.project, sidecar.versionId);
+	const behind = freshness === ModpackFreshness.Behind;
 
 	const badge = mismatched ? MISMATCHED_BADGE : behind ? OUTDATED_BADGE : CURRENT_BADGE;
 
@@ -214,11 +253,7 @@ const installedDetail = async (context: Bridge.Context, sidecar: ModpackSidecar)
 		stats: statsOf(sidecar, await sizeOnDisk(context)),
 		links: linksOf(sidecar.pageUrl),
 		stale: mismatched || behind || sidecar.pending.length > 0,
-		actions: behind
-			? [
-					MODPACK_UPDATE_ACTION,
-				]
-			: [],
+		...modpackUpdateOf(mismatched, freshness),
 	};
 };
 
@@ -242,19 +277,13 @@ export const modpackStatus: Bridge.Detail = {
 			const sidecar = await readModpackSidecar(context);
 
 			if (!sidecar) {
-				throw new BridgeUserError({
-					ar: "ما فيه مودباك مركّب، فما فيه شي نحدّثه.",
-					en: "No modpack is installed, so there is nothing to update.",
-				});
+				throw new BridgeUserError(NOTHING_TO_UPDATE);
 			}
 
 			const latest = await latestRelease(context, modpackSourceById(sidecar.provider), sidecar.project);
 
 			if (!latest || latest.versionId === sidecar.versionId) {
-				throw new BridgeUserError({
-					ar: "المودباك على آخر إصدار.",
-					en: "This modpack is already on its latest release.",
-				});
+				throw new BridgeUserError(ALREADY_LATEST);
 			}
 
 			const entry = await installModpack(context, encodeProviderRef(sidecar.provider, sidecar.project));

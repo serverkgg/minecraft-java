@@ -287,7 +287,13 @@ const managed = (active: string) => {
 
 	const context = {
 		variable: () => null,
+		exec: async () => ({
+			stdout: "./world/level.dat\n./creative/level.dat",
+			stderr: "",
+			code: 0,
+		}),
 		files: {
+			size: async () => 100,
 			exists: async (path: string) => path === ".serverk-install.json",
 			read: async () => STAMP,
 			remove: async (path: string) => {
@@ -426,5 +432,43 @@ describe("what the world actions report", () => {
 				"end",
 			],
 		]);
+	});
+});
+
+describe("which world actions apply", () => {
+	const listedRow = async (context: Bridge.Context, id: string) => {
+		const row = (await worlds.list(context)).find((entry) => entry.id === id);
+
+		if (!row) {
+			throw new Error(`the list built no row for ${id}`);
+		}
+
+		return row;
+	};
+
+	test("the active world cannot be deleted or activated, and says why in the words the refusal uses", async () => {
+		const { context } = managed("creative");
+		const active = await listedRow(context, "creative");
+
+		const unavailable = await worlds.unavailable?.(context, active);
+
+		expect(Object.keys(unavailable ?? {}).sort()).toEqual([
+			"activate",
+			"delete",
+		]);
+		expect(unavailable?.delete?.en).toBe("you cannot delete the active world, activate another one first");
+		await expect(worlds.actions?.delete?.(context, active, {})).rejects.toThrow(unavailable?.delete?.en);
+		await expect(worlds.actions?.activate?.(context, active, {})).rejects.toThrow(unavailable?.activate?.en);
+	});
+
+	test("any other world, and a row that carries only its id, keeps every action", async () => {
+		const { context } = managed("world");
+
+		expect(await worlds.unavailable?.(context, await listedRow(context, "creative"))).toEqual({});
+		expect(
+			await worlds.unavailable?.(context, {
+				id: "creative",
+			}),
+		).toEqual({});
 	});
 });

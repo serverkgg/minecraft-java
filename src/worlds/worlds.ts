@@ -92,15 +92,22 @@ const reportImported = (context: Bridge.Context, imported: WorldImport[]) => {
 	});
 };
 
+const ACTIVE_WORLD_DELETE: Bridge.Text = {
+	ar: "ما تقدر تحذف الماب الشغّالة، فعّل ماب ثانية أول",
+	en: "you cannot delete the active world, activate another one first",
+};
+
+const ACTIVE_WORLD_ACTIVATE: Bridge.Text = {
+	ar: "هذي الماب شغّالة أصلًا",
+	en: "this world is already the active one",
+};
+
 const refuseActiveWorld = async (context: Bridge.Context, name: string) => {
 	if ((await activeWorld(context)) !== name) {
 		return;
 	}
 
-	throw new BridgeUserError({
-		ar: "ما تقدر تحذف الماب الشغّالة، فعّل ماب ثانية أول",
-		en: "you cannot delete the active world, activate another one first",
-	});
+	throw new BridgeUserError(ACTIVE_WORLD_DELETE);
 };
 
 export const worlds: Bridge.Collection = {
@@ -211,10 +218,7 @@ export const worlds: Bridge.Collection = {
 			const previous = await activeWorld(context);
 
 			if (previous === row.id) {
-				throw new BridgeUserError({
-					ar: "هذي الماب شغّالة أصلًا",
-					en: "this world is already the active one",
-				});
+				throw new BridgeUserError(ACTIVE_WORLD_ACTIVATE);
 			}
 
 			await setActiveWorld(context, row.id);
@@ -292,5 +296,16 @@ export const worlds: Bridge.Collection = {
 				en: `Reset the End of world ${row.id}`,
 			});
 		},
+	},
+
+	async unavailable(_context, row): Promise<Bridge.Unavailable> {
+		if (row.active !== ACTIVE_MARK) {
+			return {};
+		}
+
+		return {
+			delete: ACTIVE_WORLD_DELETE,
+			activate: ACTIVE_WORLD_ACTIVATE,
+		};
 	},
 };

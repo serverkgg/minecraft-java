@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import type { ModpackRelease } from "../providers";
-import { serverRelease } from "./modpackFreshness";
+import type { Bridge } from "@serverkgg/bridge";
+import type { ModpackRelease, ModpackSource } from "../providers";
+import { freshnessOf, ModpackFreshness, serverRelease } from "./modpackFreshness";
 
 const release = (overrides: Partial<ModpackRelease> = {}): ModpackRelease => ({
 	versionId: "6620555",
@@ -106,5 +107,43 @@ describe("choosing the modpack release a server gets", () => {
 				mixed,
 			]),
 		).toEqual(mixed);
+	});
+});
+
+describe("telling whether a modpack is behind its latest release", () => {
+	const context = {} as Bridge.Context;
+
+	const sourceOf = (releases: () => Promise<ModpackRelease[]>) => {
+		return {
+			releases: async () => await releases(),
+		} as unknown as ModpackSource;
+	};
+
+	test("a newer server release makes it behind", async () => {
+		const source = sourceOf(async () => [
+			release({
+				versionId: "2",
+			}),
+		]);
+
+		expect(await freshnessOf(context, source, "AABBCC", "1")).toBe(ModpackFreshness.Behind);
+	});
+
+	test("the installed release being the latest makes it current", async () => {
+		const source = sourceOf(async () => [
+			release({
+				versionId: "2",
+			}),
+		]);
+
+		expect(await freshnessOf(context, source, "AABBCC", "2")).toBe(ModpackFreshness.Current);
+	});
+
+	test("a provider that cannot be reached leaves it unknown rather than current", async () => {
+		const source = sourceOf(async () => {
+			throw new Error("rate limited");
+		});
+
+		expect(await freshnessOf(context, source, "AABBCC", "2")).toBe(ModpackFreshness.Unknown);
 	});
 });
