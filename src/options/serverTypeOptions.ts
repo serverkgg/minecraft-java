@@ -7,18 +7,18 @@ export const serverType: Bridge.Options = {
 			{
 				value: "vanilla",
 				label: {
-					ar: "فانيلا (Vanilla)",
+					ar: "Vanilla",
 					en: "Vanilla",
 				},
 				help: {
-					ar: "نسخة موجانق الأصلية بدون أي تعديل.",
+					ar: "سيرفر Mojang الأصلي دون أي تعديل.",
 					en: "Mojang's unmodified server.",
 				},
 			},
 			{
 				value: "paper",
 				label: {
-					ar: "بيبر (Paper)",
+					ar: "Paper",
 					en: "Paper",
 				},
 				help: {
@@ -29,18 +29,18 @@ export const serverType: Bridge.Options = {
 			{
 				value: "purpur",
 				label: {
-					ar: "بيربر (Purpur)",
+					ar: "Purpur",
 					en: "Purpur",
 				},
 				help: {
-					ar: "بيبر مع إعدادات إضافية للتحكم الدقيق.",
+					ar: "Paper مع إعدادات إضافية للتحكم الدقيق.",
 					en: "Paper plus extra settings for fine-grained control.",
 				},
 			},
 			{
 				value: "fabric",
 				label: {
-					ar: "فابريك (Fabric)",
+					ar: "Fabric",
 					en: "Fabric",
 				},
 				help: {
@@ -51,18 +51,18 @@ export const serverType: Bridge.Options = {
 			{
 				value: "neoforge",
 				label: {
-					ar: "نيوفورج (NeoForge)",
+					ar: "NeoForge",
 					en: "NeoForge",
 				},
 				help: {
-					ar: "الخيار الأفضل للمودات الحين، ومعظم المودات الجديدة عليه.",
-					en: "The best pick for mods today — most new mods target it.",
+					ar: "الخيار الأفضل للمودات حاليًا، ومعظم المودات الجديدة مبنية عليه.",
+					en: "The best pick for mods today. Most new mods target it.",
 				},
 			},
 			{
 				value: "forge",
 				label: {
-					ar: "فورج (Forge)",
+					ar: "Forge",
 					en: "Forge",
 				},
 				help: {

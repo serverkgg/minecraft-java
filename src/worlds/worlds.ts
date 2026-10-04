@@ -31,8 +31,8 @@ const uploadedWorldDirectories = async (context: Bridge.Context, source: string)
 
 	if (found.length === 0) {
 		throw new BridgeUserError({
-			ar: "ما لقينا ملف level.dat جوّا الملف المضغوط، تأكد إنك ضاغط مجلد الماب نفسه",
-			en: "the archive holds no level.dat, make sure you zipped the world folder itself",
+			ar: "لا يحتوي الملف المضغوط على level.dat، تأكد من ضغط مجلد الماب نفسه",
+			en: "The archive has no level.dat. Make sure you zipped the world folder itself",
 		});
 	}
 
@@ -93,13 +93,13 @@ const reportImported = (context: Bridge.Context, imported: WorldImport[]) => {
 };
 
 const ACTIVE_WORLD_DELETE: Bridge.Text = {
-	ar: "ما تقدر تحذف الماب الشغّالة، فعّل ماب ثانية أول",
-	en: "you cannot delete the active world, activate another one first",
+	ar: "لا يمكن حذف الماب المفعّلة، فعّل ماب أخرى أولًا",
+	en: "You can't delete the active world. Activate another one first",
 };
 
 const ACTIVE_WORLD_ACTIVATE: Bridge.Text = {
-	ar: "هذي الماب شغّالة أصلًا",
-	en: "this world is already the active one",
+	ar: "هذه الماب مفعّلة مسبقًا",
+	en: "This world is already the active one",
 };
 
 const refuseActiveWorld = async (context: Bridge.Context, name: string) => {
@@ -140,8 +140,8 @@ export const worlds: Bridge.Collection = {
 
 		if (source === null || !isUnder(source, WORLD_STAGING) || !(await context.files.exists(source))) {
 			throw new BridgeUserError({
-				ar: "ما لقينا الملفات اللي رفعتها",
-				en: "the uploaded files were not found",
+				ar: "تعذّر العثور على الملفات المرفوعة",
+				en: "We couldn't find the uploaded files",
 			});
 		}
 
@@ -230,7 +230,7 @@ export const worlds: Bridge.Collection = {
 			context.activity.report({
 				name: BridgeEventName.WorldActivated,
 				text: {
-					ar: `تم تفعيل ماب ${row.id} بدل ${previous}`,
+					ar: `تم تفعيل ماب ${row.id} بدلًا من ${previous}`,
 					en: `Activated world ${row.id} in place of ${previous}`,
 				},
 				subject: row.id,
@@ -276,7 +276,7 @@ export const worlds: Bridge.Collection = {
 			});
 
 			reportWiped(context, row.id, "nether", {
-				ar: `تم تصفير النذر في ماب ${row.id}`,
+				ar: `تم ريسيت النذر في ماب ${row.id}`,
 				en: `Reset the Nether of world ${row.id}`,
 			});
 		},
@@ -292,7 +292,7 @@ export const worlds: Bridge.Collection = {
 			});
 
 			reportWiped(context, row.id, "end", {
-				ar: `تم تصفير الإند في ماب ${row.id}`,
+				ar: `تم ريسيت الإند في ماب ${row.id}`,
 				en: `Reset the End of world ${row.id}`,
 			});
 		},

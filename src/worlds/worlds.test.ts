@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import type { Bridge } from "@serverkgg/bridge";
 import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { WORLD_STAGING } from "../shared";
@@ -80,20 +80,20 @@ const stage = (present: string[], found: string[]): Stage => {
 };
 
 describe("importing an uploaded world", () => {
-	test("an upload outside the world staging folder is refused", async () => {
+	it("an upload outside the world staging folder is refused", async () => {
 		const { context } = stage([], []);
 
 		await expect(worlds.add?.(context, "../etc/passwd")).rejects.toThrow();
 		await expect(worlds.add?.(context, "world")).rejects.toThrow();
 	});
 
-	test("an archive with no level file is refused", async () => {
+	it("an archive with no level file is refused", async () => {
 		const { context } = stage([], []);
 
 		await expect(worlds.add?.(context, UPLOAD)).rejects.toThrow();
 	});
 
-	test("a world keeps its folder name when nothing is in the way", async () => {
+	it("a world keeps its folder name when nothing is in the way", async () => {
 		const { context, moves, removed, added, reported } = stage(
 			[],
 			[
@@ -135,7 +135,7 @@ describe("importing an uploaded world", () => {
 		]);
 	});
 
-	test("an Aternos world lands beside the world the server already has", async () => {
+	it("an Aternos world lands beside the world the server already has", async () => {
 		const { context, moves, added } = stage(
 			[
 				"world",
@@ -171,11 +171,11 @@ describe("importing an uploaded world", () => {
 		]);
 		expect(outcome?.notice.en).toContain(`as "world-2"`);
 		expect(outcome?.notice.en).toContain(`named "world"`);
-		expect(outcome?.notice.ar).toContain(`باسم "world-2"`);
-		expect(outcome?.notice.ar).toContain(`اسمها "world"`);
+		expect(outcome?.notice.ar).toContain("باسم «world-2»");
+		expect(outcome?.notice.ar).toContain("ماب باسم «world»");
 	});
 
-	test("every world in one archive is imported and each sees the name the last one took", async () => {
+	it("every world in one archive is imported and each sees the name the last one took", async () => {
 		const { context, moves, added } = stage(
 			[
 				"world",
@@ -210,7 +210,7 @@ describe("importing an uploaded world", () => {
 		]);
 	});
 
-	test("a folder name with no latin letters or digits becomes the default world", async () => {
+	it("a folder name with no latin letters or digits becomes the default world", async () => {
 		const { context, moves } = stage(
 			[],
 			[
@@ -229,10 +229,12 @@ describe("importing an uploaded world", () => {
 		expect(outcome?.notice.en).toBe(
 			`The world "عالمي" was added as "world" because its folder name has no Latin letters or digits.`,
 		);
-		expect(outcome?.notice.ar).toBe(`أضفنا الماب "عالمي" باسم "world" لأن اسم مجلدها ما فيه حروف إنجليزية ولا أرقام.`);
+		expect(outcome?.notice.ar).toBe(
+			`تمت إضافة الماب «عالمي» باسم «world» لأن اسم مجلدها لا يحتوي على حروف إنجليزية أو أرقام.`,
+		);
 	});
 
-	test("a level file at the root of the upload keeps the staging folder name and leaves nothing behind", async () => {
+	it("a level file at the root of the upload keeps the staging folder name and leaves nothing behind", async () => {
 		const { context, moves, removed } = stage(
 			[],
 			[
@@ -251,7 +253,7 @@ describe("importing an uploaded world", () => {
 		expect(removed).toEqual([]);
 	});
 
-	test("a Bedrock world in the archive fails before anything moves", async () => {
+	it("a Bedrock world in the archive fails before anything moves", async () => {
 		const { context, moves } = stage(
 			[
 				`${UPLOAD}/bedrock/db`,
@@ -334,7 +336,7 @@ const ROW = {
 };
 
 describe("reporting a large world upload", () => {
-	test("more than five worlds become one entry with the count and the first names", async () => {
+	it("more than five worlds become one entry with the count and the first names", async () => {
 		const names = [
 			"alpha",
 			"bravo",
@@ -368,7 +370,7 @@ describe("reporting a large world upload", () => {
 });
 
 describe("what the world actions report", () => {
-	test("activating a world names it and the world it replaced", async () => {
+	it("activating a world names it and the world it replaced", async () => {
 		const { context, reported } = managed("world");
 
 		await worlds.actions?.activate?.(context, ROW, {});
@@ -377,7 +379,7 @@ describe("what the world actions report", () => {
 			{
 				name: BridgeEventName.WorldActivated,
 				text: {
-					ar: "تم تفعيل ماب creative بدل world",
+					ar: "تم تفعيل ماب creative بدلًا من world",
 					en: "Activated world creative in place of world",
 				},
 				subject: "creative",
@@ -389,7 +391,7 @@ describe("what the world actions report", () => {
 		]);
 	});
 
-	test("deleting a world reports it only once it is gone", async () => {
+	it("deleting a world reports it only once it is gone", async () => {
 		const { context, reported, removed } = managed("world");
 
 		await worlds.actions?.delete?.(context, ROW, {});
@@ -401,14 +403,14 @@ describe("what the world actions report", () => {
 		expect(reported.at(0)?.subject).toBe("creative");
 	});
 
-	test("the active world is refused and nothing is reported", async () => {
+	it("the active world is refused and nothing is reported", async () => {
 		const { context, reported } = managed("creative");
 
 		await expect(worlds.actions?.delete?.(context, ROW, {})).rejects.toThrow();
 		expect(reported).toEqual([]);
 	});
 
-	test("resetting the nether and the end each say which dimension was wiped", async () => {
+	it("resetting the nether and the end each say which dimension was wiped", async () => {
 		const { context, reported } = managed("world");
 
 		await worlds.actions?.resetNether?.(context, ROW, {});
@@ -446,7 +448,7 @@ describe("which world actions apply", () => {
 		return row;
 	};
 
-	test("the active world cannot be deleted or activated, and says why in the words the refusal uses", async () => {
+	it("the active world cannot be deleted or activated, and says why in the words the refusal uses", async () => {
 		const { context } = managed("creative");
 		const active = await listedRow(context, "creative");
 
@@ -456,12 +458,12 @@ describe("which world actions apply", () => {
 			"activate",
 			"delete",
 		]);
-		expect(unavailable?.delete?.en).toBe("you cannot delete the active world, activate another one first");
+		expect(unavailable?.delete?.en).toBe("You can't delete the active world. Activate another one first");
 		await expect(worlds.actions?.delete?.(context, active, {})).rejects.toThrow(unavailable?.delete?.en);
 		await expect(worlds.actions?.activate?.(context, active, {})).rejects.toThrow(unavailable?.activate?.en);
 	});
 
-	test("any other world, and a row that carries only its id, keeps every action", async () => {
+	it("any other world, and a row that carries only its id, keeps every action", async () => {
 		const { context } = managed("world");
 
 		expect(await worlds.unavailable?.(context, await listedRow(context, "creative"))).toEqual({});

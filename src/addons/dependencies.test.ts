@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, it } from "bun:test";
 import type { CatalogDependency, CatalogRelease } from "../providers";
 import { resolveDependencies } from "./dependencies";
 
@@ -25,7 +25,7 @@ const release = (versionId: string, dependencies: CatalogDependency[] = []): Cat
 	dependencies,
 });
 
-test("resolves transitive dependencies beyond the old eight-file limit and terminates cycles", async () => {
+it("resolves transitive dependencies beyond the old eight-file limit and terminates cycles", async () => {
 	const result = await resolveDependencies("0", async (project) =>
 		release(project, [
 			required(String((Number(project) + 1) % 12)),
@@ -34,7 +34,7 @@ test("resolves transitive dependencies beyond the old eight-file limit and termi
 	expect(result).toHaveLength(12);
 });
 
-test("uses exact dependency versions instead of silently selecting latest", async () => {
+it("uses exact dependency versions instead of silently selecting latest", async () => {
 	const calls: (string | null)[] = [];
 	const result = await resolveDependencies("root", async (project, version) => {
 		calls.push(version);
@@ -51,7 +51,7 @@ test("uses exact dependency versions instead of silently selecting latest", asyn
 	expect(result[1]?.release.versionId).toBe("pinned");
 });
 
-test("refuses missing required dependencies", async () => {
+it("refuses missing required dependencies", async () => {
 	await expect(
 		resolveDependencies("root", async (project) =>
 			project === "root"
@@ -63,7 +63,7 @@ test("refuses missing required dependencies", async () => {
 	).rejects.toThrow();
 });
 
-test("refuses incompatible projects and conflicting exact releases", async () => {
+it("refuses incompatible projects and conflicting exact releases", async () => {
 	await expect(
 		resolveDependencies("root", async (project) =>
 			release(
@@ -96,7 +96,7 @@ test("refuses incompatible projects and conflicting exact releases", async () =>
 	).rejects.toThrow();
 });
 
-test("does not install optional or embedded dependencies", async () => {
+it("does not install optional or embedded dependencies", async () => {
 	const result = await resolveDependencies("root", async () =>
 		release("root", [
 			{

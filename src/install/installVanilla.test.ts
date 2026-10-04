@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { type Bridge, BridgeUserError } from "@serverkgg/bridge";
 import { installVanilla } from "./installVanilla";
 
@@ -17,7 +17,7 @@ const context = {
 } as unknown as Bridge.Context;
 
 describe("installing a minecraft version mojang does not list", () => {
-	test("the customer is told to pick another version", async () => {
+	it("the customer is told to pick another version", async () => {
 		const error = await installVanilla(context, "1.99").then(
 			() => null,
 			(thrown: unknown) => thrown,

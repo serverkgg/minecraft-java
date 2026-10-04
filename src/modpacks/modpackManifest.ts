@@ -88,8 +88,8 @@ const readLoaderId = (id: string, mcVersion: string) => {
 
 	if (QUILT_LOADERS.includes(provider)) {
 		throw refuseModpack({
-			ar: "هذا المودباك يشتغل على Quilt، وسيرفرك ما عنده نوع سيرفر Quilt.",
-			en: "This modpack runs on quilt, and serverk has no quilt server type.",
+			ar: "هذا المودباك يشتغل على Quilt، ولا توفر منصة سيرفرك نوع السيرفر Quilt.",
+			en: "This modpack runs on Quilt, and Serverk has no Quilt server type.",
 		});
 	}
 
@@ -97,8 +97,8 @@ const readLoaderId = (id: string, mcVersion: string) => {
 
 	if (!variant || parts.length < 2) {
 		throw refuseModpack({
-			ar: `هذا المودباك يبي المشغّل "${id}"، وما نقدر نثبّته.`,
-			en: `This modpack asks for the "${id}" loader, which serverk cannot install.`,
+			ar: `هذا المودباك يتطلب المشغّل «${id}»، ولا يمكن تثبيته.`,
+			en: `This modpack asks for the "${id}" loader, which Serverk can't install.`,
 		});
 	}
 
@@ -107,8 +107,8 @@ const readLoaderId = (id: string, mcVersion: string) => {
 
 	if (loaderVersion.length === 0) {
 		throw refuseModpack({
-			ar: `هذا المودباك يبي المشغّل "${id}"، وما نقدر نثبّته.`,
-			en: `This modpack asks for the "${id}" loader, which serverk cannot install.`,
+			ar: `هذا المودباك يتطلب المشغّل «${id}»، ولا يمكن تثبيته.`,
+			en: `This modpack asks for the "${id}" loader, which Serverk can't install.`,
 		});
 	}
 
@@ -124,8 +124,8 @@ const readModLoader = (value: unknown, mcVersion: string) => {
 
 	if (!primary || typeof primary.id !== "string" || primary.id.length === 0) {
 		throw refuseModpack({
-			ar: "هذا المودباك ما يحدد مشغّل سيرفر نقدر نثبّته.",
-			en: "This modpack declares no server loader we can install.",
+			ar: "هذا المودباك لا يحدد مشغّل سيرفر قابلًا للتثبيت.",
+			en: "This modpack doesn't declare a server loader we can install.",
 		});
 	}
 
@@ -155,22 +155,22 @@ export const parseCurseforgeManifest = (raw: string): ModpackManifest => {
 		parsed = JSON.parse(raw) as RawManifest;
 	} catch {
 		throw refuseModpack({
-			ar: `ملف ${MODPACK_MANIFEST} في المودباك خربان.`,
-			en: `The modpack ${MODPACK_MANIFEST} is not valid json.`,
+			ar: `ملف ${MODPACK_MANIFEST} في المودباك تالف.`,
+			en: `The modpack's ${MODPACK_MANIFEST} isn't valid JSON.`,
 		});
 	}
 
 	if (parsed.manifestType !== MANIFEST_TYPE) {
 		throw refuseModpack({
-			ar: `هذا المودباك مسوّى لـ "${String(parsed.manifestType)}"، مو ماينكرافت.`,
-			en: `This modpack is built for "${String(parsed.manifestType)}", not minecraft.`,
+			ar: `هذا المودباك مصمم لـ «${String(parsed.manifestType)}»، وليس لماينكرافت.`,
+			en: `This modpack is built for "${String(parsed.manifestType)}", not Minecraft.`,
 		});
 	}
 
 	if (parsed.manifestVersion !== MANIFEST_VERSION) {
 		throw refuseModpack({
-			ar: `هذا المودباك على صيغة رقم ${String(parsed.manifestVersion)}، وما نقرأها لين الحين.`,
-			en: `This modpack uses manifest version ${String(parsed.manifestVersion)}, which we do not read yet.`,
+			ar: `هذا المودباك يستخدم الصيغة رقم ${String(parsed.manifestVersion)}، ولا ندعمها حتى الآن.`,
+			en: `This modpack uses manifest version ${String(parsed.manifestVersion)}, which we don't read yet.`,
 		});
 	}
 
@@ -178,8 +178,8 @@ export const parseCurseforgeManifest = (raw: string): ModpackManifest => {
 
 	if (typeof mcVersion !== "string" || mcVersion.length === 0) {
 		throw refuseModpack({
-			ar: "هذا المودباك ما يحدد نسخة ماينكرافت.",
-			en: "This modpack declares no minecraft version.",
+			ar: "هذا المودباك لا يحدد إصدار ماينكرافت.",
+			en: "This modpack doesn't declare a Minecraft version.",
 		});
 	}
 
@@ -187,7 +187,7 @@ export const parseCurseforgeManifest = (raw: string): ModpackManifest => {
 
 	if (entries.length > MAX_FILES) {
 		throw refuseModpack({
-			ar: `هذا المودباك فيه ${entries.length} ملف، أكثر من ${MAX_FILES} اللي نثبّتها.`,
+			ar: `يحتوي هذا المودباك على ${entries.length} ملف، وهذا أكثر من الحد الذي نثبّته (${MAX_FILES}).`,
 			en: `This modpack lists ${entries.length} files, more than the ${MAX_FILES} we install.`,
 		});
 	}

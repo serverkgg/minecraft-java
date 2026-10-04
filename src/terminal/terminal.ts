@@ -23,21 +23,21 @@ const commands: Bridge.TerminalCommand[] = [
 	{
 		name: "list",
 		summary: {
-			ar: "يعرض اللاعبين المتصلين الحين.",
+			ar: "يعرض اللاعبين المتصلين حاليًا.",
 			en: "List the players who are online.",
 		},
 	},
 	{
 		name: "save-all",
 		summary: {
-			ar: "يحفظ العالم على القرص.",
+			ar: "يحفظ الماب على القرص.",
 			en: "Save the world to disk.",
 		},
 	},
 	{
 		name: "kick",
 		summary: {
-			ar: "يطرد لاعب من السيرفر.",
+			ar: "يطرد لاعبًا من السيرفر.",
 			en: "Kick a player from the server.",
 		},
 		syntax: "kick <player> [reason]",
@@ -48,7 +48,7 @@ const commands: Bridge.TerminalCommand[] = [
 	{
 		name: "ban",
 		summary: {
-			ar: "يحظر لاعب نهائيًا.",
+			ar: "يحظر لاعبًا نهائيًا.",
 			en: "Ban a player.",
 		},
 		syntax: "ban <player> [reason]",
@@ -68,8 +68,8 @@ const commands: Bridge.TerminalCommand[] = [
 	{
 		name: "op",
 		summary: {
-			ar: "يرقّي لاعب لمشرف.",
-			en: "Grant operator rights.",
+			ar: "يجعل لاعبًا أدمن.",
+			en: "Make a player an operator.",
 		},
 		syntax: "op <player>",
 		args: [
@@ -80,8 +80,8 @@ const commands: Bridge.TerminalCommand[] = [
 	{
 		name: "deop",
 		summary: {
-			ar: "يسحب صلاحية الإشراف.",
-			en: "Revoke operator rights.",
+			ar: "يسحب صلاحية الأدمن.",
+			en: "Remove a player's operator rights.",
 		},
 		syntax: "deop <player>",
 		args: [
@@ -118,7 +118,7 @@ const commands: Bridge.TerminalCommand[] = [
 	{
 		name: "gamemode",
 		summary: {
-			ar: "يغيّر نمط اللعب للاعب.",
+			ar: "يغيّر وضع اللعب للاعب.",
 			en: "Change a player's game mode.",
 		},
 		syntax: "gamemode <mode> [player]",
@@ -142,7 +142,7 @@ const commands: Bridge.TerminalCommand[] = [
 	{
 		name: "difficulty",
 		summary: {
-			ar: "يغيّر صعوبة العالم.",
+			ar: "يغيّر صعوبة الماب.",
 			en: "Change the world difficulty.",
 		},
 		syntax: "difficulty <level>",
@@ -162,7 +162,7 @@ const commands: Bridge.TerminalCommand[] = [
 	{
 		name: "time",
 		summary: {
-			ar: "يضبط وقت العالم.",
+			ar: "يضبط الوقت في الماب.",
 			en: "Set the world time.",
 		},
 		syntax: "time set <value>",
@@ -209,7 +209,7 @@ const commands: Bridge.TerminalCommand[] = [
 	{
 		name: "tp",
 		summary: {
-			ar: "ينقل لاعب لمكان لاعب ثاني.",
+			ar: "ينقل لاعبًا إلى مكان لاعب آخر.",
 			en: "Teleport one player to another.",
 		},
 		syntax: "tp <player> <target>",
@@ -224,7 +224,7 @@ const commands: Bridge.TerminalCommand[] = [
 	{
 		name: "give",
 		summary: {
-			ar: "يعطي لاعب غرض.",
+			ar: "يعطي لاعبًا غرضًا.",
 			en: "Give a player an item.",
 		},
 		syntax: "give <player> <item> [count]",
@@ -250,7 +250,7 @@ const commands: Bridge.TerminalCommand[] = [
 	{
 		name: "seed",
 		summary: {
-			ar: "يعرض بذرة العالم.",
+			ar: "يعرض السيد الخاص بالماب.",
 			en: "Show the world seed.",
 		},
 	},

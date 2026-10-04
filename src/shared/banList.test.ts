@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { parseBanList } from "./banList";
 
 const NO_BANS = [
@@ -32,11 +32,11 @@ const AFTER_OLDER_REPLY = [
 ].join("\n");
 
 describe("reading the ban list the server prints", () => {
-	test("a server with nobody banned lists nothing", () => {
+	it("a server with nobody banned lists nothing", () => {
 		expect(parseBanList(NO_BANS)).toEqual([]);
 	});
 
-	test("a single ban carries the player, who banned them and why", () => {
+	it("a single ban carries the player, who banned them and why", () => {
 		expect(parseBanList(ONE_BAN)).toEqual([
 			{
 				name: "Steve",
@@ -46,7 +46,7 @@ describe("reading the ban list the server prints", () => {
 		]);
 	});
 
-	test("several bans keep their order, a reason with spaces, and a bedrock name with spaces", () => {
+	it("several bans keep their order, a reason with spaces, and a bedrock name with spaces", () => {
 		expect(parseBanList(THREE_BANS)).toEqual([
 			{
 				name: "Steve",
@@ -66,7 +66,7 @@ describe("reading the ban list the server prints", () => {
 		]);
 	});
 
-	test("an older server that writes bans without the plural marker still reads", () => {
+	it("an older server that writes bans without the plural marker still reads", () => {
 		expect(parseBanList(LEGACY_BANS)).toEqual([
 			{
 				name: "Herobrine",
@@ -76,7 +76,7 @@ describe("reading the ban list the server prints", () => {
 		]);
 	});
 
-	test("only the newest reply in the console is read, so an earlier one leaves no ghosts", () => {
+	it("only the newest reply in the console is read, so an earlier one leaves no ghosts", () => {
 		expect(parseBanList(AFTER_OLDER_REPLY)).toEqual([
 			{
 				name: "Steve",
@@ -86,7 +86,7 @@ describe("reading the ban list the server prints", () => {
 		]);
 	});
 
-	test("console lines that hold no reply at all list nothing", () => {
+	it("console lines that hold no reply at all list nothing", () => {
 		expect(parseBanList("")).toEqual([]);
 		expect(parseBanList("[12:10:00] [Server thread/INFO]: Steve joined the game")).toEqual([]);
 	});

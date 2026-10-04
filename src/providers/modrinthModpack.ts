@@ -29,7 +29,7 @@ export const MODPACK_SORTS: Bridge.CatalogFacet[] = [
 	{
 		value: "downloads",
 		label: {
-			ar: "الأكثر تحميلًا",
+			ar: "الأكثر تنزيلًا",
 			en: "Most downloaded",
 		},
 	},

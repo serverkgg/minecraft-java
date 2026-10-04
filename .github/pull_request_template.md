@@ -1,4 +1,4 @@
-## وش يغيّر هذا الـ PR؟ / What does this PR change?
+## ما الذي يغيّره هذا الـ PR؟ / What does this PR change?
 
 <!-- اشرح التغيير باختصار / Briefly explain the change -->
 

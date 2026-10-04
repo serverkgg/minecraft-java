@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import type { Bridge } from "@serverkgg/bridge";
 import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { gameplay } from "./gameplay";
@@ -27,7 +27,7 @@ const recorder = () => {
 };
 
 describe("what the gameplay actions report", () => {
-	test("each action says what changed and to what", async () => {
+	it("each action says what changed and to what", async () => {
 		const { context, reported } = recorder();
 
 		await gameplay.actions.timeDay?.(context, {});

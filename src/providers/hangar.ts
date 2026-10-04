@@ -112,20 +112,20 @@ export const hangarProvider: CatalogProvider = {
 	id: CatalogProviderId.Hangar,
 
 	label: {
-		ar: "هانجر",
+		ar: "Hangar",
 		en: "Hangar",
 	},
 
 	note: {
-		ar: "هانجر ما يرد علينا الحين. جرّب مرة ثانية بعد شوي.",
-		en: "Hangar is not answering right now. Try again in a bit.",
+		ar: "Hangar لا يستجيب حاليًا، جرب مرة ثانية بعد لحظة.",
+		en: "Hangar isn't responding right now. Try again in a moment.",
 	},
 
 	sorts: [
 		{
 			value: "-downloads",
 			label: {
-				ar: "الأكثر تحميلًا",
+				ar: "الأكثر تنزيلًا",
 				en: "Most downloaded",
 			},
 		},

@@ -5,7 +5,7 @@ export const buildUnavailable = (variant: ServerVariant, gameVersion: string) =>
 	const label = VARIANT_LABELS[variant];
 
 	return new BridgeUserError({
-		ar: `ما فيه إصدار من ${label} لماينكرافت ${gameVersion} لين الحين. اختر نسخة ثانية أو نوع سيرفر ثاني.`,
+		ar: `لا يتوفر إصدار من ${label} لـ ماينكرافت ${gameVersion} حتى الآن. اختر إصدارًا آخر أو نوع سيرفر آخر.`,
 		en: `${label} has no build for Minecraft ${gameVersion} yet. Pick another version or server type.`,
 	});
 };

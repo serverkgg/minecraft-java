@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { parseModpackIndex } from "./modpackIndex";
 
 const SHA512 = "a".repeat(128);
@@ -33,7 +33,7 @@ const entry = (overrides: Record<string, unknown> = {}) => {
 };
 
 describe("reading a modpack index", () => {
-	test("takes a file the pack describes properly", () => {
+	it("takes a file the pack describes properly", () => {
 		const parsed = parseModpackIndex(index(entry()));
 
 		expect(parsed.files).toEqual([
@@ -47,7 +47,7 @@ describe("reading a modpack index", () => {
 		]);
 	});
 
-	test("keeps the file when the pack forgot its size, because the checksum is what we verify", () => {
+	it("keeps the file when the pack forgot its size, because the checksum is what we verify", () => {
 		const parsed = parseModpackIndex(
 			index(
 				entry({
@@ -60,7 +60,7 @@ describe("reading a modpack index", () => {
 		expect(parsed.files.at(0)?.digest).toBe(`sha512:${SHA512}`);
 	});
 
-	test("refuses a file with no checksum we can verify", () => {
+	it("refuses a file with no checksum we can verify", () => {
 		expect(() => {
 			parseModpackIndex(
 				index(
@@ -72,7 +72,7 @@ describe("reading a modpack index", () => {
 		}).toThrow("no checksum we can verify");
 	});
 
-	test("refuses a file whose checksum is not a sha512", () => {
+	it("refuses a file whose checksum is not a sha512", () => {
 		expect(() => {
 			parseModpackIndex(
 				index(
@@ -86,7 +86,7 @@ describe("reading a modpack index", () => {
 		}).toThrow("no checksum we can verify");
 	});
 
-	test("refuses a file downloaded from a host we do not install from", () => {
+	it("refuses a file downloaded from a host we do not install from", () => {
 		expect(() => {
 			parseModpackIndex(
 				index(
@@ -97,10 +97,10 @@ describe("reading a modpack index", () => {
 					}),
 				),
 			);
-		}).toThrow("from a host we do not install from");
+		}).toThrow("from a host we don't download from");
 	});
 
-	test("refuses a host that only looks like one we allow", () => {
+	it("refuses a host that only looks like one we allow", () => {
 		expect(() => {
 			parseModpackIndex(
 				index(
@@ -111,10 +111,10 @@ describe("reading a modpack index", () => {
 					}),
 				),
 			);
-		}).toThrow("from a host we do not install from");
+		}).toThrow("from a host we don't download from");
 	});
 
-	test("skips past a host we refuse to reach one we allow", () => {
+	it("skips past a host we refuse to reach one we allow", () => {
 		const parsed = parseModpackIndex(
 			index(
 				entry({
@@ -129,7 +129,7 @@ describe("reading a modpack index", () => {
 		expect(parsed.files.at(0)?.url).toBe("https://raw.githubusercontent.com/owner/repo/main/alpha.jar");
 	});
 
-	test("refuses a plain http download from a host we otherwise allow", () => {
+	it("refuses a plain http download from a host we otherwise allow", () => {
 		expect(() => {
 			parseModpackIndex(
 				index(
@@ -140,10 +140,10 @@ describe("reading a modpack index", () => {
 					}),
 				),
 			);
-		}).toThrow("from a host we do not install from");
+		}).toThrow("from a host we don't download from");
 	});
 
-	test("leaves out a file the pack itself marks unsupported on a server", () => {
+	it("leaves out a file the pack itself marks unsupported on a server", () => {
 		const parsed = parseModpackIndex(
 			index(
 				entry({
@@ -157,7 +157,7 @@ describe("reading a modpack index", () => {
 		expect(parsed.files).toEqual([]);
 	});
 
-	test("installs a file the pack marks optional on a server", () => {
+	it("installs a file the pack marks optional on a server", () => {
 		const parsed = parseModpackIndex(
 			index(
 				entry({

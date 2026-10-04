@@ -22,7 +22,7 @@ export const gameplay: Bridge.Actions = {
 			await context.command("time set day");
 
 			reportGameplay(context, "time", "day", {
-				ar: "تم تحويل الوقت لنهار",
+				ar: "تم تحويل الوقت إلى النهار",
 				en: "Set the time to day",
 			});
 		},
@@ -31,7 +31,7 @@ export const gameplay: Bridge.Actions = {
 			await context.command("time set night");
 
 			reportGameplay(context, "time", "night", {
-				ar: "تم تحويل الوقت لليل",
+				ar: "تم تحويل الوقت إلى الليل",
 				en: "Set the time to night",
 			});
 		},
@@ -40,7 +40,7 @@ export const gameplay: Bridge.Actions = {
 			await context.command("weather clear");
 
 			reportGameplay(context, "weather", "clear", {
-				ar: "تم تغيير الجو لصافي",
+				ar: "تم تغيير الطقس إلى صافٍ",
 				en: "Set the weather to clear",
 			});
 		},
@@ -49,7 +49,7 @@ export const gameplay: Bridge.Actions = {
 			await context.command("weather rain");
 
 			reportGameplay(context, "weather", "rain", {
-				ar: "تم تغيير الجو لمطر",
+				ar: "تم تغيير الطقس إلى مطر",
 				en: "Set the weather to rain",
 			});
 		},
@@ -58,7 +58,7 @@ export const gameplay: Bridge.Actions = {
 			await context.command("weather thunder");
 
 			reportGameplay(context, "weather", "thunder", {
-				ar: "تم تغيير الجو لرعد وبرق",
+				ar: "تم تغيير الطقس إلى رعد وبرق",
 				en: "Set the weather to thunder",
 			});
 		},

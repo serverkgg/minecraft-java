@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import type { Bridge } from "@serverkgg/bridge";
 import { RCON_PASSWORD_LENGTH } from "@serverkgg/bridge/rcon";
 import { ServerVariant } from "../shared";
@@ -16,7 +16,7 @@ import { LaunchKind } from "./launchPlan";
 const generate = () => "generated";
 
 describe("promoting the rcon password the process is started with", () => {
-	test("generates the first password when the stamp carries none", () => {
+	it("generates the first password when the stamp carries none", () => {
 		expect(
 			promoteRconPassword(
 				{
@@ -31,7 +31,7 @@ describe("promoting the rcon password the process is started with", () => {
 		});
 	});
 
-	test("keeps the live password when nothing is pending", () => {
+	it("keeps the live password when nothing is pending", () => {
 		expect(
 			promoteRconPassword(
 				{
@@ -46,7 +46,7 @@ describe("promoting the rcon password the process is started with", () => {
 		});
 	});
 
-	test("moves a rotated password into place and clears the pending slot", () => {
+	it("moves a rotated password into place and clears the pending slot", () => {
 		expect(
 			promoteRconPassword(
 				{
@@ -61,13 +61,13 @@ describe("promoting the rcon password the process is started with", () => {
 		});
 	});
 
-	test("generates a password of the shared length", () => {
+	it("generates a password of the shared length", () => {
 		expect(generateRconPassword()).toHaveLength(RCON_PASSWORD_LENGTH);
 	});
 });
 
 describe("telling the customer which password to use", () => {
-	test("answers nothing before the first boot generated one", () => {
+	it("answers nothing before the first boot generated one", () => {
 		expect(rconPasswordOf(null)).toBeNull();
 		expect(
 			rconPasswordOf({
@@ -77,7 +77,7 @@ describe("telling the customer which password to use", () => {
 		).toBeNull();
 	});
 
-	test("answers the live password with nothing pending", () => {
+	it("answers the live password with nothing pending", () => {
 		expect(
 			rconPasswordOf({
 				rconPassword: "live",
@@ -89,7 +89,7 @@ describe("telling the customer which password to use", () => {
 		});
 	});
 
-	test("answers the rotated password as pending until the restart promotes it", () => {
+	it("answers the rotated password as pending until the restart promotes it", () => {
 		expect(
 			rconPasswordOf({
 				rconPassword: "live",
@@ -112,7 +112,7 @@ describe("telling the customer which password to use", () => {
 });
 
 describe("pinning rcon into server.properties", () => {
-	test("enables rcon only while remote access is on, on the manifest port", () => {
+	it("enables rcon only while remote access is on, on the manifest port", () => {
 		expect(rconProperties(true, "secret")).toEqual({
 			"enable-rcon": "true",
 			"rcon.port": RCON_PORT,
@@ -125,12 +125,12 @@ describe("pinning rcon into server.properties", () => {
 		});
 	});
 
-	test("listens on the port the manifest publishes", () => {
+	it("listens on the port the manifest publishes", () => {
 		expect(RCON_PORT).toBe(25_575);
 	});
 });
 
-test("a fresh install commits its password only after writing RCON properties", async () => {
+it("a fresh install commits its password only after writing RCON properties", async () => {
 	const calls: string[] = [];
 	const stamp: InstallStamp = {
 		variant: ServerVariant.Paper,

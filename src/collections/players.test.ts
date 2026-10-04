@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import type { Bridge } from "@serverkgg/bridge";
 import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { playerPresence, players } from "./players";
@@ -41,7 +41,7 @@ const STEVE = {
 };
 
 describe("the player a kick or a ban is reported against", () => {
-	test("a java name is carried as it is", () => {
+	it("a java name is carried as it is", () => {
 		expect(playerPresence("Notch")).toEqual({
 			platform: "java",
 			player: "Notch",
@@ -49,7 +49,7 @@ describe("the player a kick or a ban is reported against", () => {
 		});
 	});
 
-	test("a bedrock name keeps its prefix in the line and drops it for the head", () => {
+	it("a bedrock name keeps its prefix in the line and drops it for the head", () => {
 		expect(playerPresence(".Steve")).toEqual({
 			platform: "bedrock",
 			player: ".Steve",
@@ -59,7 +59,7 @@ describe("the player a kick or a ban is reported against", () => {
 });
 
 describe("what the player actions report", () => {
-	test("a kick keeps its event and also reports the player", async () => {
+	it("a kick keeps its event and also reports the player", async () => {
 		const { context, emitted, reported } = recorder();
 
 		await players.actions?.kick?.(context, STEVE, {});
@@ -80,7 +80,7 @@ describe("what the player actions report", () => {
 		]);
 	});
 
-	test("a ban keeps its event and also reports the player", async () => {
+	it("a ban keeps its event and also reports the player", async () => {
 		const { context, emitted, reported } = recorder();
 
 		await players.actions?.ban?.(context, STEVE, {});
@@ -101,7 +101,7 @@ describe("what the player actions report", () => {
 		]);
 	});
 
-	test("making a player an operator is reported as access granted", async () => {
+	it("making a player an operator is reported as access granted", async () => {
 		const { context, reported } = recorder();
 
 		await players.actions?.op?.(context, STEVE, {});
@@ -116,7 +116,7 @@ describe("what the player actions report", () => {
 		});
 	});
 
-	test("xp, game mode and kill each say what changed", async () => {
+	it("xp, game mode and kill each say what changed", async () => {
 		const { context, reported } = recorder();
 
 		await players.actions?.xp?.(context, STEVE, {
@@ -133,7 +133,7 @@ describe("what the player actions report", () => {
 				en: "Gave Steve 5 levels of experience",
 			},
 			{
-				ar: "تم تغيير نمط اللعب لـ Steve إلى الإبداع",
+				ar: "تم تغيير وضع اللعب لـ Steve إلى الإبداع",
 				en: "Set Steve's game mode to Creative",
 			},
 			{
@@ -156,7 +156,7 @@ describe("what the player actions report", () => {
 		});
 	});
 
-	test("a refused argument runs nothing and reports nothing", async () => {
+	it("a refused argument runs nothing and reports nothing", async () => {
 		const { context, sent, reported } = recorder();
 
 		await expect(

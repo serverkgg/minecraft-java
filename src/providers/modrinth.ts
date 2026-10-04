@@ -92,13 +92,13 @@ export const modrinthProvider: CatalogProvider = {
 	id: CatalogProviderId.Modrinth,
 
 	label: {
-		ar: "مودرينث",
+		ar: "Modrinth",
 		en: "Modrinth",
 	},
 
 	note: {
-		ar: "مودرينث ما يرد علينا الحين. جرّب مرة ثانية بعد شوي.",
-		en: "Modrinth is not answering right now. Try again in a bit.",
+		ar: "Modrinth لا يستجيب حاليًا، جرب مرة ثانية بعد لحظة.",
+		en: "Modrinth isn't responding right now. Try again in a moment.",
 	},
 
 	sorts: [
@@ -112,7 +112,7 @@ export const modrinthProvider: CatalogProvider = {
 		{
 			value: "downloads",
 			label: {
-				ar: "الأكثر تحميلًا",
+				ar: "الأكثر تنزيلًا",
 				en: "Most downloaded",
 			},
 		},

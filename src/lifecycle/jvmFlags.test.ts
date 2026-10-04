@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { jvmFlags } from "./jvmFlags";
 
 const flagOf = (flags: string[], name: string) => {
@@ -6,22 +6,22 @@ const flagOf = (flags: string[], name: string) => {
 };
 
 describe("g1 tuning from aikar's guide without the reservation flags", () => {
-	test("the heap ceiling is the plan's heap, so the jvm never grows into memory the plan does not have", () => {
+	it("the heap ceiling is the plan's heap, so the jvm never grows into memory the plan does not have", () => {
 		expect(flagOf(jvmFlags(6144), "-Xmx")).toBe("-Xmx6144M");
 		expect(flagOf(jvmFlags(1536), "-Xmx")).toBe("-Xmx1536M");
 	});
 
-	test("the jvm starts on a quarter of the heap and grows into the rest as the world needs it", () => {
+	it("the jvm starts on a quarter of the heap and grows into the rest as the world needs it", () => {
 		expect(flagOf(jvmFlags(6144), "-Xms")).toBe("-Xms1536M");
 		expect(flagOf(jvmFlags(1536), "-Xms")).toBe("-Xms384M");
 	});
 
-	test("a small heap still starts on at least 256mb, never on less", () => {
+	it("a small heap still starts on at least 256mb, never on less", () => {
 		expect(flagOf(jvmFlags(512), "-Xms")).toBe("-Xms256M");
 		expect(flagOf(jvmFlags(1024), "-Xms")).toBe("-Xms256M");
 	});
 
-	test("the starting heap never passes the ceiling, whatever the plan is", () => {
+	it("the starting heap never passes the ceiling, whatever the plan is", () => {
 		for (const heapMb of [
 			128,
 			256,
@@ -37,7 +37,7 @@ describe("g1 tuning from aikar's guide without the reservation flags", () => {
 		}
 	});
 
-	test("the heap is never pre-touched, the container is memory capped and sold by the gigabyte", () => {
+	it("the heap is never pre-touched, the container is memory capped and sold by the gigabyte", () => {
 		for (const heapMb of [
 			512,
 			2048,
@@ -48,7 +48,7 @@ describe("g1 tuning from aikar's guide without the reservation flags", () => {
 		}
 	});
 
-	test("a heap of twelve gigabytes or less gets the base tuning", () => {
+	it("a heap of twelve gigabytes or less gets the base tuning", () => {
 		const flags = jvmFlags(6144);
 
 		expect(flagOf(flags, "-XX:G1NewSizePercent")).toBe("-XX:G1NewSizePercent=30");
@@ -58,7 +58,7 @@ describe("g1 tuning from aikar's guide without the reservation flags", () => {
 		expect(flagOf(flags, "-XX:InitiatingHeapOccupancyPercent")).toBe("-XX:InitiatingHeapOccupancyPercent=15");
 	});
 
-	test("a heap past twelve gigabytes gets the large-heap tuning", () => {
+	it("a heap past twelve gigabytes gets the large-heap tuning", () => {
 		const flags = jvmFlags(16_384);
 
 		expect(flagOf(flags, "-XX:G1NewSizePercent")).toBe("-XX:G1NewSizePercent=40");
@@ -68,12 +68,12 @@ describe("g1 tuning from aikar's guide without the reservation flags", () => {
 		expect(flagOf(flags, "-XX:InitiatingHeapOccupancyPercent")).toBe("-XX:InitiatingHeapOccupancyPercent=20");
 	});
 
-	test("twelve gigabytes exactly is still a base heap, the variant starts above it", () => {
+	it("twelve gigabytes exactly is still a base heap, the variant starts above it", () => {
 		expect(flagOf(jvmFlags(12_288), "-XX:G1HeapRegionSize")).toBe("-XX:G1HeapRegionSize=8M");
 		expect(flagOf(jvmFlags(12_289), "-XX:G1HeapRegionSize")).toBe("-XX:G1HeapRegionSize=16M");
 	});
 
-	test("the experimental options are unlocked before the flags that need them", () => {
+	it("the experimental options are unlocked before the flags that need them", () => {
 		const flags = jvmFlags(2048);
 
 		const unlock = flags.indexOf("-XX:+UnlockExperimentalVMOptions");
@@ -87,7 +87,7 @@ describe("g1 tuning from aikar's guide without the reservation flags", () => {
 		}
 	});
 
-	test("the whole set stays valid on java 8, the oldest runtime the image ships", () => {
+	it("the whole set stays valid on java 8, the oldest runtime the image ships", () => {
 		const flags = jvmFlags(2048);
 
 		for (const flag of flags) {
@@ -96,7 +96,7 @@ describe("g1 tuning from aikar's guide without the reservation flags", () => {
 		}
 	});
 
-	test("the set is exactly the tuning flags, with no marker the server is no longer entitled to", () => {
+	it("the set is exactly the tuning flags, with no marker the server is no longer entitled to", () => {
 		expect(jvmFlags(2048)).toEqual([
 			"-Xms512M",
 			"-Xmx2048M",

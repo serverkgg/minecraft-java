@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import type { Bridge } from "@serverkgg/bridge";
 import type { ModpackRelease, ModpackSource } from "../providers";
 import { freshnessOf, ModpackFreshness, serverRelease } from "./modpackFreshness";
@@ -24,7 +24,7 @@ const release = (overrides: Partial<ModpackRelease> = {}): ModpackRelease => ({
 });
 
 describe("choosing the modpack release a server gets", () => {
-	test("the newest stable release wins", () => {
+	it("the newest stable release wins", () => {
 		const stable = release({
 			versionId: "2",
 		});
@@ -43,7 +43,7 @@ describe("choosing the modpack release a server gets", () => {
 		).toEqual(stable);
 	});
 
-	test("a beta is taken when the pack has published nothing stable", () => {
+	it("a beta is taken when the pack has published nothing stable", () => {
 		const beta = release({
 			versionId: "1",
 			stable: false,
@@ -60,7 +60,7 @@ describe("choosing the modpack release a server gets", () => {
 		).toEqual(beta);
 	});
 
-	test("a release on a loader we cannot run is never chosen", () => {
+	it("a release on a loader we cannot run is never chosen", () => {
 		const neoforge = release({
 			versionId: "2",
 		});
@@ -78,7 +78,7 @@ describe("choosing the modpack release a server gets", () => {
 		).toEqual(neoforge);
 	});
 
-	test("a pack with no release we can run answers with nothing", () => {
+	it("a pack with no release we can run answers with nothing", () => {
 		expect(
 			serverRelease([
 				release({
@@ -94,7 +94,7 @@ describe("choosing the modpack release a server gets", () => {
 		expect(serverRelease([])).toBeNull();
 	});
 
-	test("a release that also lists a loader we cannot run is still usable", () => {
+	it("a release that also lists a loader we cannot run is still usable", () => {
 		const mixed = release({
 			loaders: [
 				"quilt",
@@ -119,7 +119,7 @@ describe("telling whether a modpack is behind its latest release", () => {
 		} as unknown as ModpackSource;
 	};
 
-	test("a newer server release makes it behind", async () => {
+	it("a newer server release makes it behind", async () => {
 		const source = sourceOf(async () => [
 			release({
 				versionId: "2",
@@ -129,7 +129,7 @@ describe("telling whether a modpack is behind its latest release", () => {
 		expect(await freshnessOf(context, source, "AABBCC", "1")).toBe(ModpackFreshness.Behind);
 	});
 
-	test("the installed release being the latest makes it current", async () => {
+	it("the installed release being the latest makes it current", async () => {
 		const source = sourceOf(async () => [
 			release({
 				versionId: "2",
@@ -139,7 +139,7 @@ describe("telling whether a modpack is behind its latest release", () => {
 		expect(await freshnessOf(context, source, "AABBCC", "2")).toBe(ModpackFreshness.Current);
 	});
 
-	test("a provider that cannot be reached leaves it unknown rather than current", async () => {
+	it("a provider that cannot be reached leaves it unknown rather than current", async () => {
 		const source = sourceOf(async () => {
 			throw new Error("rate limited");
 		});

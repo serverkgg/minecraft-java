@@ -40,8 +40,8 @@ export const preserveRuntime = async (context: Bridge.Context, stamp: InstallSta
 		if (copied.code !== 0) {
 			await context.files.remove(staging);
 			throw new BridgeUserError({
-				ar: "ما قدرنا نحفظ ملفات التشغيل القديمة. تأكد من المساحة وجرّب التحديث مرة ثانية.",
-				en: "Could not preserve the previous runtime. Check disk space and retry the update.",
+				ar: "تعذّر حفظ ملفات التشغيل القديمة. تأكد من المساحة وجرب التحديث مرة ثانية.",
+				en: "We couldn't save the previous runtime files. Check disk space and try the update again.",
 			});
 		}
 	}
@@ -98,8 +98,8 @@ export const recoverRuntime = async (context: Bridge.Context, stamp: InstallStam
 		);
 		if (copied.code !== 0) {
 			throw new BridgeUserError({
-				ar: "ما قدرنا نسترجع ملفات التشغيل المحفوظة. تأكد من المساحة وجرّب مرة ثانية.",
-				en: "Could not recover the preserved runtime. Check disk space and retry.",
+				ar: "تعذّر استرجاع ملفات التشغيل المحفوظة. تأكد من المساحة وجرب مرة ثانية.",
+				en: "We couldn't restore the saved runtime files. Check disk space and try again.",
 			});
 		}
 	}

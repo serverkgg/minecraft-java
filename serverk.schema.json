@@ -103,6 +103,45 @@
 							"minLength": 1,
 							"maxLength": 256,
 							"pattern": "^[a-zA-Z0-9][a-zA-Z0-9/_-]*\\.webp$"
+						},
+						"extensions": {
+							"default": [],
+							"description": "What a customer can add to this game, and from which catalogs. The public pages claim only what is declared here; declare nothing when the game takes no additions.",
+							"maxItems": 4,
+							"type": "array",
+							"items": {
+								"type": "object",
+								"properties": {
+									"kind": {
+										"type": "string",
+										"enum": [
+											"mods",
+											"plugins",
+											"addons",
+											"modpacks"
+										],
+										"description": "What the customer adds to the game: mods, plugins, add-ons or modpacks."
+									},
+									"sources": {
+										"default": [],
+										"description": "The catalogs the panel installs this kind from. Leave it empty when the customer adds them by hand through the files.",
+										"maxItems": 4,
+										"type": "array",
+										"items": {
+											"type": "string",
+											"enum": [
+												"modrinth",
+												"curseforge",
+												"hangar",
+												"thunderstore"
+											]
+										}
+									}
+								},
+								"required": [
+									"kind"
+								]
+							}
 						}
 					},
 					"required": [

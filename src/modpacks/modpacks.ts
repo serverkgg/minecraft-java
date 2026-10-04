@@ -19,8 +19,8 @@ import { pickModpackVersion } from "./modpackVersion";
 const PAGE_SIZE = 20;
 
 const MODPACK_MISSING: Bridge.Text = {
-	ar: "ما لقينا هذا المودباك عند مصدره. دوّر عليه مرة ثانية أو اختَر مودباك ثاني.",
-	en: "We could not find this modpack at its source. Search for it again or pick another modpack.",
+	ar: "تعذّر العثور على هذا المودباك لدى مصدره. ابحث عنه مرة ثانية أو اختر مودباكًا آخر.",
+	en: "We couldn't find this modpack at its source. Search for it again or pick another modpack.",
 };
 
 const MODPACK_SUBJECT: Bridge.Text = {
@@ -82,8 +82,8 @@ export const installModpack = async (
 
 	if (!decoded || !source || source.id !== decoded.provider) {
 		throw new BridgeUserError({
-			ar: "ما نقدر نركّب هذا المودباك من المرجع اللي وصلنا. حدّث الصفحة وجرّب مرة ثانية.",
-			en: `"${id}" is not a modpack reference we can install.`,
+			ar: "تعذّر تثبيت هذا المودباك من المرجع المستلم. حدّث الصفحة وجرب مرة ثانية.",
+			en: `We couldn't install "${id}" because it isn't a modpack reference we can install. Refresh the page and try again.`,
 		});
 	}
 
@@ -219,8 +219,8 @@ export const modpacks: Bridge.Catalog = {
 					en: `${entry.title}: ${entry.version} · ${entry.gameVersion}`,
 				},
 				{
-					ar: "نحفظ نسخة احتياطية قبل تركيب المودباك. تغيير النوع أو الرجوع لنسخة أقدم ممكن يحذف بيانات الماب.",
-					en: "A recovery backup is required before installing. Changing loader or downgrading can remove world data.",
+					ar: "نأخذ نسخة احتياطية قبل تثبيت المودباك. قد يحذف تغيير النوع أو الرجوع إلى إصدار أقدم بيانات من الماب.",
+					en: "We take a backup before installing the modpack. Changing the loader or moving to an older version can remove world data.",
 				},
 			],
 		};
@@ -250,8 +250,8 @@ export const modpacks: Bridge.Catalog = {
 
 	async remove() {
 		throw new BridgeUserError({
-			ar: "امسح المودباك من تبويب المودباكات. إزالته من هنا تعيد بناء السيرفر بدونه.",
-			en: "Clear the modpack from the modpacks tab. Removing it here rebuilds the server without it.",
+			ar: "أزل المودباك من تبويب المودباك. إزالته من هنا تعيد بناء السيرفر بدونه.",
+			en: "Remove the modpack from the Modpacks tab. Removing it here rebuilds the server without it.",
 		});
 	},
 };

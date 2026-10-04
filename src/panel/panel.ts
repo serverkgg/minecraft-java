@@ -49,8 +49,8 @@ const modpackStatusSection: Bridge.Section = {
 	variable: MODPACK_VARIABLE,
 	confirm: BridgeConfirm.Strong,
 	confirmText: {
-		ar: "شيل المودباك يشيله هو وموداته والماب اللي بنيته عليه، ويرجّع سيرفرك عادي على نفس النوع والنسخة بماب جديدة. اللي ركّبته بنفسك يبقى.",
-		en: "Removing the modpack takes it, its mods and the world you built on it, and leaves your server plain on the same type and version with a fresh world. Anything you installed yourself stays.",
+		ar: "إزالة المودباك تحذفه مع موداته والماب التي بنيتها عليه، ويعود سيرفرك إلى النوع والإصدار نفسيهما دون مودباك وبماب جديدة. يبقى ما ثبّته بنفسك.",
+		en: "Removing the modpack deletes it, its mods and the world you built on it, and leaves your server on the same type and version without a modpack and with a fresh world. Anything you installed yourself stays.",
 	},
 	actions: [
 		{
@@ -61,7 +61,7 @@ const modpackStatusSection: Bridge.Section = {
 			},
 			confirm: BridgeConfirm.Strong,
 			confirmText: {
-				ar: "نركّب آخر إصدار من نفس المودباك. مابك تبقى إذا الإصدار الجديد على نفس النوع ونفس النسخة أو أحدث.",
+				ar: "نثبّت آخر إصدار من المودباك نفسه. تبقى مابك إذا كان الإصدار الجديد على النوع نفسه وعلى إصدار ماينكرافت نفسه أو أحدث.",
 				en: "We install the latest release of the same pack. Your world stays as long as the new release is on the same type and the same version or newer.",
 			},
 		},
@@ -74,8 +74,8 @@ const modpackStatusSection: Bridge.Section = {
 		},
 	},
 	empty: {
-		ar: "ما ركّبنا المودباك بعد. افتح تبويب المودباك وشوف وين وصل.",
-		en: "The modpack is not installed yet. Open the Modpacks tab to see where it stands.",
+		ar: "لم يكتمل تثبيت المودباك بعد. افتح تبويب المودباك لمتابعة التقدم.",
+		en: "The modpack isn't installed yet. Open the Modpacks tab to see where it stands.",
 	},
 	visibleWhen: {
 		variable: MODPACK_VARIABLE,
@@ -86,7 +86,7 @@ const modpackStatusSection: Bridge.Section = {
 const versionTab: Bridge.Tab = {
 	id: "version",
 	title: {
-		ar: "النسخة",
+		ar: "الإصدار",
 		en: "Version",
 	},
 	icon: BridgeIcon.Tag,
@@ -96,7 +96,7 @@ const versionTab: Bridge.Tab = {
 			layout: BridgeLayout.Form,
 			id: "version",
 			help: {
-				ar: "غيّر نوع سيرفرك أو نسخته، ونركّبه لك من جديد على اللي تختاره.",
+				ar: "غيّر نوع سيرفرك أو إصداره، ونثبّته لك من جديد على ما تختاره.",
 				en: "Change your server's type or version and we reinstall it on what you pick.",
 			},
 			target: BridgeFormTarget.Variables,
@@ -104,8 +104,8 @@ const versionTab: Bridge.Tab = {
 			reinstall: true,
 			confirm: BridgeConfirm.Strong,
 			confirmText: {
-				ar: "حسب التغيير، مابك إما تبقى مكانها، أو ننقل ملفاتها للمكان الجديد، أو يروح كل اللي أضافته المودات لها. والرجوع لنسخة أقدم يبدأ ماب جديدة دايمًا.",
-				en: "Depending on the change your world may stay where it is, be moved into place, or lose what mods added to it. Going back to an older version always starts a fresh world.",
+				ar: "حسب التغيير، إما أن تبقى مابك في مكانها، أو ننقل ملفاتها إلى المكان الجديد، أو يُفقد كل ما أضافته المودات إليها. والرجوع إلى إصدار أقدم يبدأ ماب جديدة دائمًا.",
+				en: "Depending on the change, your world may stay where it is, be moved into place, or lose what mods added to it. Going back to an older version always starts a fresh world.",
 			},
 			preview: {
 				module: "transitionPreview",
@@ -119,7 +119,7 @@ const versionTab: Bridge.Tab = {
 						en: "Server type",
 					},
 					help: {
-						ar: "غيّر النوع إذا تبي إضافات أو مودات.",
+						ar: "غيّر النوع إذا أردت إضافات أو مودات.",
 						en: "Switch type for plugins or mods.",
 					},
 					options: {
@@ -130,12 +130,12 @@ const versionTab: Bridge.Tab = {
 					key: "MC_VERSION",
 					control: BridgeControl.Select,
 					label: {
-						ar: "نسخة ماينكرافت",
+						ar: "إصدار ماينكرافت",
 						en: "Minecraft version",
 					},
 					help: {
-						ar: "اتركها فاضية عشان تبقى على نسختك الحالية (وآخر إصدار على سيرفر جديد)، واختر وحدة إذا تبي تغيّرها.",
-						en: "Leave it empty to keep the version you are on (the latest release on a fresh server); pick one to change it.",
+						ar: "اتركه فارغًا لتبقى على إصدارك الحالي (وعلى آخر إصدار في السيرفر الجديد)، أو اختر إصدارًا لتغييره.",
+						en: "Leave it empty to keep the version you're on (the latest release on a fresh server), or pick one to change it.",
 					},
 					options: {
 						module: "gameVersion",
@@ -145,12 +145,12 @@ const versionTab: Bridge.Tab = {
 					key: "LOADER_VERSION",
 					control: BridgeControl.Select,
 					label: {
-						ar: "نسخة المشغّل",
+						ar: "إصدار المشغّل",
 						en: "Loader build",
 					},
 					help: {
-						ar: "اتركها فاضية عشان تبقى على المشغّل الحالي، أو اختَر إصدار محدد للتحديث.",
-						en: "Leave empty to keep the installed loader, or select a specific build to update.",
+						ar: "اتركه فارغًا لتبقى على المشغّل الحالي، أو اختر إصدارًا محددًا للتحديث.",
+						en: "Leave it empty to keep the installed loader, or pick a specific build to update.",
 					},
 					options: {
 						module: "loaderBuild",
@@ -165,7 +165,7 @@ const versionTab: Bridge.Tab = {
 				{
 					variable: MODPACK_VARIABLE,
 					warning: {
-						ar: "سيرفرك على مودباك. أي تغيير هنا يشيل المودباك وموداته والماب اللي بنيته عليه، ويرجّع سيرفرك على النوع والنسخة اللي تختارها بماب جديدة.",
+						ar: "سيرفرك على مودباك. أي تغيير هنا يزيل المودباك وموداته والماب التي بنيتها عليه، ويعيد سيرفرك إلى النوع والإصدار اللذين تختارهما بماب جديدة.",
 						en: "Your server runs a modpack. Any change here removes the pack, its mods and the world you built on it, and puts your server on the type and version you pick with a fresh world.",
 					},
 				},
@@ -190,12 +190,12 @@ const modpacksTab: Bridge.Tab = {
 			variable: MODPACK_VARIABLE,
 			confirm: BridgeConfirm.Strong,
 			confirmText: {
-				ar: "تركيب المودباك يبني سيرفرك من جديد: يمسح مجلدات المودات والإعدادات كاملة، حتى المودات اللي ركّبتها بنفسك. مابك تبقى مكانها إلا إذا المودباك يبي نسخة أقدم من نسختك، وإذا كان سيرفرك على مود لودر وطلعت منه يروح كل اللي أضافته المودات لمابك. وشيل المودباك يشيله هو وموداته والماب اللي بنيته عليه، ويرجّع سيرفرك عادي بماب جديدة.",
-				en: "Installing a modpack rebuilds your server: the mods and config folders are wiped, including mods you installed yourself. Your world stays unless the pack needs an older version than yours, and if you leave a mod loader everything the mods added to your world is lost. Removing the modpack takes it, its mods and the world you built on it, and leaves your server plain with a fresh world.",
+				ar: "تثبيت المودباك يعيد بناء سيرفرك: يحذف مجلدات المودات والإعدادات بالكامل، بما فيها المودات التي ثبّتها بنفسك. تبقى مابك في مكانها إلا إذا تطلب المودباك إصدارًا أقدم من إصدارك، وإذا كان سيرفرك على مشغّل مودات وانتقلت منه يُفقد كل ما أضافته المودات إلى مابك. وإزالة المودباك تحذفه مع موداته والماب التي بنيتها عليه، ويعود سيرفرك دون مودباك وبماب جديدة.",
+				en: "Installing a modpack rebuilds your server: the mods and config folders are deleted, including mods you installed yourself. Your world stays unless the pack needs an older version than yours, and if you leave a mod loader everything the mods added to your world is lost. Removing the modpack takes it, its mods and the world you built on it, and leaves your server without a modpack and with a fresh world.",
 			},
 			empty: {
-				ar: "ما ركّبت أي مودباك. دوّر على واحد فوق واختره، وإحنا نجهّز سيرفرك عليه.",
-				en: "No modpack installed. Search for one above and pick it — we set your server up for it.",
+				ar: "لا يوجد مودباك مثبّت. ابحث عن مودباك في الأعلى واختره، ونجهّز سيرفرك عليه.",
+				en: "No modpack installed. Search for one above and pick it, and we'll set your server up for it.",
 			},
 		},
 	],
@@ -217,14 +217,14 @@ const settingsTab: Bridge.Tab = {
 				en: "Crossplay",
 			},
 			help: {
-				ar: "خل أصحابك من الجوال أو الكونسول أو ويندوز يدخلون سيرفرك.",
+				ar: "اسمح لأصحابك على الجوال أو الكونسول أو ويندوز بدخول سيرفرك.",
 				en: "Let friends on phone, console or Windows into your server.",
 			},
 			target: BridgeFormTarget.Variables,
 			reinstall: false,
 			confirm: BridgeConfirm.Normal,
 			confirmText: {
-				ar: "حفظ التغيير يعيد تشغيل سيرفرك على طول عشان يشتغل التعديل.",
+				ar: "عند حفظ التغيير يتم ريستارت سيرفرك فورًا لتطبيق التعديل.",
 				en: "Saving restarts your server right away so the change takes effect.",
 			},
 			fields: [
@@ -236,12 +236,12 @@ const settingsTab: Bridge.Tab = {
 						en: "Let Bedrock players in",
 					},
 					help: {
-						ar: "نركّب Geyser و Floodgate ونحدّثهم لك. أول ما تفعّله يظهر عنوان بيدروك في صفحة سيرفرك، وأصحابك من الجوال أو الكونسول أو ويندوز يدخلون عليه، وأسماءهم داخل اللعبة تبدأ بنقطة.",
+						ar: "نثبّت Geyser و Floodgate ونحدّثهما لك. بعد التفعيل يظهر عنوان بيدروك في صفحة سيرفرك، ويدخل منه أصحابك على الجوال أو الكونسول أو ويندوز، وتبدأ أسماؤهم داخل اللعبة بنقطة.",
 						en: "We install and update Geyser and Floodgate for you. The Bedrock address appears on your server page once crossplay is on, friends on phone, console or Windows join on it, and their in-game names start with a dot.",
 					},
 					warning: {
-						ar: "كروس بلاي ياخذ رام زيادة. إذا سيرفرك 1GB بس، توقّع لاق.",
-						en: "Crossplay needs extra memory. On a 1GB server expect lag.",
+						ar: "يستهلك الكروس بلاي رامًا إضافيًا. إذا كان رام سيرفرك 1GB فقط فتوقع حدوث لاق.",
+						en: "Crossplay needs extra RAM. On a 1GB server, expect lag.",
 					},
 				},
 			],
@@ -254,18 +254,18 @@ const settingsTab: Bridge.Tab = {
 			layout: BridgeLayout.Form,
 			id: "version-compat",
 			title: {
-				ar: "توافق النسخ",
+				ar: "توافق الإصدارات",
 				en: "Version compatibility",
 			},
 			help: {
-				ar: "خل أصحابك يدخلون سيرفرك بنسخة جافا غير نسخته.",
+				ar: "اسمح لأصحابك بدخول سيرفرك بإصدار جافا مختلف عن إصداره.",
 				en: "Let friends join your server on a Java version other than its own.",
 			},
 			target: BridgeFormTarget.Variables,
 			reinstall: false,
 			confirm: BridgeConfirm.Normal,
 			confirmText: {
-				ar: "حفظ التغيير يعيد تشغيل سيرفرك على طول عشان يشتغل التعديل.",
+				ar: "عند حفظ التغيير يتم ريستارت سيرفرك فورًا لتطبيق التعديل.",
 				en: "Saving restarts your server right away so the change takes effect.",
 			},
 			fields: [
@@ -273,15 +273,15 @@ const settingsTab: Bridge.Tab = {
 					key: "VERSION_COMPAT",
 					control: BridgeControl.Boolean,
 					label: {
-						ar: "دخول نسخ جافا الثانية",
+						ar: "دخول إصدارات جافا الأخرى",
 						en: "Let other Java versions in",
 					},
 					help: {
-						ar: "نركّب ViaVersion و ViaBackwards ونحدّثهم لك. أصحابك يدخلون سيرفرك بنسخة جافا أحدث أو أقدم من نسخة سيرفرك، وما يغيّرون شي عندهم.",
+						ar: "نثبّت ViaVersion و ViaBackwards ونحدّثهما لك. يدخل أصحابك سيرفرك بإصدار جافا أحدث أو أقدم من إصدار سيرفرك، دون أي تغيير من جهتهم.",
 						en: "We install and update ViaVersion and ViaBackwards for you. Friends join on a Java version newer or older than your server, with nothing to change on their side.",
 					},
 					warning: {
-						ar: "البلوكات والأغراض اللي جت مع النسخ الجديدة تطلع ناقصة أو شكلها غلط عند اللي داخل بنسخة أقدم.",
+						ar: "البلوكات والأغراض التي أُضيفت في الإصدارات الجديدة تظهر ناقصة أو بشكل غير صحيح لمن يدخل بإصدار أقدم.",
 						en: "Blocks and items added in newer versions look wrong or go missing for players on an older version.",
 					},
 				},
@@ -295,7 +295,7 @@ const settingsTab: Bridge.Tab = {
 			layout: BridgeLayout.Form,
 			id: "settings",
 			help: {
-				ar: "إعدادات اللعبة نفسها اللي تنكتب في ملف server.properties.",
+				ar: "إعدادات اللعبة نفسها، وتُحفظ في ملف server.properties.",
 				en: "The game's own settings, written into server.properties.",
 			},
 			target: BridgeFormTarget.Settings,
@@ -310,7 +310,7 @@ const settingsTab: Bridge.Tab = {
 						en: "MOTD",
 					},
 					help: {
-						ar: "النص اللي يظهر للاعبين في قائمة السيرفرات.",
+						ar: "النص الذي يظهر للاعبين في قائمة السيرفرات.",
 						en: "Shown to players in the server list.",
 					},
 					maxLength: 59,
@@ -329,7 +329,7 @@ const settingsTab: Bridge.Tab = {
 					key: "gamemode",
 					control: BridgeControl.Select,
 					label: {
-						ar: "نمط اللعب",
+						ar: "وضع اللعب",
 						en: "Game mode",
 					},
 					options: GAME_MODE_OPTIONS,
@@ -371,7 +371,7 @@ const settingsTab: Bridge.Tab = {
 						en: "Whitelist",
 					},
 					help: {
-						ar: "لما تفعّلها، ما يدخل إلا اللاعبين اللي تضيفهم بنفسك.",
+						ar: "عند تفعيلها، لا يدخل إلا اللاعبون الذين تضيفهم بنفسك.",
 						en: "When on, only players you add can join.",
 					},
 				},
@@ -383,8 +383,8 @@ const settingsTab: Bridge.Tab = {
 						en: "View distance",
 					},
 					help: {
-						ar: "كل ما زاد، زاد استهلاك المعالج والذاكرة.",
-						en: "Higher values cost more CPU and memory.",
+						ar: "كلما زاد، زاد استهلاك المعالج والرام.",
+						en: "Higher values cost more CPU and RAM.",
 					},
 					min: 3,
 					max: 32,
@@ -413,12 +413,12 @@ const settingsTab: Bridge.Tab = {
 					key: "level-seed",
 					control: BridgeControl.Text,
 					label: {
-						ar: "بذرة العالم",
+						ar: "سيد الماب",
 						en: "World seed",
 					},
 					help: {
-						ar: "اتركها فاضية لعالم عشوائي. تغييرها ما يأثر على عالم موجود.",
-						en: "Leave empty for a random world. Changing it does not affect an existing world.",
+						ar: "اتركه فارغًا لماب عشوائية. تغييره لا يؤثر على ماب موجودة.",
+						en: "Leave it empty for a random world. Changing it doesn't affect an existing world.",
 					},
 				},
 				{
@@ -446,7 +446,7 @@ const settingsTab: Bridge.Tab = {
 const playersTab: Bridge.Tab = {
 	id: "players",
 	title: {
-		ar: "اللاعبين",
+		ar: "اللاعبون",
 		en: "Players",
 	},
 	icon: BridgeIcon.Users,
@@ -455,7 +455,7 @@ const playersTab: Bridge.Tab = {
 			layout: BridgeLayout.Table,
 			id: "players",
 			title: {
-				ar: "المتصلون الحين",
+				ar: "المتصلون حاليًا",
 				en: "Online now",
 			},
 			place: BridgePlace.Players,
@@ -473,7 +473,7 @@ const playersTab: Bridge.Tab = {
 				{
 					id: "kick",
 					label: {
-						ar: "طرد",
+						ar: "اطرد",
 						en: "Kick",
 					},
 					confirm: BridgeConfirm.Normal,
@@ -481,7 +481,7 @@ const playersTab: Bridge.Tab = {
 				{
 					id: "ban",
 					label: {
-						ar: "حظر",
+						ar: "احظر",
 						en: "Ban",
 					},
 					confirm: BridgeConfirm.Normal,
@@ -490,7 +490,7 @@ const playersTab: Bridge.Tab = {
 				{
 					id: "op",
 					label: {
-						ar: "ترقية لمشرف",
+						ar: "اجعله أدمن",
 						en: "Make operator",
 					},
 					confirm: BridgeConfirm.Strong,
@@ -498,7 +498,7 @@ const playersTab: Bridge.Tab = {
 				{
 					id: "xp",
 					label: {
-						ar: "زيادة الخبرة",
+						ar: "أضف خبرة",
 						en: "Give XP",
 					},
 					fields: [
@@ -517,7 +517,7 @@ const playersTab: Bridge.Tab = {
 				{
 					id: "gamemode",
 					label: {
-						ar: "تغيير النمط",
+						ar: "غيّر وضع اللعب",
 						en: "Change game mode",
 					},
 					fields: [
@@ -525,7 +525,7 @@ const playersTab: Bridge.Tab = {
 							key: "mode",
 							control: BridgeControl.Select,
 							label: {
-								ar: "نمط اللعب",
+								ar: "وضع اللعب",
 								en: "Game mode",
 							},
 							options: GAME_MODE_OPTIONS,
@@ -535,18 +535,18 @@ const playersTab: Bridge.Tab = {
 				{
 					id: "kill",
 					label: {
-						ar: "قتل",
+						ar: "اقتله",
 						en: "Kill",
 					},
 					confirm: BridgeConfirm.Normal,
 					confirmText: {
-						ar: "يموت اللاعب داخل اللعبة ويرجع لنقطة البداية، وأغراضه تنزل مكانه.",
+						ar: "يموت اللاعب داخل اللعبة ويعود إلى نقطة البداية، وتسقط أغراضه في مكانه.",
 						en: "The player dies in game and respawns, dropping whatever they carried.",
 					},
 				},
 			],
 			empty: {
-				ar: "ما فيه أحد داخل السيرفر حاليًا.",
+				ar: "لا يوجد لاعبون متصلون حاليًا.",
 				en: "Nobody is online right now.",
 			},
 		},
@@ -570,7 +570,7 @@ const playersTab: Bridge.Tab = {
 			],
 			add: {
 				label: {
-					ar: "إضافة لاعب",
+					ar: "أضف لاعبًا",
 					en: "Add player",
 				},
 				placeholder: "Steve  ·  .Gamer Tag",
@@ -579,14 +579,14 @@ const playersTab: Bridge.Tab = {
 				{
 					id: "remove",
 					label: {
-						ar: "إزالة",
+						ar: "أزل",
 						en: "Remove",
 					},
 					confirm: BridgeConfirm.Normal,
 				},
 			],
 			empty: {
-				ar: "القائمة البيضاء فاضية. اكتب اسم لاعب جافا زي ما هو، ولاعب بيدروك اكتب اسمه بنقطة قبله ومسافاته زي ما هي.",
+				ar: "القائمة البيضاء فارغة. اكتب اسم لاعب جافا كما هو، واكتب اسم لاعب بيدروك مسبوقًا بنقطة مع الإبقاء على مسافاته.",
 				en: "The whitelist is empty. Add a Java name as it is, and a Bedrock gamertag with a dot in front and its spaces kept.",
 			},
 		},
@@ -626,14 +626,14 @@ const playersTab: Bridge.Tab = {
 				{
 					id: "remove",
 					label: {
-						ar: "رفع الحظر",
+						ar: "فك الحظر",
 						en: "Unban",
 					},
 					confirm: BridgeConfirm.Normal,
 				},
 			],
 			empty: {
-				ar: "ما فيه أحد محظور من سيرفرك. أي لاعب تحظره من جدول المتصلين يطلع لك هنا، ومن هنا ترفع عنه الحظر ويرجع يدخل على طول.",
+				ar: "لا يوجد لاعبون محظورون من سيرفرك. يظهر هنا كل لاعب تحظره من جدول المتصلين، ومن هنا تفك الحظر عنه ليتمكن من الدخول فورًا.",
 				en: "Nobody is banned from your server. Anyone you ban from the online list shows up here, and this is where you lift the ban so they can join again right away.",
 			},
 		},
@@ -656,7 +656,7 @@ const gameplayTab: Bridge.Tab = {
 				en: "World controls",
 			},
 			help: {
-				ar: "أوامر تشتغل على طول على سيرفرك الشغّال، وترجع لإعدادات السيرفر بعد إعادة التشغيل.",
+				ar: "أوامر تُنفَّذ فورًا على سيرفرك الشغّال، وتعود إلى إعدادات السيرفر بعد الريستارت.",
 				en: "These run on your server right away and fall back to its settings after a restart.",
 			},
 			module: "gameplay",
@@ -664,21 +664,21 @@ const gameplayTab: Bridge.Tab = {
 				{
 					id: "timeDay",
 					label: {
-						ar: "خله نهار",
+						ar: "اجعله نهارًا",
 						en: "Set day",
 					},
 				},
 				{
 					id: "timeNight",
 					label: {
-						ar: "خله ليل",
+						ar: "اجعله ليلًا",
 						en: "Set night",
 					},
 				},
 				{
 					id: "weatherClear",
 					label: {
-						ar: "جو صافي",
+						ar: "طقس صافٍ",
 						en: "Clear weather",
 					},
 				},
@@ -718,7 +718,7 @@ const gameplayTab: Bridge.Tab = {
 								en: "Difficulty",
 							},
 							help: {
-								ar: "عشان تبقى بعد إعادة التشغيل، غيّرها من الإعدادات.",
+								ar: "لكي تبقى بعد الريستارت، غيّرها من الإعدادات.",
 								en: "To keep it after a restart, change it in Settings.",
 							},
 							options: DIFFICULTY_OPTIONS,
@@ -735,7 +735,7 @@ const gameplayTab: Bridge.Tab = {
 				en: "Broadcast",
 			},
 			help: {
-				ar: "توصل لكل اللي داخلين السيرفر الحين.",
+				ar: "تصل إلى كل اللاعبين المتصلين بالسيرفر حاليًا.",
 				en: "Reaches everyone who is on the server right now.",
 			},
 			module: "broadcast",
@@ -786,7 +786,7 @@ const worldsTab: Bridge.Tab = {
 					},
 					confirm: BridgeConfirm.Normal,
 					confirmText: {
-						ar: "نجهّز ماب جديدة ونفعّلها عند التشغيل. مابك الحالية تبقى محفوظة.",
+						ar: "نجهّز ماب جديدة ونفعّلها عند التشغيل. تبقى مابك الحالية محفوظة.",
 						en: "Prepare a new world and activate it on start. Your current world stays available.",
 					},
 					fields: [
@@ -835,14 +835,14 @@ const worldsTab: Bridge.Tab = {
 				{
 					key: "active",
 					label: {
-						ar: "الشغّالة",
+						ar: "المفعّلة",
 						en: "Active",
 					},
 				},
 			],
 			upload: {
 				label: {
-					ar: "رفع ماب",
+					ar: "ارفع ماب",
 					en: "Upload world",
 				},
 				extensions: [
@@ -854,21 +854,21 @@ const worldsTab: Bridge.Tab = {
 				{
 					id: "export",
 					label: {
-						ar: "تجهيز التنزيل",
+						ar: "جهّز التنزيل",
 						en: "Prepare download",
 					},
 					confirm: BridgeConfirm.Normal,
 					confirmText: {
-						ar: "نجهّز ZIP فيه الماب والنذر والإند. بعدها اضغط تنزيل. وقّف سيرفرك قبل إذا تبي نسخة مضمونة.",
-						en: "We prepare a ZIP with the world, Nether and End, then select Download. Stop the server first if you want a clean copy.",
+						ar: "نجهّز ملف ZIP يحتوي على الماب والنذر والإند، ثم اضغط «نزّل». وقّف سيرفرك أولًا إذا أردت نسخة سليمة.",
+						en: "We prepare a ZIP with the world, Nether and End. Then select Download. Stop the server first if you want a clean copy.",
 					},
 				},
 
 				{
 					id: "clone",
 					label: {
-						ar: "نسخ الماب",
-						en: "Clone world",
+						ar: "انسخ الماب",
+						en: "Copy world",
 					},
 					confirm: BridgeConfirm.Normal,
 					fields: [
@@ -876,7 +876,7 @@ const worldsTab: Bridge.Tab = {
 							key: "name",
 							control: BridgeControl.Text,
 							label: {
-								ar: "اسم النسخة الجديدة",
+								ar: "اسم الماب الجديدة",
 								en: "New world name",
 							},
 							maxLength: 32,
@@ -886,7 +886,7 @@ const worldsTab: Bridge.Tab = {
 				{
 					id: "download",
 					label: {
-						ar: "تنزيل",
+						ar: "نزّل",
 						en: "Download",
 					},
 					download: true,
@@ -894,54 +894,54 @@ const worldsTab: Bridge.Tab = {
 				{
 					id: "activate",
 					label: {
-						ar: "تفعيل",
+						ar: "فعّل",
 						en: "Activate",
 					},
 					confirm: BridgeConfirm.Normal,
 					confirmText: {
-						ar: "نبدّل الماب في إعدادات السيرفر. إذا كان شغّال، الماب الجديدة ما تفتح إلا بعد ما تعيد تشغيله.",
-						en: "We switch the world in the server settings. If it is running, the new world only opens after you restart it.",
+						ar: "نبدّل الماب في إعدادات السيرفر. إذا كان السيرفر شغّالًا فلن تُفتح الماب الجديدة إلا بعد الريستارت.",
+						en: "We switch the world in the server settings. If the server is running, the new world opens only after you restart it.",
 					},
 				},
 				{
 					id: "delete",
 					label: {
-						ar: "حذف",
+						ar: "احذف",
 						en: "Delete",
 					},
 					confirm: BridgeConfirm.Strong,
 					confirmText: {
-						ar: "حذف الماب يشيلها هي والنذر والإند حقها للأبد. النسخة الاحتياطية هي طريقك الوحيد للرجوع، فخذ لك وحدة قبل لا تكمّل.",
-						en: "Deleting a world removes it with its Nether and its End forever. A backup is your only way back, so take one before you continue.",
+						ar: "حذف الماب يزيلها مع النذر والإند الخاصين بها نهائيًا. النسخة الاحتياطية هي طريقك الوحيد للرجوع، لذلك خذ نسخة احتياطية قبل المتابعة.",
+						en: "Deleting a world removes it with its Nether and End for good. A backup is your only way back, so take one before you continue.",
 					},
 				},
 				{
 					id: "resetNether",
 					label: {
-						ar: "تصفير النذر",
+						ar: "ريسيت النذر",
 						en: "Reset the Nether",
 					},
 					confirm: BridgeConfirm.Strong,
 					confirmText: {
-						ar: "نمسح النذر كامل، وكل اللي بنيته هناك يروح للأبد. يتولد نذر جديد أول ما أحد يدخله.",
-						en: "The whole Nether is wiped and everything you built there is gone forever. A new one generates the next time somebody walks in.",
+						ar: "يُحذف النذر بالكامل، ويُفقد كل ما بنيته هناك نهائيًا. يتولد نذر جديد عندما يدخله أحد اللاعبين.",
+						en: "The whole Nether is deleted and everything you built there is gone for good. A new one generates the next time someone enters it.",
 					},
 				},
 				{
 					id: "resetEnd",
 					label: {
-						ar: "تصفير الإند",
+						ar: "ريسيت الإند",
 						en: "Reset the End",
 					},
 					confirm: BridgeConfirm.Strong,
 					confirmText: {
-						ar: "نمسح الإند كامل، وكل اللي بنيته هناك يروح للأبد. يتولد إند جديد بتنينه أول ما أحد يدخله.",
-						en: "The whole End is wiped and everything you built there is gone forever. A new one generates, dragon included, the next time somebody walks in.",
+						ar: "يُحذف الإند بالكامل، ويُفقد كل ما بنيته هناك نهائيًا. يتولد إند جديد مع التنين عندما يدخله أحد اللاعبين.",
+						en: "The whole End is deleted and everything you built there is gone for good. A new one generates, dragon included, the next time someone enters it.",
 					},
 				},
 			],
 			empty: {
-				ar: "ما لقينا أي ماب. أول ما تشغّل سيرفرك يتولد لك ماب جديدة.",
+				ar: "لا توجد مابات. تتولد ماب جديدة عند أول تشغيل لسيرفرك.",
 				en: "No world found. The first time you start your server, one is generated for you.",
 			},
 		},
@@ -961,7 +961,7 @@ const pluginsTab: Bridge.Tab = {
 			id: "plugin-list",
 			module: "addons",
 			empty: {
-				ar: "ما ركّبت أي إضافات بعد.",
+				ar: "لا توجد إضافات مثبّتة بعد.",
 				en: "No plugins installed yet.",
 			},
 			visibleWhen: {
@@ -988,7 +988,7 @@ const modsTab: Bridge.Tab = {
 			id: "mod-list",
 			module: "addons",
 			empty: {
-				ar: "ما ركّبت أي مودات بعد.",
+				ar: "لا توجد مودات مثبّتة بعد.",
 				en: "No mods installed yet.",
 			},
 			visibleWhen: {

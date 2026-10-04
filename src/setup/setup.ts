@@ -25,11 +25,11 @@ export const setup: Bridge.Setup = {
 			tab: VERSION_TAB,
 			section: VERSION_SECTION,
 			title: {
-				ar: "اختر النسخة",
+				ar: "اختر الإصدار",
 				en: "Pick your version",
 			},
 			help: {
-				ar: "نوع السيرفر ونسخة ماينكرافت. تغييرها يعيد التركيب، فاختر من الحين لو تبي إضافات أو مودات. تقدر تتخطاها وتبقى على الأحدث.",
+				ar: "نوع السيرفر وإصدار ماينكرافت. تغييرهما يعيد التثبيت، لذلك اختر الآن إذا أردت إضافات أو مودات، أو تخطَّ هذه الخطوة لتبقى على أحدث إصدار.",
 				en: "The server type and Minecraft version. Changing them reinstalls, so choose now if you want plugins or mods. Skip it to stay on the latest.",
 			},
 		},
@@ -44,12 +44,12 @@ export const setup: Bridge.Setup = {
 				"max-players",
 			],
 			title: {
-				ar: "سمِّ سيرفرك",
+				ar: "سمّ سيرفرك",
 				en: "Name your server",
 			},
 			help: {
-				ar: "الرسالة اللي تطلع في قائمة السيرفرات وعدد اللاعبين. تقدر تعدّلها بعدين من الإعدادات.",
-				en: "The line shown in the server list and the player slots. You can change them later from Settings.",
+				ar: "الرسالة التي تظهر في قائمة السيرفرات وعدد اللاعبين. عدّلهما لاحقًا من الإعدادات متى أردت.",
+				en: "The line shown in the server list and the player slots. Change them later from Settings whenever you like.",
 			},
 		},
 		{
@@ -60,11 +60,11 @@ export const setup: Bridge.Setup = {
 				tab: GuideOpenTab.Access,
 			},
 			title: {
-				ar: "عزّم أصحابك",
+				ar: "ادعُ أصحابك",
 				en: "Invite your friends",
 			},
 			help: {
-				ar: "انسخ عنوان سيرفرك وأرسله لأصحابك عشان يدخلون من Multiplayer ← Add Server.",
+				ar: "انسخ عنوان سيرفرك وأرسله إلى أصحابك ليدخلوا من Multiplayer ← Add Server.",
 				en: "Copy your server address and send it to your friends so they can join from Multiplayer → Add Server.",
 			},
 		},

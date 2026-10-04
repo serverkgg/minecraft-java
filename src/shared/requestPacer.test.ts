@@ -1,8 +1,8 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { createRequestPacer } from "./requestPacer";
 
 describe("pacing the requests an install sends", () => {
-	test("lets a burst through while the window has room", async () => {
+	it("lets a burst through while the window has room", async () => {
 		const pacer = createRequestPacer(4, 60_000);
 		const started = Date.now();
 
@@ -13,7 +13,7 @@ describe("pacing the requests an install sends", () => {
 		expect(Date.now() - started).toBeLessThan(50);
 	});
 
-	test("holds the request that would go over the budget until the window rolls", async () => {
+	it("holds the request that would go over the budget until the window rolls", async () => {
 		const pacer = createRequestPacer(2, 120);
 		const started = Date.now();
 
@@ -24,7 +24,7 @@ describe("pacing the requests an install sends", () => {
 		expect(Date.now() - started).toBeGreaterThanOrEqual(100);
 	});
 
-	test("shares one budget across everything downloading at once", async () => {
+	it("shares one budget across everything downloading at once", async () => {
 		const pacer = createRequestPacer(3, 120);
 		const started = Date.now();
 
@@ -42,7 +42,7 @@ describe("pacing the requests an install sends", () => {
 		expect(Date.now() - started).toBeGreaterThanOrEqual(100);
 	});
 
-	test("keeps letting requests through once the window has rolled past", async () => {
+	it("keeps letting requests through once the window has rolled past", async () => {
 		const pacer = createRequestPacer(1, 60);
 
 		await pacer.acquire();

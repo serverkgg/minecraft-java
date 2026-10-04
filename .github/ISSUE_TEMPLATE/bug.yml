@@ -1,32 +1,32 @@
 name: مشكلة / Bug report
-description: شيء خربان في سيرفر ماينكرافت أو في الحزمة نفسها / Something broken in the Minecraft server or the package itself
+description: خلل في سيرفر ماينكرافت أو في الحزمة نفسها / Something broken in the Minecraft server or the package itself
 labels:
   - bug
 body:
   - type: textarea
     id: what-happened
     attributes:
-      label: وش صار؟ / What happened?
-      description: اشرح المشكلة، ولو تقدر أرفق لوق أو صورة / Describe the problem, attach logs or screenshots if you can
+      label: ماذا حدث؟ / What happened?
+      description: اشرح المشكلة، وأرفق السجل أو صورة إن أمكن / Describe the problem, attach logs or screenshots if you can
     validations:
       required: true
   - type: textarea
     id: expected
     attributes:
-      label: وش كنت متوقع؟ / What did you expect?
+      label: ما الذي كنت تتوقعه؟ / What did you expect?
     validations:
       required: true
   - type: textarea
     id: steps
     attributes:
       label: خطوات التكرار / Steps to reproduce
-      description: كيف نوصل لنفس المشكلة؟ / How do we hit the same problem?
+      description: كيف نصل إلى المشكلة نفسها؟ / How do we hit the same problem?
     validations:
       required: false
   - type: input
     id: server-type
     attributes:
-      label: نوع السيرفر ونسخته / Server type and version
+      label: نوع السيرفر وإصداره / Server type and version
       placeholder: vanilla 1.21, paper 1.20.4, fabric...
     validations:
       required: false

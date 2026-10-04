@@ -22,8 +22,8 @@ const PAGE_LINK: Bridge.Text = {
 };
 
 const NOTHING_TO_UPDATE: Bridge.Text = {
-	ar: "ما فيه مودباك مركّب، فما فيه شي نحدّثه.",
-	en: "No modpack is installed, so there is nothing to update.",
+	ar: "لا يوجد مودباك مثبّت، لذلك لا يوجد ما يمكن تحديثه.",
+	en: "No modpack is installed, so there's nothing to update.",
 };
 
 const ALREADY_LATEST: Bridge.Text = {
@@ -32,14 +32,14 @@ const ALREADY_LATEST: Bridge.Text = {
 };
 
 const LATEST_MISMATCHED: Bridge.Text = {
-	ar: "المودباك على آخر إصدار، بس ما يطابق نوع سيرفرك أو نسخته. ركّبه من جديد من تبويب المودباك.",
-	en: "This modpack is on its latest release but does not match your server's type or version. Install it again from the Modpacks tab.",
+	ar: "المودباك على آخر إصدار، لكنه لا يطابق نوع سيرفرك أو إصداره. ثبّته من جديد من تبويب المودباك.",
+	en: "This modpack is on its latest release but doesn't match your server's type or version. Install it again from the Modpacks tab.",
 };
 
 const NOT_INSTALLED_BADGE: Bridge.DetailBadge = {
 	tone: BridgeDetailTone.Warning,
 	label: {
-		ar: "ما ركّبناه بعد",
+		ar: "غير مثبّت بعد",
 		en: "Not installed yet",
 	},
 };
@@ -47,15 +47,15 @@ const NOT_INSTALLED_BADGE: Bridge.DetailBadge = {
 const MISMATCHED_BADGE: Bridge.DetailBadge = {
 	tone: BridgeDetailTone.Danger,
 	label: {
-		ar: "ما يطابق نسخة سيرفرك",
-		en: "Does not match your server",
+		ar: "لا يطابق إصدار سيرفرك",
+		en: "Doesn't match your server",
 	},
 };
 
 const OUTDATED_BADGE: Bridge.DetailBadge = {
 	tone: BridgeDetailTone.Warning,
 	label: {
-		ar: "فيه تحديث",
+		ar: "يتوفر تحديث",
 		en: "Update available",
 	},
 };
@@ -77,7 +77,14 @@ export const pendingBadges = (pending: PendingFile[]): Bridge.DetailBadge[] => {
 		{
 			tone: BridgeDetailTone.Warning,
 			label: {
-				ar: pending.length === 1 ? "ناقص ملف واحد" : `ناقص ${pending.length} ملفات`,
+				ar:
+					pending.length === 1
+						? "ملف واحد ناقص"
+						: pending.length === 2
+							? "ملفان ناقصان"
+							: pending.length <= 10
+								? `${pending.length} ملفات ناقصة`
+								: `${pending.length} ملفًا ناقصًا`,
 				en: pending.length === 1 ? "1 file missing" : `${pending.length} files missing`,
 			},
 		},
@@ -160,7 +167,7 @@ const statsOf = (sidecar: ModpackSidecar, sizeBytes: number | null): Bridge.Deta
 		{
 			key: "mcVersion",
 			label: {
-				ar: "نسخة ماينكرافت",
+				ar: "إصدار ماينكرافت",
 				en: "Minecraft",
 			},
 			value: sidecar.mcVersion,
@@ -178,7 +185,7 @@ const statsOf = (sidecar: ModpackSidecar, sizeBytes: number | null): Bridge.Deta
 		{
 			key: "loaderVersion",
 			label: {
-				ar: "نسخة المشغّل",
+				ar: "إصدار المشغّل",
 				en: "Loader build",
 			},
 			value: sidecar.loaderVersion,
@@ -205,7 +212,7 @@ const statsOf = (sidecar: ModpackSidecar, sizeBytes: number | null): Bridge.Deta
 		{
 			key: "appliedAt",
 			label: {
-				ar: "تاريخ التركيب",
+				ar: "تاريخ التثبيت",
 				en: "Installed",
 			},
 			value: sidecar.appliedAt.length > 0 ? sidecar.appliedAt : null,
@@ -214,7 +221,7 @@ const statsOf = (sidecar: ModpackSidecar, sizeBytes: number | null): Bridge.Deta
 		{
 			key: "downloads",
 			label: {
-				ar: "التحميلات",
+				ar: "التنزيلات",
 				en: "Downloads",
 			},
 			value: sidecar.downloads,

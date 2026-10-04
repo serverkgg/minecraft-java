@@ -1,8 +1,8 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { choiceArgument, DIFFICULTIES, GAME_MODES, levelsArgument, XP_MAX_LEVELS, XP_MIN_LEVELS } from "./gameplay";
 
 describe("reading a choice out of an action's arguments", () => {
-	test("a declared choice comes back as it is", () => {
+	it("a declared choice comes back as it is", () => {
 		expect(
 			choiceArgument(
 				{
@@ -14,7 +14,7 @@ describe("reading a choice out of an action's arguments", () => {
 		).toBe("creative");
 	});
 
-	test("every declared difficulty and game mode is accepted", () => {
+	it("every declared difficulty and game mode is accepted", () => {
 		for (const difficulty of DIFFICULTIES) {
 			expect(
 				choiceArgument(
@@ -28,7 +28,7 @@ describe("reading a choice out of an action's arguments", () => {
 		}
 	});
 
-	test("a value outside the list is refused", () => {
+	it("a value outside the list is refused", () => {
 		expect(() =>
 			choiceArgument(
 				{
@@ -40,13 +40,13 @@ describe("reading a choice out of an action's arguments", () => {
 		).toThrow();
 	});
 
-	test("a missing argument is refused", () => {
+	it("a missing argument is refused", () => {
 		expect(() => choiceArgument({}, "mode", GAME_MODES)).toThrow();
 	});
 });
 
 describe("reading an experience amount out of an action's arguments", () => {
-	test("a whole number inside the range is taken", () => {
+	it("a whole number inside the range is taken", () => {
 		expect(
 			levelsArgument({
 				amount: 30,
@@ -54,7 +54,7 @@ describe("reading an experience amount out of an action's arguments", () => {
 		).toBe(30);
 	});
 
-	test("both ends of the range are allowed", () => {
+	it("both ends of the range are allowed", () => {
 		expect(
 			levelsArgument({
 				amount: XP_MIN_LEVELS,
@@ -67,7 +67,7 @@ describe("reading an experience amount out of an action's arguments", () => {
 		).toBe(XP_MAX_LEVELS);
 	});
 
-	test("anything outside the range is refused", () => {
+	it("anything outside the range is refused", () => {
 		expect(() =>
 			levelsArgument({
 				amount: XP_MIN_LEVELS - 1,
@@ -80,7 +80,7 @@ describe("reading an experience amount out of an action's arguments", () => {
 		).toThrow();
 	});
 
-	test("a fraction, a missing amount and text are all refused", () => {
+	it("a fraction, a missing amount and text are all refused", () => {
 		expect(() =>
 			levelsArgument({
 				amount: 1.5,
@@ -94,7 +94,7 @@ describe("reading an experience amount out of an action's arguments", () => {
 		).toThrow();
 	});
 
-	test("a whole number written as text is read as a number", () => {
+	it("a whole number written as text is read as a number", () => {
 		expect(
 			levelsArgument({
 				amount: "30",

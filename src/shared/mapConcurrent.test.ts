@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { mapConcurrent } from "./mapConcurrent";
 
 const settle = () => {
@@ -8,7 +8,7 @@ const settle = () => {
 };
 
 describe("running work a few items at a time", () => {
-	test("runs every item exactly once", async () => {
+	it("runs every item exactly once", async () => {
 		const seen: number[] = [];
 
 		await mapConcurrent(
@@ -40,7 +40,7 @@ describe("running work a few items at a time", () => {
 		]);
 	});
 
-	test("never runs more than the width at once", async () => {
+	it("never runs more than the width at once", async () => {
 		let running = 0;
 		let peak = 0;
 
@@ -65,7 +65,7 @@ describe("running work a few items at a time", () => {
 		expect(peak).toBe(4);
 	});
 
-	test("does nothing when there is nothing to do", async () => {
+	it("does nothing when there is nothing to do", async () => {
 		let calls = 0;
 
 		await mapConcurrent([], 4, async () => {
@@ -75,7 +75,7 @@ describe("running work a few items at a time", () => {
 		expect(calls).toBe(0);
 	});
 
-	test("still works when the width is wider than the list, or nonsense", async () => {
+	it("still works when the width is wider than the list, or nonsense", async () => {
 		const seen: number[] = [];
 
 		await mapConcurrent(
@@ -105,7 +105,7 @@ describe("running work a few items at a time", () => {
 		]);
 	});
 
-	test("lets a failure surface instead of swallowing it", async () => {
+	it("lets a failure surface instead of swallowing it", async () => {
 		await expect(
 			mapConcurrent(
 				[
@@ -123,7 +123,7 @@ describe("running work a few items at a time", () => {
 		).rejects.toThrow("nope");
 	});
 
-	test("stops handing out work once something fails", async () => {
+	it("stops handing out work once something fails", async () => {
 		const seen: number[] = [];
 
 		await expect(
@@ -151,7 +151,7 @@ describe("running work a few items at a time", () => {
 		expect(seen).toContain(1);
 	});
 
-	test("reports the failure that came first", async () => {
+	it("reports the failure that came first", async () => {
 		await expect(
 			mapConcurrent(
 				[

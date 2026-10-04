@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { ServerVariant } from "../shared";
 import { detachPinnedBuild } from "./applyModpack";
 import { ModpackFreshness } from "./modpackFreshness";
@@ -44,11 +44,11 @@ const sidecar = (overrides: Partial<ModpackSidecar> = {}): ModpackSidecar => ({
 });
 
 describe("counting the mods a modpack laid down", () => {
-	test("counts only the jars under mods", () => {
+	it("counts only the jars under mods", () => {
 		expect(modpackModCount(sidecar())).toBe(2);
 	});
 
-	test("falls back to the recorded file count when the pack predates file tracking", () => {
+	it("falls back to the recorded file count when the pack predates file tracking", () => {
 		expect(
 			modpackModCount(
 				sidecar({
@@ -61,7 +61,7 @@ describe("counting the mods a modpack laid down", () => {
 });
 
 describe("reading a modpack sidecar", () => {
-	test("accepts a sidecar written before the pack carried a description, author or downloads", () => {
+	it("accepts a sidecar written before the pack carried a description, author or downloads", () => {
 		const parsed = parseModpackSidecar(
 			JSON.stringify({
 				provider: "curseforge",
@@ -91,7 +91,7 @@ describe("reading a modpack sidecar", () => {
 		});
 	});
 
-	test("keeps the description, author and downloads a newer pack recorded", () => {
+	it("keeps the description, author and downloads a newer pack recorded", () => {
 		const parsed = parseModpackSidecar(
 			JSON.stringify(
 				sidecar({
@@ -109,7 +109,7 @@ describe("reading a modpack sidecar", () => {
 		});
 	});
 
-	test("rejects a sidecar naming a server type we do not run", () => {
+	it("rejects a sidecar naming a server type we do not run", () => {
 		expect(
 			parseModpackSidecar(
 				JSON.stringify(
@@ -121,11 +121,11 @@ describe("reading a modpack sidecar", () => {
 		).toBeNull();
 	});
 
-	test("rejects text that is not json", () => {
+	it("rejects text that is not json", () => {
 		expect(parseModpackSidecar("{")).toBeNull();
 	});
 
-	test("reads back the files still waiting on the player", () => {
+	it("reads back the files still waiting on the player", () => {
 		const pending = {
 			fileId: 6_620_555,
 			fileName: "bmcpalegardenpatcher-0.3.0.jar",
@@ -152,7 +152,7 @@ describe("reading a modpack sidecar", () => {
 		]);
 	});
 
-	test("fills in what a pending entry left out and lowers its checksum", () => {
+	it("fills in what a pending entry left out and lowers its checksum", () => {
 		const parsed = parseModpackSidecar(
 			JSON.stringify(
 				sidecar({
@@ -182,7 +182,7 @@ describe("reading a modpack sidecar", () => {
 		]);
 	});
 
-	test("drops the pending entries it cannot make sense of", () => {
+	it("drops the pending entries it cannot make sense of", () => {
 		const parsed = parseModpackSidecar(
 			JSON.stringify({
 				...sidecar(),
@@ -206,7 +206,7 @@ describe("reading a modpack sidecar", () => {
 		expect(parsed?.pending).toEqual([]);
 	});
 
-	test("accepts a sidecar written before the pack tracked pending files", () => {
+	it("accepts a sidecar written before the pack tracked pending files", () => {
 		const { pending: _pending, ...rest } = sidecar();
 
 		expect(parseModpackSidecar(JSON.stringify(rest))?.pending).toEqual([]);
@@ -214,36 +214,36 @@ describe("reading a modpack sidecar", () => {
 });
 
 describe("the loader build a detach keeps", () => {
-	test("keeps the pack's loader build when the server stays on the same type", () => {
+	it("keeps the pack's loader build when the server stays on the same type", () => {
 		expect(detachPinnedBuild(sidecar(), ServerVariant.NeoForge)).toBe("21.1.176");
 	});
 
-	test("drops the pack's loader build when the server moves to another type", () => {
+	it("drops the pack's loader build when the server moves to another type", () => {
 		expect(detachPinnedBuild(sidecar(), ServerVariant.Paper)).toBeNull();
 	});
 
-	test("pins nothing without a sidecar", () => {
+	it("pins nothing without a sidecar", () => {
 		expect(detachPinnedBuild(null, ServerVariant.NeoForge)).toBeNull();
 	});
 });
 
 describe("showing the files a held modpack waits for", () => {
-	test("shows no badge while nothing is pending", () => {
+	it("shows no badge while nothing is pending", () => {
 		expect(pendingBadges([])).toEqual([]);
 	});
 
-	test("counts one missing file in the singular", () => {
+	it("counts one missing file in the singular", () => {
 		expect(
 			pendingBadges([
 				pending(),
 			]).at(0)?.label,
 		).toEqual({
-			ar: "ناقص ملف واحد",
+			ar: "ملف واحد ناقص",
 			en: "1 file missing",
 		});
 	});
 
-	test("counts more than one missing file", () => {
+	it("counts more than one missing file", () => {
 		expect(
 			pendingBadges([
 				pending(),
@@ -252,14 +252,14 @@ describe("showing the files a held modpack waits for", () => {
 				}),
 			]).at(0)?.label,
 		).toEqual({
-			ar: "ناقص 2 ملفات",
+			ar: "ملفان ناقصان",
 			en: "2 files missing",
 		});
 	});
 });
 
 describe("when a modpack can be updated", () => {
-	test("offers the update whenever a newer release exists, even on a pack that no longer matches the server", () => {
+	it("offers the update whenever a newer release exists, even on a pack that no longer matches the server", () => {
 		for (const mismatched of [
 			false,
 			true,
@@ -272,7 +272,7 @@ describe("when a modpack can be updated", () => {
 		}
 	});
 
-	test("a pack on its latest release says so in the words the update refusal uses", () => {
+	it("a pack on its latest release says so in the words the update refusal uses", () => {
 		expect(modpackUpdateOf(false, ModpackFreshness.Current)).toEqual({
 			actions: [],
 			unavailable: {
@@ -284,13 +284,13 @@ describe("when a modpack can be updated", () => {
 		});
 	});
 
-	test("a pack on its latest release that no longer matches the server points to installing it again", () => {
+	it("a pack on its latest release that no longer matches the server points to installing it again", () => {
 		expect(modpackUpdateOf(true, ModpackFreshness.Current).unavailable?.[MODPACK_UPDATE_ACTION]?.en).toBe(
-			"This modpack is on its latest release but does not match your server's type or version. Install it again from the Modpacks tab.",
+			"This modpack is on its latest release but doesn't match your server's type or version. Install it again from the Modpacks tab.",
 		);
 	});
 
-	test("leaves the update to the handler when the provider could not say which release is latest", () => {
+	it("leaves the update to the handler when the provider could not say which release is latest", () => {
 		for (const mismatched of [
 			false,
 			true,

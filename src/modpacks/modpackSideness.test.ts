@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { MODRINTH_UNSUPPORTED } from "../providers";
 import type { ModpackFile } from "./modpackIndex";
 import { type ModpackSignals, partitionModpackFiles } from "./modpackSideness";
@@ -41,12 +41,12 @@ const inList = (list: string[], needle: string) => {
 };
 
 describe("a modpack that claims every file runs on a server", () => {
-	test("leaves out the client-only mod that crashed the server", () => {
+	it("leaves out the client-only mod that crashed the server", () => {
 		expect(inList(left, "entity_texture_features")).toBe(true);
 		expect(inList(kept, "entity_texture_features")).toBe(false);
 	});
 
-	test("leaves out the client-only mods that came with it", () => {
+	it("leaves out the client-only mods that came with it", () => {
 		for (const mod of [
 			"oculus",
 			"physics-mod",
@@ -58,7 +58,7 @@ describe("a modpack that claims every file runs on a server", () => {
 		}
 	});
 
-	test("keeps the libraries a server actually needs", () => {
+	it("keeps the libraries a server actually needs", () => {
 		for (const library of [
 			"geckolib",
 			"creativecore",
@@ -70,20 +70,20 @@ describe("a modpack that claims every file runs on a server", () => {
 		}
 	});
 
-	test("drops a client-only library together with the mod that depends on it", () => {
+	it("drops a client-only library together with the mod that depends on it", () => {
 		expect(inList(left, "libipn")).toBe(true);
 		expect(inList(left, "inventoryprofilesnext")).toBe(true);
 	});
 
-	test("still installs a mod whose project no longer exists on modrinth", () => {
+	it("still installs a mod whose project no longer exists on modrinth", () => {
 		expect(inList(kept, "smsn")).toBe(true);
 	});
 
-	test("never sends shaderpacks or resourcepacks to a server", () => {
+	it("never sends shaderpacks or resourcepacks to a server", () => {
 		expect(kept.some((path) => path.startsWith("shaderpacks/") || path.startsWith("resourcepacks/"))).toBe(false);
 	});
 
-	test("removes the mods modrinth says a server can run only when they are known to be client-side", () => {
+	it("removes the mods modrinth says a server can run only when they are known to be client-side", () => {
 		const supported = new Set(
 			FILES.flatMap((file) => {
 				return file.projectId !== null && UNSUPPORTED.has(file.projectId)
@@ -104,7 +104,7 @@ describe("a modpack that claims every file runs on a server", () => {
 		);
 	});
 
-	test("keeps most of the pack rather than gutting it", () => {
+	it("keeps most of the pack rather than gutting it", () => {
 		expect(keep.length + skipped.length).toBe(129);
 		expect(skipped.length).toBe(53);
 		expect(keep.length).toBe(76);
@@ -112,7 +112,7 @@ describe("a modpack that claims every file runs on a server", () => {
 });
 
 describe("the signals that override each other", () => {
-	test("a mod modrinth calls client-only is dropped even when its name says nothing", () => {
+	it("a mod modrinth calls client-only is dropped even when its name says nothing", () => {
 		const gravestone = FILES.find((file) => file.path.includes("gravestone"));
 
 		expect(gravestone).toBeDefined();
@@ -128,7 +128,7 @@ describe("the signals that override each other", () => {
 		expect(dropped.skipped.some((file) => file.path.includes("gravestone"))).toBe(true);
 	});
 
-	test("the dependency shield keeps a required dependency modrinth marks client-only", () => {
+	it("the dependency shield keeps a required dependency modrinth marks client-only", () => {
 		const gravestone = FILES.find((file) => file.path.includes("gravestone"));
 		const projectId = gravestone?.projectId ?? "";
 		const shielded = partitionModpackFiles(FILES, {
@@ -143,7 +143,7 @@ describe("the signals that override each other", () => {
 		expect(shielded.keep.some((file) => file.path.includes("gravestone"))).toBe(true);
 	});
 
-	test("the whitelist wins over every other signal", () => {
+	it("the whitelist wins over every other signal", () => {
 		const whitelisted: ModpackFile[] = [
 			{
 				path: "mods/Ping-Wheel-1.9.2-forge-1.20.1.jar",
@@ -165,7 +165,7 @@ describe("the signals that override each other", () => {
 		expect(partitioned.skipped.length).toBe(0);
 	});
 
-	test("without any modrinth answer the deny list still catches the crashers", () => {
+	it("without any modrinth answer the deny list still catches the crashers", () => {
 		const blind = partition({
 			unsupported: new Set<string>(),
 		});

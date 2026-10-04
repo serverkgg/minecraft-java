@@ -1,8 +1,8 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { pickModpackVersion } from "./modpackVersion";
 
 describe("picking the minecraft version a modpack release runs on", () => {
-	test("drops the family tag that sits beside the exact one", () => {
+	it("drops the family tag that sits beside the exact one", () => {
 		expect(
 			pickModpackVersion(
 				[
@@ -14,7 +14,7 @@ describe("picking the minecraft version a modpack release runs on", () => {
 		).toBe("1.20.1");
 	});
 
-	test("drops the family tag whichever order the source lists it in", () => {
+	it("drops the family tag whichever order the source lists it in", () => {
 		expect(
 			pickModpackVersion(
 				[
@@ -26,7 +26,7 @@ describe("picking the minecraft version a modpack release runs on", () => {
 		).toBe("1.20.1");
 	});
 
-	test("keeps a single tag as it is", () => {
+	it("keeps a single tag as it is", () => {
 		expect(
 			pickModpackVersion(
 				[
@@ -37,7 +37,7 @@ describe("picking the minecraft version a modpack release runs on", () => {
 		).toBe("1.21.4");
 	});
 
-	test("keeps the version the server is already pinned to when the release carries it", () => {
+	it("keeps the version the server is already pinned to when the release carries it", () => {
 		expect(
 			pickModpackVersion(
 				[
@@ -49,7 +49,7 @@ describe("picking the minecraft version a modpack release runs on", () => {
 		).toBe("1.20.1");
 	});
 
-	test("takes the newest tag when the pinned version is not one of them", () => {
+	it("takes the newest tag when the pinned version is not one of them", () => {
 		expect(
 			pickModpackVersion(
 				[
@@ -61,7 +61,7 @@ describe("picking the minecraft version a modpack release runs on", () => {
 		).toBe("1.20.2");
 	});
 
-	test("ignores snapshot ids that are not release versions", () => {
+	it("ignores snapshot ids that are not release versions", () => {
 		expect(
 			pickModpackVersion(
 				[
@@ -73,7 +73,7 @@ describe("picking the minecraft version a modpack release runs on", () => {
 		).toBe("1.20.1");
 	});
 
-	test("drops a bare major tag beside a full one", () => {
+	it("drops a bare major tag beside a full one", () => {
 		expect(
 			pickModpackVersion(
 				[
@@ -85,7 +85,7 @@ describe("picking the minecraft version a modpack release runs on", () => {
 		).toBe("26.3");
 	});
 
-	test("survives a source that lists the same tag twice", () => {
+	it("survives a source that lists the same tag twice", () => {
 		expect(
 			pickModpackVersion(
 				[
@@ -97,7 +97,7 @@ describe("picking the minecraft version a modpack release runs on", () => {
 		).toBe("1.20.1");
 	});
 
-	test("ignores a pinned version that is only the family tag, so a server stuck on it recovers", () => {
+	it("ignores a pinned version that is only the family tag, so a server stuck on it recovers", () => {
 		expect(
 			pickModpackVersion(
 				[
@@ -109,7 +109,7 @@ describe("picking the minecraft version a modpack release runs on", () => {
 		).toBe("1.20.1");
 	});
 
-	test("treats a zero patch as the exact tag beside its family", () => {
+	it("treats a zero patch as the exact tag beside its family", () => {
 		expect(
 			pickModpackVersion(
 				[
@@ -121,7 +121,7 @@ describe("picking the minecraft version a modpack release runs on", () => {
 		).toBe("1.20.0");
 	});
 
-	test("returns nothing when the release names no release version", () => {
+	it("returns nothing when the release names no release version", () => {
 		expect(pickModpackVersion([], null)).toBeNull();
 		expect(
 			pickModpackVersion(

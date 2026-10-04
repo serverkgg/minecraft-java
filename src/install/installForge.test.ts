@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { type Bridge, BridgeUserError } from "@serverkgg/bridge";
 import { installForge } from "./installForge";
 
@@ -27,7 +27,7 @@ const launcherless = {
 } as unknown as Bridge.Context;
 
 describe("installing Forge on a version it has no build for", () => {
-	test("the customer is told which type and version, and what to do", async () => {
+	it("the customer is told which type and version, and what to do", async () => {
 		const error = await installForge(context, "1.99", null, 21).then(
 			() => null,
 			(thrown: unknown) => thrown,
@@ -43,7 +43,7 @@ describe("installing Forge on a version it has no build for", () => {
 });
 
 describe("a Forge installer that leaves no server launcher behind", () => {
-	test("the customer is told to pick another build or version", async () => {
+	it("the customer is told to pick another build or version", async () => {
 		const error = await installForge(launcherless, "1.20.1", "47.2.0", 21).then(
 			() => null,
 			(thrown: unknown) => thrown,

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import type { CurseforgeSearchPage, CurseforgeSearchQuery } from "@serverkgg/bridge/catalogs";
 import { curseforgeRelaxedQuery, curseforgeSearchPage, curseforgeSearchText } from "./curseforgeApi";
 
@@ -39,20 +39,20 @@ const catalog = (answers: Record<string, string[]>) => {
 };
 
 describe("the text a player's search sends to curseforge", () => {
-	test("keeps typed text as it is, trimmed", () => {
+	it("keeps typed text as it is, trimmed", () => {
 		expect(curseforgeSearchText("  Dungeons, Dragons and Space Shuttles 2 ")).toBe(
 			"Dungeons, Dragons and Space Shuttles 2",
 		);
 	});
 
-	test("turns a pasted project page into its slug words, with or without a file", () => {
+	it("turns a pasted project page into its slug words, with or without a file", () => {
 		expect(curseforgeSearchText("https://www.curseforge.com/minecraft/modpacks/all-the-mods-9")).toBe("all the mods 9");
 		expect(curseforgeSearchText("https://www.curseforge.com/minecraft/modpacks/all-the-mods-9/files/5432101")).toBe(
 			"all the mods 9",
 		);
 	});
 
-	test("leaves a link to another site alone", () => {
+	it("leaves a link to another site alone", () => {
 		expect(curseforgeSearchText("https://modrinth.com/modpack/cobblemon")).toBe(
 			"https://modrinth.com/modpack/cobblemon",
 		);
@@ -60,7 +60,7 @@ describe("the text a player's search sends to curseforge", () => {
 });
 
 describe("relaxing a title curseforge refuses to match", () => {
-	test("drops punctuation, joining words and bare numbers, and keeps the first five words", () => {
+	it("drops punctuation, joining words and bare numbers, and keeps the first five words", () => {
 		expect(curseforgeRelaxedQuery("Dungeons, Dragons and Space Shuttles 2")).toBe("Dungeons Dragons Space Shuttles");
 		expect(curseforgeRelaxedQuery("Complex Pixelmon - The #1 Pokemon Adventure in Pixelmon - Multiplayer")).toBe(
 			"Complex Pixelmon Pokemon Adventure Pixelmon",
@@ -68,13 +68,13 @@ describe("relaxing a title curseforge refuses to match", () => {
 		expect(curseforgeRelaxedQuery("Craft to Exile 2 - 2.0 Atlas Update")).toBe("Craft Exile Atlas Update");
 	});
 
-	test("keeps tags that mix letters and digits", () => {
+	it("keeps tags that mix letters and digits", () => {
 		expect(curseforgeRelaxedQuery("All the Mods 9 - ATM9")).toBe("All Mods ATM9");
 	});
 });
 
 describe("searching curseforge with the relaxed title as the second try", () => {
-	test("returns the first page when the text search finds something", async () => {
+	it("returns the first page when the text search finds something", async () => {
 		const fake = catalog({
 			"space shuttles": [
 				"Dungeons, Dragons and Space Shuttles",
@@ -92,7 +92,7 @@ describe("searching curseforge with the relaxed title as the second try", () => 
 		expect(fake.queries.length).toBe(1);
 	});
 
-	test("retries an empty first page with the relaxed title, keeping every other filter", async () => {
+	it("retries an empty first page with the relaxed title, keeping every other filter", async () => {
 		const fake = catalog({
 			"Dungeons Dragons Space Shuttles": [
 				"Dungeons, Dragons and Space Shuttles 2",
@@ -116,7 +116,7 @@ describe("searching curseforge with the relaxed title as the second try", () => 
 		});
 	});
 
-	test("searches a pasted project page by its slug words", async () => {
+	it("searches a pasted project page by its slug words", async () => {
 		const fake = catalog({
 			"dungeons dragons and space shuttles 2": [
 				"Dungeons, Dragons and Space Shuttles 2",
@@ -132,7 +132,7 @@ describe("searching curseforge with the relaxed title as the second try", () => 
 		expect(fake.queries.at(0)?.query).toBe("dungeons dragons and space shuttles 2");
 	});
 
-	test("does not retry a later page, an empty query, or a title that is already relaxed", async () => {
+	it("does not retry a later page, an empty query, or a title that is already relaxed", async () => {
 		const fake = catalog({});
 
 		await curseforgeSearchPage(fake, {

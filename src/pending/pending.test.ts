@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import type { Bridge } from "@serverkgg/bridge";
 import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { MODPACK_SIDECAR, type PendingFile } from "../modpacks";
@@ -18,7 +18,7 @@ const pending = (overrides: Partial<PendingFile> = {}): PendingFile => ({
 });
 
 describe("describing a file the player still owes us", () => {
-	test("names the file id, the jar and the mod's page", () => {
+	it("names the file id, the jar and the mod's page", () => {
 		expect(pendingFileOf(pending())).toMatchObject({
 			id: "6620555",
 			fileName: "bmcpalegardenpatcher-0.3.0.jar",
@@ -27,25 +27,25 @@ describe("describing a file the player still owes us", () => {
 		});
 	});
 
-	test("hands the checksum over with the algorithm that produced it", () => {
+	it("hands the checksum over with the algorithm that produced it", () => {
 		expect(pendingFileOf(pending()).digest).toBe("sha1:0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33");
 	});
 
-	test("titles the file with the mod name in both languages", () => {
+	it("titles the file with the mod name in both languages", () => {
 		expect(pendingFileOf(pending()).title).toEqual({
 			ar: "BMC Datafixer",
 			en: "BMC Datafixer",
 		});
 	});
 
-	test("explains in both languages why the player has to fetch it", () => {
+	it("explains in both languages why the player has to fetch it", () => {
 		const note = pendingFileOf(pending()).note;
 
-		expect(note?.ar).toContain("كيرس فورج");
+		expect(note?.ar).toContain("CurseForge");
 		expect(note?.en).toContain("CurseForge");
 	});
 
-	test("leaves the size out when the pack never told us", () => {
+	it("leaves the size out when the pack never told us", () => {
 		expect(
 			pendingFileOf(
 				pending({
@@ -55,7 +55,7 @@ describe("describing a file the player still owes us", () => {
 		).toBeNull();
 	});
 
-	test("leaves the page out when we do not know it", () => {
+	it("leaves the page out when we do not know it", () => {
 		expect(
 			pendingFileOf(
 				pending({
@@ -67,7 +67,7 @@ describe("describing a file the player still owes us", () => {
 });
 
 describe("uploading a file the modpack was waiting for", () => {
-	test("reports the file, the mod and the modpack it completes", async () => {
+	it("reports the file, the mod and the modpack it completes", async () => {
 		const upload = `${PENDING_STAGING}/a1/bmcpalegardenpatcher-0.3.0.jar`;
 		const files = new Map<string, string>([
 			[
@@ -124,7 +124,7 @@ describe("uploading a file the modpack was waiting for", () => {
 			{
 				name: BridgeEventName.ModInstalled,
 				text: {
-					ar: "تم رفع bmcpalegardenpatcher-0.3.0.jar الناقص لمودباك Better MC",
+					ar: "تم رفع bmcpalegardenpatcher-0.3.0.jar الناقص إلى مودباك Better MC",
 					en: "Uploaded the missing bmcpalegardenpatcher-0.3.0.jar for modpack Better MC",
 				},
 				subject: "BMC Datafixer",

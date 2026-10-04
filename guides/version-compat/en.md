@@ -11,15 +11,15 @@ We install `ViaVersion` and `ViaBackwards` for you and keep them updated on ever
 
 ## Turn it on
 
-In the **Settings** tab turn on **Let other Java versions in** and save. The server restarts right away, and the first start takes a moment while the files download.
+In the **Settings** tab, turn on **Let other Java versions in** and save. The server restarts right away, and the first start takes a moment while the files download.
 
 @[open](panel:settings)
 
-If a download fails, your server still starts — without version compatibility — and prints a warning line in the console. We never block a start on a download.
+If a download fails, your server still starts without version compatibility and prints a warning line in the console. We never block a start on a download.
 
-## Your server version does not change
+## Your server version doesn't change
 
-Version compatibility does not touch your server's version or your world. Your server stays on its own version:
+Version compatibility doesn't touch your server's version or your world. Your server stays on its own version:
 
 @[field](server.version)
 
@@ -27,18 +27,18 @@ The two plugins only translate between the player's version and the server's ver
 
 ## What to expect
 
-The translation is not perfect, and the further a player's version is from the server's, the more you will notice:
+The translation isn't perfect, and the further a player's version is from the server's, the more you'll notice:
 
 - Blocks and items added in newer versions look wrong or go missing for players on an older version
-- Some newer sounds and mob behaviours never reach older versions
+- Some newer sounds and mob behaviors never reach older versions
 - Plugins that depend on version details can misbehave for a player on a different version
 
 > [!warning] If your server runs a lot of plugins, try it yourself from an older version before you tell your friends to join.
 
-## Fabric is not covered
+## Fabric isn't covered
 
-On Fabric the project ships under a different name (`ViaFabric`) with its own setup, and we did not wire it into this switch. If your server is Fabric and you want it, install it yourself from the Mods tab.
+On Fabric the project ships under a different name (`ViaFabric`) with its own setup, and we didn't wire it into this switch. If your server is Fabric and you want it, install it yourself from the Mods tab.
 
 ## Turn it off
 
-Same switch — turn it off and save. We disable both plugins and leave them in place, so turning it back on starts them again with no new download.
+Use the same switch: turn it off and save. We disable both plugins and leave them in place, so turning it back on starts them again with no new download.

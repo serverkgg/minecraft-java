@@ -135,12 +135,12 @@ const KIND_TEXT: Record<AddonKind, Bridge.Text> = {
 
 const MISSING_TEXT: Record<AddonKind, Bridge.Text> = {
 	[AddonKind.Mod]: {
-		ar: "ما لقينا المود أو واحد من متطلباته عند مصدره. دوّر عليه مرة ثانية أو اختَر مود ثاني.",
-		en: "We could not find this mod or one of its dependencies at its source. Search for it again or pick another mod.",
+		ar: "تعذّر العثور على المود أو أحد متطلباته لدى مصدره. ابحث عنه مرة ثانية أو اختر مودًا آخر.",
+		en: "We couldn't find this mod or one of its dependencies at its source. Search for it again or pick another mod.",
 	},
 	[AddonKind.Plugin]: {
-		ar: "ما لقينا الإضافة أو وحدة من متطلباتها عند مصدرها. دوّر عليها مرة ثانية أو اختَر إضافة ثانية.",
-		en: "We could not find this plugin or one of its dependencies at its source. Search for it again or pick another plugin.",
+		ar: "تعذّر العثور على الإضافة أو أحد متطلباتها لدى مصدرها. ابحث عنها مرة ثانية أو اختر إضافة أخرى.",
+		en: "We couldn't find this plugin or one of its dependencies at its source. Search for it again or pick another plugin.",
 	},
 };
 
@@ -217,8 +217,8 @@ const installProject = async (
 
 	if (!decoded) {
 		throw new BridgeUserError({
-			ar: "ما نقدر نركّب هذي الإضافة من المرجع اللي وصلنا. حدّث الصفحة وجرّب مرة ثانية.",
-			en: `"${id}" is not a provider reference.`,
+			ar: "تعذّر تثبيت هذه الإضافة من المرجع المستلم. حدّث الصفحة وجرب مرة ثانية.",
+			en: `We couldn't install "${id}" because it isn't a provider reference. Refresh the page and try again.`,
 		});
 	}
 
@@ -226,8 +226,8 @@ const installProject = async (
 
 	if (companion) {
 		throw new BridgeUserError({
-			ar: `${companion.title} يتركّب ويتحدّث من مفتاح ${companion.feature.switchLabel} في تبويب الإعدادات.`,
-			en: `${companion.title} is installed and updated by the ${companion.feature.switchLabel} switch in the settings tab.`,
+			ar: `يتم تثبيت ${companion.title} وتحديثه من مفتاح ${companion.feature.switchLabel} في تبويب الإعدادات.`,
+			en: `${companion.title} is installed and updated by the ${companion.feature.switchLabel} switch in the Settings tab.`,
 		});
 	}
 
@@ -236,7 +236,7 @@ const installProject = async (
 
 	if (!provider?.supports(target)) {
 		throw new BridgeUserError({
-			ar: `${decoded.provider} ما عنده شي يناسب سيرفر ${target.variant}.`,
+			ar: `لا يوجد لدى ${decoded.provider} ما يناسب سيرفر ${target.variant}.`,
 			en: `${decoded.provider} has nothing for a ${target.variant} server.`,
 		});
 	}
@@ -270,8 +270,8 @@ const installProject = async (
 				)
 			) {
 				throw new BridgeUserError({
-					ar: `الإضافة تتعارض مع ${dependency.project} المركّبة. شيل الإضافة المتعارضة أول.`,
-					en: `This addon conflicts with installed ${dependency.project}. Remove the conflicting addon first.`,
+					ar: `الإضافة تتعارض مع ${dependency.project} المثبّتة. أزل الإضافة المتعارضة أولًا.`,
+					en: `This add-on conflicts with the installed ${dependency.project}. Remove the conflicting add-on first.`,
 				});
 			}
 		}
@@ -396,8 +396,8 @@ const removeEntry = async (context: Bridge.Context, id: string) => {
 
 	if (!name.endsWith(".jar")) {
 		throw new BridgeUserError({
-			ar: `"${id}" مو مركّب.`,
-			en: `"${id}" is not installed.`,
+			ar: `«${id}» غير مثبّت.`,
+			en: `"${id}" isn't installed.`,
 		});
 	}
 
@@ -541,8 +541,8 @@ export const addons: Bridge.Catalog = {
 		const provider = ref ? providerById(ref.provider) : null;
 		if (!ref || !provider) {
 			throw new BridgeUserError({
-				ar: "اختَر إضافة من الكتالوج.",
-				en: "Choose an addon from the catalog.",
+				ar: "اختر إضافة من الكتالوج.",
+				en: "Choose an add-on from the catalog.",
 			});
 		}
 		const target = await addonTarget(context);
@@ -554,7 +554,7 @@ export const addons: Bridge.Catalog = {
 			confirm: BridgeConfirm.Normal,
 			lines: [
 				{
-					ar: "التغيير ما يبان إلا بعد ما تعيد تشغيل سيرفرك.",
+					ar: "يظهر التغيير بعد ريستارت سيرفرك.",
 					en: "The change only shows after you restart your server.",
 				},
 				...pending.map((entry) => ({

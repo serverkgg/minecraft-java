@@ -1,10 +1,10 @@
 ## Create your server
 
-From the **Create a server** page pick Minecraft, then choose a plan — 4GB is a great start for playing with friends, and you can upgrade later without losing your world.
+From the **Create a server** page, pick Minecraft, then choose a plan. 4GB is a great start for playing with friends, and you can upgrade later without losing your world.
 
-After payment your machine starts provisioning — follow its progress on the order page. There is nothing to set up: as soon as the machine is ready your server downloads the latest Minecraft release and starts on its own.
+After payment, your server starts setting up. Follow its progress on the order page. There's nothing to set up yourself: as soon as it's ready, your server downloads the latest Minecraft release and starts on its own.
 
-> [!note] The first start takes a moment while the game downloads and the world generates. Watch all of it from the console tab.
+> [!note] The first start takes a moment while the game downloads and the world generates. Watch all of it from the Console tab.
 
 ## Join the game
 
@@ -17,18 +17,18 @@ Then inside Minecraft:
 
 1. Open **Multiplayer**
 2. Click **Add Server**
-3. Paste the address into Server Address
+3. Paste the address into **Server Address**
 4. Join and play
 
 :::else
-Your server is still setting up, so it has no address yet — it appears here the moment the install finishes.
+Your server is still setting up, so it has no address yet. The address appears here as soon as the install finishes.
 
 @[open](console)
 :::
 
-## Make friends with the console
+## The console
 
-The **Console** tab streams the server log live, and you can type commands directly without the leading `/` — for example:
+The **Console** tab streams the server log live, and you can type commands directly without the leading `/`. For example:
 
 ```txt
 say Hello everyone
@@ -36,7 +36,7 @@ time set day
 gamemode creative Steve
 ```
 
-> [!warning] Stopping the server with the stop button saves the world safely. Only force-restart if the server is completely stuck.
+> [!warning] Stopping the server with the stop button saves the world safely. Only force a restart if the server is completely stuck.
 
 ## What next?
 
@@ -50,7 +50,7 @@ Every server setting lives in `server.properties`.
 
 Turn the whitelist on, then add each friend by name from the console with `whitelist add playername`.
 
-And if you banned somebody and want them back, find them under Banned players in the **Players** tab and press Unban.
+If you banned someone and want them back, find them under Banned players in the **Players** tab and press Unban.
 
 @[command](whitelist on)
 

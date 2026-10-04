@@ -44,7 +44,7 @@ export const CURSEFORGE_MODPACK_SORTS: Bridge.CatalogFacet[] = [
 	{
 		value: CurseforgeSort.TotalDownloads,
 		label: {
-			ar: "الأكثر تحميلًا",
+			ar: "الأكثر تنزيلًا",
 			en: "Most downloaded",
 		},
 	},

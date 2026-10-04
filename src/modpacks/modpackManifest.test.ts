@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
 	CurseforgeDependency,
 	type CurseforgeFile,
@@ -43,7 +43,7 @@ const manifest = (overrides: Record<string, unknown> = {}) => {
 };
 
 describe("reading a curseforge modpack manifest", () => {
-	test("reads the pack a server can be built from", () => {
+	it("reads the pack a server can be built from", () => {
 		const parsed = parseCurseforgeManifest(manifest());
 
 		expect(parsed.mcVersion).toBe("1.20.1");
@@ -59,7 +59,7 @@ describe("reading a curseforge modpack manifest", () => {
 		]);
 	});
 
-	test("drops the minecraft version out of a three part neoforge loader id", () => {
+	it("drops the minecraft version out of a three part neoforge loader id", () => {
 		const parsed = parseCurseforgeManifest(
 			manifest({
 				minecraft: {
@@ -78,7 +78,7 @@ describe("reading a curseforge modpack manifest", () => {
 		expect(parsed.loaderVersion).toBe("47.1.99");
 	});
 
-	test("keeps a loader version that carries its own suffix", () => {
+	it("keeps a loader version that carries its own suffix", () => {
 		const parsed = parseCurseforgeManifest(
 			manifest({
 				minecraft: {
@@ -96,7 +96,7 @@ describe("reading a curseforge modpack manifest", () => {
 		expect(parsed.loaderVersion).toBe("26.1.2.68-beta");
 	});
 
-	test("reads fabric packs", () => {
+	it("reads fabric packs", () => {
 		const parsed = parseCurseforgeManifest(
 			manifest({
 				minecraft: {
@@ -115,7 +115,7 @@ describe("reading a curseforge modpack manifest", () => {
 		expect(parsed.loaderVersion).toBe("0.15.11");
 	});
 
-	test("takes the loader the pack marked primary", () => {
+	it("takes the loader the pack marked primary", () => {
 		const parsed = parseCurseforgeManifest(
 			manifest({
 				minecraft: {
@@ -137,7 +137,7 @@ describe("reading a curseforge modpack manifest", () => {
 		expect(parsed.variant).toBe(ServerVariant.Forge);
 	});
 
-	test("falls back to the default overrides folder", () => {
+	it("falls back to the default overrides folder", () => {
 		expect(
 			parseCurseforgeManifest(
 				manifest({
@@ -147,7 +147,7 @@ describe("reading a curseforge modpack manifest", () => {
 		).toBe("overrides");
 	});
 
-	test("keeps the folder a pack named itself", () => {
+	it("keeps the folder a pack named itself", () => {
 		expect(
 			parseCurseforgeManifest(
 				manifest({
@@ -157,7 +157,7 @@ describe("reading a curseforge modpack manifest", () => {
 		).toBe("serverpack");
 	});
 
-	test("refuses a quilt pack the way the modrinth reader does", () => {
+	it("refuses a quilt pack the way the modrinth reader does", () => {
 		expect(() =>
 			parseCurseforgeManifest(
 				manifest({
@@ -172,20 +172,20 @@ describe("reading a curseforge modpack manifest", () => {
 					},
 				}),
 			),
-		).toThrow("quilt");
+		).toThrow("Quilt");
 	});
 
-	test("refuses a pack built for another game", () => {
+	it("refuses a pack built for another game", () => {
 		expect(() =>
 			parseCurseforgeManifest(
 				manifest({
 					manifestType: "somethingElse",
 				}),
 			),
-		).toThrow("not minecraft");
+		).toThrow("not Minecraft");
 	});
 
-	test("refuses a manifest version we have not read", () => {
+	it("refuses a manifest version we have not read", () => {
 		expect(() =>
 			parseCurseforgeManifest(
 				manifest({
@@ -195,7 +195,7 @@ describe("reading a curseforge modpack manifest", () => {
 		).toThrow("manifest version 2");
 	});
 
-	test("refuses a pack with no minecraft version", () => {
+	it("refuses a pack with no minecraft version", () => {
 		expect(() =>
 			parseCurseforgeManifest(
 				manifest({
@@ -209,10 +209,10 @@ describe("reading a curseforge modpack manifest", () => {
 					},
 				}),
 			),
-		).toThrow("no minecraft version");
+		).toThrow("declare a Minecraft version");
 	});
 
-	test("refuses a pack with more files than we install", () => {
+	it("refuses a pack with more files than we install", () => {
 		expect(() =>
 			parseCurseforgeManifest(
 				manifest({
@@ -233,8 +233,8 @@ describe("reading a curseforge modpack manifest", () => {
 		).toThrow("more than the 1024");
 	});
 
-	test("refuses json that is not a manifest", () => {
-		expect(() => parseCurseforgeManifest("not json")).toThrow("not valid json");
+	it("refuses json that is not a manifest", () => {
+		expect(() => parseCurseforgeManifest("not json")).toThrow("isn't valid JSON");
 	});
 });
 
@@ -309,7 +309,7 @@ const names = (entries: CurseforgeFile[]) => {
 };
 
 describe("the curseforge dependency shield", () => {
-	test("keeps the client-tagged library a kept mod requires", () => {
+	it("keeps the client-tagged library a kept mod requires", () => {
 		const partition = partitionCurseforgeEntries([
 			file("climaterivers-1.20.1-1.0.0.jar", CLIMATE_RIVERS, {
 				dependencies: requires(TERRABLENDER),
@@ -327,7 +327,7 @@ describe("the curseforge dependency shield", () => {
 		expect(partition.degraded).toBe(false);
 	});
 
-	test("keeps the library the library it shields requires", () => {
+	it("keeps the library the library it shields requires", () => {
 		const partition = partitionCurseforgeEntries([
 			file("netherportalfix-fabric-1.20.1-13.0.1.jar", NETHER_PORTAL_FIX, {
 				dependencies: requires(BALM),
@@ -347,7 +347,7 @@ describe("the curseforge dependency shield", () => {
 		expect(partition.installable.length).toBe(3);
 	});
 
-	test("still leaves out the client-tagged mod nothing requires", () => {
+	it("still leaves out the client-tagged mod nothing requires", () => {
 		const partition = partitionCurseforgeEntries([
 			file("climaterivers-1.20.1-1.0.0.jar", CLIMATE_RIVERS),
 			clientTagged("TerraBlender-fabric-1.20.1-3.0.1.7.jar", TERRABLENDER),
@@ -359,7 +359,7 @@ describe("the curseforge dependency shield", () => {
 		expect(partition.shielded.length).toBe(0);
 	});
 
-	test("keeps a jar the deny list names when a kept mod requires it", () => {
+	it("keeps a jar the deny list names when a kept mod requires it", () => {
 		const partition = partitionCurseforgeEntries([
 			file("Jade-1.20.1-fabric-11.9.2.jar", JADE, {
 				dependencies: requires(SEARCHABLES),
@@ -372,7 +372,7 @@ describe("the curseforge dependency shield", () => {
 		]);
 	});
 
-	test("leaves the deny list in charge of a jar nothing requires", () => {
+	it("leaves the deny list in charge of a jar nothing requires", () => {
 		const partition = partitionCurseforgeEntries([
 			file("Jade-1.20.1-fabric-11.9.2.jar", JADE),
 			file("sodium-fabric-0.5.11.jar", SODIUM),
@@ -383,7 +383,7 @@ describe("the curseforge dependency shield", () => {
 		]);
 	});
 
-	test("keeps a whitelisted file before any other signal reads it", () => {
+	it("keeps a whitelisted file before any other signal reads it", () => {
 		const partition = partitionCurseforgeEntries([
 			clientTagged("appleskin-fabric-mc1.20.1-2.5.1.jar", APPLESKIN),
 		]);
@@ -392,7 +392,7 @@ describe("the curseforge dependency shield", () => {
 		expect(partition.shielded.length).toBe(0);
 	});
 
-	test("names the dependency the pack never shipped instead of failing", () => {
+	it("names the dependency the pack never shipped instead of failing", () => {
 		const partition = partitionCurseforgeEntries([
 			file("climaterivers-1.20.1-1.0.0.jar", CLIMATE_RIVERS, {
 				dependencies: requires(MISSING),
@@ -405,7 +405,7 @@ describe("the curseforge dependency shield", () => {
 		expect(partition.installable.length).toBe(1);
 	});
 
-	test("keeps every questionable file when curseforge sends no dependencies at all", () => {
+	it("keeps every questionable file when curseforge sends no dependencies at all", () => {
 		const partition = partitionCurseforgeEntries([
 			unreadable(file("climaterivers-1.20.1-1.0.0.jar", CLIMATE_RIVERS)),
 			unreadable(clientTagged("TerraBlender-fabric-1.20.1-3.0.1.7.jar", TERRABLENDER)),
@@ -422,7 +422,7 @@ describe("the curseforge dependency shield", () => {
 		expect(partition.absent.length).toBe(0);
 	});
 
-	test("reads only the required relation, not the optional one", () => {
+	it("reads only the required relation, not the optional one", () => {
 		const partition = partitionCurseforgeEntries([
 			file("climaterivers-1.20.1-1.0.0.jar", CLIMATE_RIVERS, {
 				dependencies: [
@@ -439,7 +439,7 @@ describe("the curseforge dependency shield", () => {
 		expect(partition.installable.length).toBe(1);
 	});
 
-	test("never lets a dependency cycle stall the shield", () => {
+	it("never lets a dependency cycle stall the shield", () => {
 		const partition = partitionCurseforgeEntries([
 			file("climaterivers-1.20.1-1.0.0.jar", CLIMATE_RIVERS, {
 				dependencies: requires(TERRABLENDER),
@@ -550,7 +550,7 @@ const ladder = (entries: CurseforgeFile[], options: LadderOptions = {}) => {
 };
 
 describe("the source ladder a curseforge modpack file walks", () => {
-	test("takes the url curseforge handed us when there is one", () => {
+	it("takes the url curseforge handed us when there is one", () => {
 		const result = ladder(
 			[
 				hashed(file("jei.jar", JADE)),
@@ -575,7 +575,7 @@ describe("the source ladder a curseforge modpack file walks", () => {
 		expect(result.skipped).toBe(0);
 	});
 
-	test("takes the modrinth mirror when curseforge hands us no url", () => {
+	it("takes the modrinth mirror when curseforge hands us no url", () => {
 		const result = ladder(
 			[
 				hashed(
@@ -605,7 +605,7 @@ describe("the source ladder a curseforge modpack file walks", () => {
 		]);
 	});
 
-	test("falls back to the id split url for a file its author still lets us fetch", () => {
+	it("falls back to the id split url for a file its author still lets us fetch", () => {
 		const result = ladder(
 			[
 				hashed(
@@ -625,7 +625,7 @@ describe("the source ladder a curseforge modpack file walks", () => {
 		expect(result.blocked).toEqual([]);
 	});
 
-	test("skips an optional file its author blocked outside curseforge", () => {
+	it("skips an optional file its author blocked outside curseforge", () => {
 		const entry = hashed(
 			file("optional.jar", SEARCHABLES, {
 				downloadUrl: null,
@@ -657,7 +657,7 @@ describe("the source ladder a curseforge modpack file walks", () => {
 		expect(result.skipped).toBe(1);
 	});
 
-	test("lists a required file its author blocked instead of guessing a url", () => {
+	it("lists a required file its author blocked instead of guessing a url", () => {
 		const entry = hashed(
 			file("bmcpalegardenpatcher-0.3.0.jar", SEARCHABLES, {
 				downloadUrl: null,
@@ -702,7 +702,7 @@ describe("the source ladder a curseforge modpack file walks", () => {
 		]);
 	});
 
-	test("keeps the page url curseforge published for a blocked mod", () => {
+	it("keeps the page url curseforge published for a blocked mod", () => {
 		const entry = hashed(
 			file("blocked.jar", SEARCHABLES, {
 				downloadUrl: null,
@@ -728,7 +728,7 @@ describe("the source ladder a curseforge modpack file walks", () => {
 		expect(result.blocked.at(0)?.pageUrl).toBe("https://www.curseforge.com/minecraft/mc-mods/published");
 	});
 
-	test("leaves out a blocked file we could never verify", () => {
+	it("leaves out a blocked file we could never verify", () => {
 		const result = ladder(
 			[
 				file("nohash.jar", NETHER_PORTAL_FIX, {

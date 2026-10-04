@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import type { Bridge } from "@serverkgg/bridge";
 import { install } from "./install";
 
@@ -100,7 +100,7 @@ const bootWith = () => {
 };
 
 describe("starting a server whose install is current", () => {
-	test("reports nothing, so a plain start never reads as an install", async () => {
+	it("reports nothing, so a plain start never reads as an install", async () => {
 		const { context, reported, logged } = bootWith();
 
 		const outcome = await install.run(context);

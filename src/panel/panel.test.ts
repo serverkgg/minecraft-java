@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { BridgeLayout, BridgePlace } from "@serverkgg/bridge";
 import type { BridgeSection } from "@serverkgg/bridge/protocol";
 import { panel } from "./panel";
@@ -59,26 +59,26 @@ const PLACE_LAYOUTS: Record<BridgePlace, BridgeLayout[]> = {
 };
 
 describe("laying out the minecraft panel", () => {
-	test("gives every tab a unique id", () => {
+	it("gives every tab a unique id", () => {
 		const ids = panel.tabs.map((tab) => tab.id);
 
 		expect(new Set(ids).size).toBe(ids.length);
 	});
 
-	test("gives every section a unique id", () => {
+	it("gives every section a unique id", () => {
 		const ids = sections.map((section) => section.id);
 
 		expect(new Set(ids).size).toBe(ids.length);
 	});
 
-	test("titles every tab in both arabic and english", () => {
+	it("titles every tab in both arabic and english", () => {
 		for (const tab of panel.tabs) {
 			expect(tab.title.ar.length).toBeGreaterThan(0);
 			expect(tab.title.en.length).toBeGreaterThan(0);
 		}
 	});
 
-	test("writes every help line in both arabic and english", () => {
+	it("writes every help line in both arabic and english", () => {
 		for (const section of sections) {
 			if (section.help === undefined) {
 				continue;
@@ -91,28 +91,28 @@ describe("laying out the minecraft panel", () => {
 });
 
 describe("saying what each form is for before the owner reads its fields", () => {
-	test("explains the version, crossplay, version compatibility and settings forms", () => {
+	it("explains the version, crossplay, version compatibility and settings forms", () => {
 		for (const id of HELPED_FORM_IDS) {
 			expect(formNamed(id)?.help?.ar.length).toBeGreaterThan(0);
 			expect(formNamed(id)?.help?.en.length).toBeGreaterThan(0);
 		}
 	});
 
-	test("names server.properties in the settings help, which is the file it writes", () => {
+	it("names server.properties in the settings help, which is the file it writes", () => {
 		expect(formNamed("settings")?.help?.ar).toContain("server.properties");
 		expect(formNamed("settings")?.help?.en).toContain("server.properties");
 	});
 });
 
 describe("handing the roster to the platform's players page", () => {
-	test("calls the tab the players by the name the panel uses everywhere", () => {
+	it("calls the tab the players by the name the panel uses everywhere", () => {
 		expect(tabNamed("players")?.title).toEqual({
-			ar: "اللاعبين",
+			ar: "اللاعبون",
 			en: "Players",
 		});
 	});
 
-	test("places the roster, the whitelist and the ban list on the players page", () => {
+	it("places the roster, the whitelist and the ban list on the players page", () => {
 		expect(tabNamed("players")?.sections.map((section) => section.id)).toEqual(PLAYERS_SECTION_IDS);
 
 		for (const id of PLAYERS_SECTION_IDS) {
@@ -120,11 +120,11 @@ describe("handing the roster to the platform's players page", () => {
 		}
 	});
 
-	test("places every one of them, so the tab leaves the sidebar entirely", () => {
+	it("places every one of them, so the tab leaves the sidebar entirely", () => {
 		expect(tabNamed("players")?.sections.every((section) => placeOf(section) !== undefined)).toBe(true);
 	});
 
-	test("keeps the tab declared, because the crossplay guide opens it", async () => {
+	it("keeps the tab declared, because the crossplay guide opens it", async () => {
 		for (const locale of [
 			"ar",
 			"en",
@@ -137,7 +137,7 @@ describe("handing the roster to the platform's players page", () => {
 		expect(tabNamed("players")).not.toBeNull();
 	});
 
-	test("puts a place only on a layout the page it names can render", () => {
+	it("puts a place only on a layout the page it names can render", () => {
 		for (const section of sections) {
 			const place = placeOf(section);
 
@@ -151,11 +151,11 @@ describe("handing the roster to the platform's players page", () => {
 });
 
 describe("moderating a player who already left", () => {
-	test("marks the ban as the one roster action that reaches an offline player", () => {
+	it("marks the ban as the one roster action that reaches an offline player", () => {
 		expect(rowActionNamed("players", "ban")?.offline).toBe(true);
 	});
 
-	test("leaves every other roster action to players who are actually connected", () => {
+	it("leaves every other roster action to players who are actually connected", () => {
 		const offline = (tableNamed("players")?.actions ?? []).filter((action) => action.offline === true);
 
 		expect(offline.map((action) => action.id)).toEqual([
@@ -163,7 +163,7 @@ describe("moderating a player who already left", () => {
 		]);
 	});
 
-	test("never marks a row action offline outside the roster, where it means nothing", () => {
+	it("never marks a row action offline outside the roster, where it means nothing", () => {
 		for (const id of [
 			"whitelist",
 			"bans",

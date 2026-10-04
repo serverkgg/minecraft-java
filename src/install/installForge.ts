@@ -45,7 +45,7 @@ export const installForge = async (
 	}
 
 	throw new BridgeUserError({
-		ar: `أداة تثبيت Forge خلصت بدون ما تجهّز ملف تشغيل السيرفر للإصدار ${release}. اختَر إصدار Forge ثاني أو نسخة ماينكرافت ثانية من تبويب النسخة.`,
+		ar: `انتهت أداة تثبيت Forge دون تجهيز ملف تشغيل السيرفر للإصدار ${release}. اختر إصدار Forge آخر أو إصدار ماينكرافت آخر من تبويب الإصدار.`,
 		en: `The Forge installer finished without a server launcher for ${release}. Pick another Forge build or Minecraft version in the Version tab.`,
 	});
 };

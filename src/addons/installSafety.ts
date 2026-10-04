@@ -21,7 +21,7 @@ export const assertInstallSafety = async (
 			|| (!sameOwner && ((await exists(filename)) || (await exists(`${filename}${DISABLED_SUFFIX}`))))
 		) {
 			throw new BridgeUserError({
-				ar: `الملف ${filename} يتعارض مع ملف موجود. غيّر اسمه أو شيله أول.`,
+				ar: `الملف ${filename} يتعارض مع ملف موجود. غيّر اسمه أو أزله أولًا.`,
 				en: `File ${filename} conflicts with an existing file. Rename or remove it first.`,
 			});
 		}
@@ -34,8 +34,8 @@ export const assertInstallSafety = async (
 					&& (await exists(`${trackedName}${DISABLED_SUFFIX}`))
 				) {
 					throw new BridgeUserError({
-						ar: `الإضافة تحتاج ${installed.title} المعطّلة. فعّلها أول وجرّب مرة ثانية.`,
-						en: `This addon requires disabled ${installed.title}. Enable that dependency first and retry.`,
+						ar: `الإضافة تتطلب ${installed.title}، وهي موقوفة. فعّلها أولًا وجرب مرة ثانية.`,
+						en: `This add-on requires ${installed.title}, which is disabled. Enable it first and try again.`,
 					});
 				}
 			}

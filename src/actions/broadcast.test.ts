@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import type { Bridge } from "@serverkgg/bridge";
 import { BRIDGE_ACTIVITY_EXCERPT_LENGTH_LIMIT, BridgeEventName } from "@serverkgg/bridge/protocol";
 import { broadcast } from "./broadcast";
@@ -27,7 +27,7 @@ const recorder = () => {
 };
 
 describe("what a broadcast reports", () => {
-	test("a short chat message is quoted whole", async () => {
+	it("a short chat message is quoted whole", async () => {
 		const { context, reported } = recorder();
 
 		await broadcast.actions.say?.(context, {
@@ -49,7 +49,7 @@ describe("what a broadcast reports", () => {
 		]);
 	});
 
-	test("a long on-screen message is cut to the excerpt limit", async () => {
+	it("a long on-screen message is cut to the excerpt limit", async () => {
 		const { context, reported } = recorder();
 		const message = "welcome ".repeat(30);
 

@@ -45,13 +45,13 @@ export const curseForgeProvider: CatalogProvider = {
 	id: CatalogProviderId.CurseForge,
 
 	label: {
-		ar: "كيرس فورج",
+		ar: "CurseForge",
 		en: "CurseForge",
 	},
 
 	note: {
-		ar: "كيرس فورج مو متاح الحين. لازم الأدمن يضبط مفتاح CurseForge.",
-		en: "CurseForge is unavailable. An administrator needs to set the CurseForge key.",
+		ar: "CurseForge غير متاح حاليًا، ويلزم أن يضبط فريق سيرفرك مفتاح CurseForge.",
+		en: "CurseForge isn't available right now. The Serverk team needs to set the CurseForge key.",
 	},
 
 	sorts: [
@@ -65,7 +65,7 @@ export const curseForgeProvider: CatalogProvider = {
 		{
 			value: CurseforgeSort.TotalDownloads,
 			label: {
-				ar: "الأكثر تحميلًا",
+				ar: "الأكثر تنزيلًا",
 				en: "Most downloaded",
 			},
 		},

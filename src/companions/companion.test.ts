@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { manifestSchema } from "@serverkgg/bridge/manifest";
 import { ServerVariant } from "../shared";
 import { COMPANIONS, CompanionId, CROSSPLAY, FABRIC_API } from "./companion";
@@ -8,7 +8,7 @@ const MANIFEST_PATH = `${import.meta.dir}/../../serverk.yml`;
 const manifest = manifestSchema.parse(Bun.YAML.parse(await Bun.file(MANIFEST_PATH).text()));
 
 describe("the bedrock address only exists when crossplay can run", () => {
-	test("the bedrock port is live on the server types Geyser supports, with crossplay on", () => {
+	it("the bedrock port is live on the server types Geyser supports, with crossplay on", () => {
 		const bedrock = manifest.container.ports.find((port) => port.key === "bedrock");
 
 		expect(bedrock?.activeWhen).toMatchObject([
@@ -25,7 +25,7 @@ describe("the bedrock address only exists when crossplay can run", () => {
 		]);
 	});
 
-	test("the java port is always live", () => {
+	it("the java port is always live", () => {
 		const game = manifest.container.ports.find((port) => port.key === "game");
 
 		expect(game?.activeWhen).toEqual([]);
@@ -36,7 +36,7 @@ describe("a companion brings the libraries its loader needs", () => {
 	const geyser = COMPANIONS.find((companion) => companion.id === CompanionId.Geyser);
 	const floodgate = COMPANIONS.find((companion) => companion.id === CompanionId.Floodgate);
 
-	test("the fabric builds of geyser and floodgate ask for fabric api, which they refuse to load without", () => {
+	it("the fabric builds of geyser and floodgate ask for fabric api, which they refuse to load without", () => {
 		expect(geyser?.artifacts[ServerVariant.Fabric]?.requires).toEqual([
 			FABRIC_API,
 		]);
@@ -45,7 +45,7 @@ describe("a companion brings the libraries its loader needs", () => {
 		]);
 	});
 
-	test("the neoforge and plugin builds need no library of their own", () => {
+	it("the neoforge and plugin builds need no library of their own", () => {
 		for (const variant of [
 			ServerVariant.NeoForge,
 			ServerVariant.Paper,
@@ -56,7 +56,7 @@ describe("a companion brings the libraries its loader needs", () => {
 		}
 	});
 
-	test("fabric api is read from modrinth for the version the server runs", () => {
+	it("fabric api is read from modrinth for the version the server runs", () => {
 		expect(FABRIC_API.project).toBe("P7dR8mSH");
 		expect(FABRIC_API.loader).toBe("fabric");
 		expect(FABRIC_API.files.test("fabric-api-0.145.5+26.2.jar")).toBe(true);
@@ -69,7 +69,7 @@ describe("a mod build of a companion is pinned to the version the server runs", 
 	const geyser = COMPANIONS.find((companion) => companion.id === CompanionId.Geyser);
 	const floodgate = COMPANIONS.find((companion) => companion.id === CompanionId.Floodgate);
 
-	test("the fabric and neoforge builds are read from modrinth for the version the server runs", () => {
+	it("the fabric and neoforge builds are read from modrinth for the version the server runs", () => {
 		for (const variant of [
 			ServerVariant.Fabric,
 			ServerVariant.NeoForge,
@@ -79,7 +79,7 @@ describe("a mod build of a companion is pinned to the version the server runs", 
 		}
 	});
 
-	test("the fabric and neoforge builds of geyser never fall back to the newest build", () => {
+	it("the fabric and neoforge builds of geyser never fall back to the newest build", () => {
 		for (const variant of [
 			ServerVariant.Fabric,
 			ServerVariant.NeoForge,
@@ -88,7 +88,7 @@ describe("a mod build of a companion is pinned to the version the server runs", 
 		}
 	});
 
-	test("the plugin builds of geyser still come from geysermc, where one jar spans versions", () => {
+	it("the plugin builds of geyser still come from geysermc, where one jar spans versions", () => {
 		for (const variant of [
 			ServerVariant.Paper,
 			ServerVariant.Purpur,

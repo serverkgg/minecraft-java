@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import type { Bridge } from "@serverkgg/bridge";
 import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { rconAccess } from "./rconAccess";
@@ -19,7 +19,7 @@ const STAMP = {
 };
 
 describe("rotating the RCON password", () => {
-	test("reports the target and never the password", async () => {
+	it("reports the target and never the password", async () => {
 		const reported: Bridge.Activity[] = [];
 		let written = "";
 		const context = {

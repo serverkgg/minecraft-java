@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { parseModIds } from "./modIndex";
 
 const NEOFORGE_MODS_TOML = `modLoader="javafml"
@@ -67,42 +67,42 @@ const QUILT_MOD_JSON = `{
 `;
 
 describe("reading the mod ids a jar declares", () => {
-	test("reads the id out of a neoforge mods.toml", () => {
+	it("reads the id out of a neoforge mods.toml", () => {
 		expect(parseModIds("neoforge.mods.toml", NEOFORGE_MODS_TOML)).toEqual([
 			"wakes",
 		]);
 	});
 
-	test("reads every mods entry a forge mods.toml declares", () => {
+	it("reads every mods entry a forge mods.toml declares", () => {
 		expect(parseModIds("mods.toml", FORGE_MODS_TOML)).toEqual([
 			"missingmodschecker",
 			"missingmodschecker_core",
 		]);
 	});
 
-	test("reads the id out of a fabric.mod.json", () => {
+	it("reads the id out of a fabric.mod.json", () => {
 		expect(parseModIds("fabric.mod.json", FABRIC_MOD_JSON)).toEqual([
 			"wakes",
 		]);
 	});
 
-	test("reads the id quilt hides one level down", () => {
+	it("reads the id quilt hides one level down", () => {
 		expect(parseModIds("quilt.mod.json", QUILT_MOD_JSON)).toEqual([
 			"wakes",
 		]);
 	});
 
-	test("reads a file the extract handed back by its full path", () => {
+	it("reads a file the extract handed back by its full path", () => {
 		expect(parseModIds(".serverk-staging/modindex/neoforge.mods.toml", NEOFORGE_MODS_TOML)).toEqual([
 			"wakes",
 		]);
 	});
 
-	test("leaves the loader a mod depends on out of the index", () => {
+	it("leaves the loader a mod depends on out of the index", () => {
 		expect(parseModIds("neoforge.mods.toml", NEOFORGE_MODS_TOML)).not.toContain("neoforge");
 	});
 
-	test("stays quiet on metadata it cannot make sense of", () => {
+	it("stays quiet on metadata it cannot make sense of", () => {
 		expect(parseModIds("fabric.mod.json", "not json at all")).toEqual([]);
 		expect(parseModIds("neoforge.mods.toml", '[[mods]]\ndisplayName="Wakes"\n')).toEqual([]);
 		expect(parseModIds("pack.mcmeta", NEOFORGE_MODS_TOML)).toEqual([]);

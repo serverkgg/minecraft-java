@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { type CompanionRecord, parseCompanionSidecar } from "./companionSidecar";
 
 const record = (overrides: Partial<CompanionRecord> = {}): CompanionRecord => ({
@@ -10,7 +10,7 @@ const record = (overrides: Partial<CompanionRecord> = {}): CompanionRecord => ({
 });
 
 describe("reading the record of the companions we installed", () => {
-	test("a complete sidecar is read back whole", () => {
+	it("a complete sidecar is read back whole", () => {
 		const written = {
 			entries: {
 				geyser: record(),
@@ -24,7 +24,7 @@ describe("reading the record of the companions we installed", () => {
 		expect(parseCompanionSidecar(JSON.stringify(written))).toEqual(written);
 	});
 
-	test("an entry missing a field is dropped, so we reinstall that companion instead of trusting it", () => {
+	it("an entry missing a field is dropped, so we reinstall that companion instead of trusting it", () => {
 		expect(
 			parseCompanionSidecar(
 				JSON.stringify({
@@ -44,7 +44,7 @@ describe("reading the record of the companions we installed", () => {
 		});
 	});
 
-	test("an entry whose version is not text is dropped", () => {
+	it("an entry whose version is not text is dropped", () => {
 		expect(
 			parseCompanionSidecar(
 				JSON.stringify({
@@ -59,13 +59,13 @@ describe("reading the record of the companions we installed", () => {
 		).toEqual({});
 	});
 
-	test("a sidecar with no entries, or entries of the wrong shape, reads as empty", () => {
+	it("a sidecar with no entries, or entries of the wrong shape, reads as empty", () => {
 		expect(parseCompanionSidecar("{}").entries).toEqual({});
 		expect(parseCompanionSidecar('{"entries":[]}').entries).toEqual({});
 		expect(parseCompanionSidecar('{"entries":null}').entries).toEqual({});
 	});
 
-	test("a truncated or empty file reads as empty instead of throwing", () => {
+	it("a truncated or empty file reads as empty instead of throwing", () => {
 		expect(parseCompanionSidecar("").entries).toEqual({});
 		expect(parseCompanionSidecar('{"entries":{').entries).toEqual({});
 	});

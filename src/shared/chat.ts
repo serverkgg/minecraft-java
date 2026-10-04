@@ -15,7 +15,7 @@ export const messageArgument = (args: Bridge.Values) => {
 
 	if (message.length === 0) {
 		throw new BridgeUserError({
-			ar: "اكتب الرسالة أول.",
+			ar: "اكتب الرسالة أولًا.",
 			en: "Write the message first.",
 		});
 	}

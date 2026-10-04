@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { type Bridge, BridgeNetError, BridgeUserError } from "@serverkgg/bridge";
 import type { PaperBuild } from "../shared";
 import { installPaper } from "./installPaper";
@@ -25,7 +25,7 @@ const thrownBy = async (context: Bridge.Context) => {
 };
 
 describe("installing Paper on a version it has no build for", () => {
-	test("a 404 from the build list becomes text the customer can act on", async () => {
+	it("a 404 from the build list becomes text the customer can act on", async () => {
 		const error = await thrownBy(contextWith(new BridgeNetError(404, "fill.papermc.io answered 404")));
 
 		expect(error).toBeInstanceOf(BridgeUserError);
@@ -33,18 +33,18 @@ describe("installing Paper on a version it has no build for", () => {
 			"Paper has no build for Minecraft 1.99 yet. Pick another version or server type.",
 		);
 		expect((error as BridgeUserError).text.ar).toBe(
-			"ما فيه إصدار من Paper لماينكرافت 1.99 لين الحين. اختر نسخة ثانية أو نوع سيرفر ثاني.",
+			"لا يتوفر إصدار من Paper لـ ماينكرافت 1.99 حتى الآن. اختر إصدارًا آخر أو نوع سيرفر آخر.",
 		);
 	});
 
-	test("an empty build list says the same thing", async () => {
+	it("an empty build list says the same thing", async () => {
 		const error = await thrownBy(contextWith([]));
 
 		expect(error).toBeInstanceOf(BridgeUserError);
 		expect((error as BridgeUserError).text.en).toContain("Paper has no build for Minecraft 1.99");
 	});
 
-	test("any other network failure keeps its own path", async () => {
+	it("any other network failure keeps its own path", async () => {
 		const failure = new BridgeNetError(503, "fill.papermc.io answered 503");
 		const error = await thrownBy(contextWith(failure));
 

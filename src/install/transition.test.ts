@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { BridgeConfirm } from "@serverkgg/bridge";
 import { eraOf, layoutOf, ServerVariant, StorageEra, VARIANT_LABELS, WorldLayout } from "../shared";
 import {
@@ -169,52 +169,52 @@ const planFor = (row: Row, era: StorageEra, step: VersionStep) => {
 };
 
 describe("the version order tells an upgrade from a downgrade", () => {
-	test("staying on the same version is no step at all", () => {
+	it("staying on the same version is no step at all", () => {
 		expect(stepOf(ORDER, "26.2", "26.2")).toBe(VersionStep.Same);
 	});
 
-	test("26.2 to 26.1.2 is a downgrade", () => {
+	it("26.2 to 26.1.2 is a downgrade", () => {
 		expect(stepOf(ORDER, "26.2", "26.1.2")).toBe(VersionStep.Downgrade);
 	});
 
-	test("1.21.11 to 26.1 is an upgrade even though the numbering scheme changed", () => {
+	it("1.21.11 to 26.1 is an upgrade even though the numbering scheme changed", () => {
 		expect(stepOf(ORDER, "1.21.11", "26.1")).toBe(VersionStep.Upgrade);
 	});
 
-	test("1.21.10 to 1.21.11 is an upgrade", () => {
+	it("1.21.10 to 1.21.11 is an upgrade", () => {
 		expect(stepOf(ORDER, "1.21.10", "1.21.11")).toBe(VersionStep.Upgrade);
 	});
 
-	test("a version the manifest does not list leaves the direction unknown", () => {
+	it("a version the manifest does not list leaves the direction unknown", () => {
 		expect(stepOf(ORDER, "26.2", "26.3")).toBe(VersionStep.Unknown);
 		expect(stepOf(ORDER, "1.7.10", "26.2")).toBe(VersionStep.Unknown);
 	});
 });
 
 describe("26.1 is where minecraft moved every dimension inside the world folder", () => {
-	test("26.1 is already on the new layout", () => {
+	it("26.1 is already on the new layout", () => {
 		expect(eraOf(ORDER, "26.1")).toBe(StorageEra.Unified);
 	});
 
-	test("26.2 is on the new layout", () => {
+	it("26.2 is on the new layout", () => {
 		expect(eraOf(ORDER, "26.2")).toBe(StorageEra.Unified);
 	});
 
-	test("1.21.11 is on the old layout", () => {
+	it("1.21.11 is on the old layout", () => {
 		expect(eraOf(ORDER, "1.21.11")).toBe(StorageEra.Legacy);
 	});
 
-	test("a version we cannot look up falls back to its numbering scheme", () => {
+	it("a version we cannot look up falls back to its numbering scheme", () => {
 		expect(eraOf(ORDER, "1.7.10")).toBe(StorageEra.Legacy);
 		expect(eraOf(ORDER, "27.1")).toBe(StorageEra.Unified);
 	});
 
-	test("before 26.1 paper keeps its dimensions beside the world and vanilla keeps them inside it", () => {
+	it("before 26.1 paper keeps its dimensions beside the world and vanilla keeps them inside it", () => {
 		expect(layoutOf(ServerVariant.Paper, StorageEra.Legacy)).toBe(WorldLayout.Bukkit);
 		expect(layoutOf(ServerVariant.Vanilla, StorageEra.Legacy)).toBe(WorldLayout.Vanilla);
 	});
 
-	test("from 26.1 on every server type keeps its dimensions in the same place", () => {
+	it("from 26.1 on every server type keeps its dimensions in the same place", () => {
 		expect(layoutOf(ServerVariant.Paper, StorageEra.Unified)).toBe(WorldLayout.Unified);
 		expect(layoutOf(ServerVariant.Fabric, StorageEra.Unified)).toBe(WorldLayout.Unified);
 	});
@@ -226,7 +226,7 @@ for (const era of [
 ]) {
 	describe(`changing the server type on the same version, ${ERA_TITLES[era]}`, () => {
 		for (const row of TABLE) {
-			test(claimOf(row, era), () => {
+			it(claimOf(row, era), () => {
 				const plan = planFor(row, era, VersionStep.Same);
 
 				expect(plan.world).toBe(WorldOutcome.Kept);
@@ -240,7 +240,7 @@ for (const era of [
 }
 
 describe("the version step decides the world", () => {
-	test("going back to an older version always starts a fresh world, whatever the type", () => {
+	it("going back to an older version always starts a fresh world, whatever the type", () => {
 		for (const row of TABLE) {
 			const plan = planFor(row, StorageEra.Unified, VersionStep.Downgrade);
 
@@ -253,7 +253,7 @@ describe("the version step decides the world", () => {
 		}
 	});
 
-	test("a version we cannot place keeps the world and still asks before it happens", () => {
+	it("a version we cannot place keeps the world and still asks before it happens", () => {
 		for (const row of TABLE) {
 			const plan = planFor(row, StorageEra.Unified, VersionStep.Unknown);
 
@@ -263,7 +263,7 @@ describe("the version step decides the world", () => {
 		}
 	});
 
-	test("moving to a newer version on the same mod loader warns that the mods may need an update", () => {
+	it("moving to a newer version on the same mod loader warns that the mods may need an update", () => {
 		for (const row of TABLE) {
 			const plan = planFor(row, StorageEra.Unified, VersionStep.Upgrade);
 			const staysOnAModLoader =
@@ -278,7 +278,7 @@ describe("the version step decides the world", () => {
 		}
 	});
 
-	test("moving to a newer version keeps the world everywhere", () => {
+	it("moving to a newer version keeps the world everywhere", () => {
 		for (const row of TABLE) {
 			expect(planFor(row, StorageEra.Unified, VersionStep.Upgrade).world).toBe(WorldOutcome.Kept);
 		}
@@ -286,7 +286,7 @@ describe("the version step decides the world", () => {
 });
 
 describe("what we move when a world leaves paper or purpur", () => {
-	test("before 26.1 the Nether and the End folders go inside the world and the empty ones go away", () => {
+	it("before 26.1 the Nether and the End folders go inside the world and the empty ones go away", () => {
 		const plan = planFor(
 			leavingPlugins(ServerVariant.Paper, ServerVariant.Vanilla),
 			StorageEra.Legacy,
@@ -307,7 +307,7 @@ describe("what we move when a world leaves paper or purpur", () => {
 		]);
 	});
 
-	test("from 26.1 on the five world-settings files move out of the overworld folder", () => {
+	it("from 26.1 on the five world-settings files move out of the overworld folder", () => {
 		expect(UNIFIED_WORLD_DATA_FILES).toEqual([
 			"game_rules.dat",
 			"scheduled_events.dat",
@@ -331,7 +331,7 @@ describe("what we move when a world leaves paper or purpur", () => {
 		expect(plan.relocations.every((relocation) => relocation.removeAfter === null)).toBe(true);
 	});
 
-	test("a world moving onto paper needs no move because paper rearranges it itself", () => {
+	it("a world moving onto paper needs no move because paper rearranges it itself", () => {
 		for (const era of [
 			StorageEra.Legacy,
 			StorageEra.Unified,
@@ -343,7 +343,7 @@ describe("what we move when a world leaves paper or purpur", () => {
 		}
 	});
 
-	test("a move is written against the world it is applied to", () => {
+	it("a move is written against the world it is applied to", () => {
 		expect(
 			expandRelocation(
 				{

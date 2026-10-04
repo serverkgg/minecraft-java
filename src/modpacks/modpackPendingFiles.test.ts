@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { BridgeHoldReason } from "@serverkgg/bridge";
 import { ServerVariant } from "../shared";
 import { matchPendingFile, pendingHold, pendingMismatchMessage, settlePendingSidecar } from "./modpackPendingFiles";
@@ -42,7 +42,7 @@ const sidecar = (overrides: Partial<ModpackSidecar> = {}): ModpackSidecar => ({
 });
 
 describe("matching an uploaded jar against the files we wait for", () => {
-	test("finds the entry whatever its place in the list", () => {
+	it("finds the entry whatever its place in the list", () => {
 		const wanted = pending({
 			fileId: 2,
 			fileName: "second.jar",
@@ -60,7 +60,7 @@ describe("matching an uploaded jar against the files we wait for", () => {
 		).toEqual(wanted);
 	});
 
-	test("reads an upper case checksum the same way", () => {
+	it("reads an upper case checksum the same way", () => {
 		expect(
 			matchPendingFile(
 				[
@@ -71,7 +71,7 @@ describe("matching an uploaded jar against the files we wait for", () => {
 		).toBe("bmcpalegardenpatcher-0.3.0.jar");
 	});
 
-	test("finds nothing for a jar the pack never asked for", () => {
+	it("finds nothing for a jar the pack never asked for", () => {
 		expect(
 			matchPendingFile(
 				[
@@ -84,7 +84,7 @@ describe("matching an uploaded jar against the files we wait for", () => {
 });
 
 describe("telling the player which jar we wait for", () => {
-	test("names every file we still need in both languages", () => {
+	it("names every file we still need in both languages", () => {
 		const message = pendingMismatchMessage([
 			pending(),
 			pending({
@@ -93,16 +93,16 @@ describe("telling the player which jar we wait for", () => {
 		]);
 
 		expect(message.ar).toContain("المطلوب: bmcpalegardenpatcher-0.3.0.jar، second.jar");
-		expect(message.en).toContain("we need: bmcpalegardenpatcher-0.3.0.jar، second.jar");
+		expect(message.en).toContain("We need: bmcpalegardenpatcher-0.3.0.jar، second.jar");
 	});
 });
 
 describe("holding the install until the files arrive", () => {
-	test("holds nothing when nothing is pending", () => {
+	it("holds nothing when nothing is pending", () => {
 		expect(pendingHold([])).toBeUndefined();
 	});
 
-	test("holds the install and counts the files we wait for", () => {
+	it("holds the install and counts the files we wait for", () => {
 		expect(
 			pendingHold([
 				pending(),
@@ -120,7 +120,7 @@ describe("holding the install until the files arrive", () => {
 });
 
 describe("recording a pending file that arrived", () => {
-	test("tracks the jar's path and drops it from the waiting list", () => {
+	it("tracks the jar's path and drops it from the waiting list", () => {
 		expect(
 			settlePendingSidecar(sidecar(), {
 				pending: [],
@@ -137,7 +137,7 @@ describe("recording a pending file that arrived", () => {
 		});
 	});
 
-	test("never records the same path twice", () => {
+	it("never records the same path twice", () => {
 		expect(
 			settlePendingSidecar(sidecar(), {
 				pending: [],
@@ -150,7 +150,7 @@ describe("recording a pending file that arrived", () => {
 		]);
 	});
 
-	test("leaves an untracked pack untracked", () => {
+	it("leaves an untracked pack untracked", () => {
 		expect(
 			settlePendingSidecar(
 				sidecar({

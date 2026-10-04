@@ -26,7 +26,7 @@ const reportAdded = (context: Bridge.Context, name: string, bedrock: boolean) =>
 	context.activity.report({
 		name: BridgeEventName.AccessGranted,
 		text: {
-			ar: `تمت إضافة ${name} للقائمة البيضاء`,
+			ar: `تمت إضافة ${name} إلى القائمة البيضاء`,
 			en: `Added ${name} to the whitelist`,
 		},
 		subject: name,

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import type { Bridge } from "@serverkgg/bridge";
 import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { whitelist } from "./whitelist";
@@ -32,7 +32,7 @@ const recorder = (variables: Record<string, string> = {}) => {
 };
 
 describe("what the whitelist reports", () => {
-	test("adding a java player grants whitelist access by name", async () => {
+	it("adding a java player grants whitelist access by name", async () => {
 		const { context, sent, reported } = recorder();
 
 		await whitelist.add?.(context, " Steve ");
@@ -44,7 +44,7 @@ describe("what the whitelist reports", () => {
 			{
 				name: BridgeEventName.AccessGranted,
 				text: {
-					ar: "تمت إضافة Steve للقائمة البيضاء",
+					ar: "تمت إضافة Steve إلى القائمة البيضاء",
 					en: "Added Steve to the whitelist",
 				},
 				subject: "Steve",
@@ -57,7 +57,7 @@ describe("what the whitelist reports", () => {
 		]);
 	});
 
-	test("a bedrock player added through floodgate is reported as bedrock", async () => {
+	it("a bedrock player added through floodgate is reported as bedrock", async () => {
 		const { context, sent, reported } = recorder({
 			CROSSPLAY: "true",
 			SERVER_TYPE: "paper",
@@ -78,7 +78,7 @@ describe("what the whitelist reports", () => {
 		});
 	});
 
-	test("removing a player revokes whitelist access", async () => {
+	it("removing a player revokes whitelist access", async () => {
 		const { context, reported } = recorder();
 
 		await whitelist.actions?.remove?.(

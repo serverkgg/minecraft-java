@@ -8,14 +8,28 @@ metadata:
     ar: ماينكرافت جافا
     en: Minecraft Java
   description:
-    ar: سيرفر ماينكرافت (جافا) — نسخة أصلية، يشتغل على طول بدون أي إعداد.
-    en: Minecraft Java Edition — vanilla, running the moment your order completes.
+    ar: سيرفر ماينكرافت جافا الأصلي، يشتغل فور اكتمال طلبك دون أي إعداد.
+    en: Minecraft Java Edition, vanilla and running the moment your order completes.
   tagline:
-    ar: أشهر لعبة في العالم — سيرفرك جاهز خلال دقيقة
-    en: The world's biggest game — your server, ready in a minute
+    ar: أشهر لعبة في العالم، وسيرفرك جاهز خلال دقيقة
+    en: The world's biggest game, with your server ready in a minute
   category: sandbox
   logo: assets/logo.webp
   banner: assets/banner.webp
+  extensions:
+    - kind: mods
+      sources:
+        - modrinth
+        - curseforge
+    - kind: plugins
+      sources:
+        - modrinth
+        - curseforge
+        - hangar
+    - kind: modpacks
+      sources:
+        - modrinth
+        - curseforge
 
 resources:
   minMemoryMb: 1024
@@ -39,7 +53,7 @@ container:
         ar: جافا
         en: Java
       hint:
-        ar: في ماينكرافت جافا اكتب العنوان بس في خانة السيرفر، ما تحتاج منفذ.
+        ar: في ماينكرافت جافا، اكتب العنوان وحده في خانة السيرفر دون منفذ.
         en: In Minecraft Java, type the address alone in the server field, no port needed.
       hostRange:
         default: 25565
@@ -54,8 +68,8 @@ container:
         ar: بيدروك
         en: Bedrock
       hint:
-        ar: في بيدروك حط العنوان في خانة "عنوان السيرفر" والمنفذ في خانة "المنفذ".
-        en: In Bedrock, put the address in the "Server Address" field and the port in the "Port" field.
+        ar: في بيدروك، اكتب العنوان في خانة «عنوان السيرفر» والمنفذ في خانة «المنفذ».
+        en: In Bedrock, type the address in the "Server Address" field and the port in the "Port" field.
       join: separate
       hostRange:
         default: 19132
@@ -78,8 +92,8 @@ container:
         ar: RCON
         en: RCON
       hint:
-        ar: للأدوات الخارجية بس، ما يدخل منه لاعب. يشتغل لما تفتح الوصول عن بُعد من اللوحة.
-        en: For external tools only, never for players. Live once remote access is turned on in the panel.
+        ar: للأدوات الخارجية فقط، ولا يدخل منه اللاعبون. يتفعّل عند تفعيل الوصول عن بُعد من اللوحة.
+        en: For external tools only, never for players. It's live once you turn on remote access in the panel.
       join: separate
       hostRange:
         default: 12500
@@ -110,18 +124,18 @@ backup:
 secrets:
   - key: MODRINTH_API_KEY
     description:
-      ar: مفتاح Modrinth API — يرفع حدود الطلبات لكتالوج الإضافات والمودات.
-      en: Modrinth API key — raises rate limits for the plugin and mod catalog.
+      ar: مفتاح Modrinth API، ويرفع حدود الطلبات لكتالوج الإضافات والمودات.
+      en: Modrinth API key. It raises the rate limits for the plugin and mod catalog.
     required: false
   - key: CURSEFORGE_API_KEY
     description:
-      ar: مفتاح CurseForge API — بدونه ما يشتغل مصدر كيرس فورج في كتالوج المودات ولا في المودباكات.
-      en: CurseForge API key — without it the CurseForge source stays off in both the mod catalog and the modpacks tab.
+      ar: مفتاح CurseForge API. بدونه يبقى مصدر CurseForge موقوفًا في كتالوج المودات وفي المودباكات.
+      en: CurseForge API key. Without it, the CurseForge source stays off in both the mod catalog and the Modpacks tab.
     required: false
   - key: HANGAR_API_KEY
     description:
-      ar: مفتاح Hangar API — يرفع حدود الطلبات لكتالوج إضافات بيبر.
-      en: Hangar API key — raises rate limits for the Paper plugin catalog.
+      ar: مفتاح Hangar API، ويرفع حدود الطلبات لكتالوج إضافات Paper.
+      en: Hangar API key. It raises the rate limits for the Paper plugin catalog.
     required: false
 
 reset:
@@ -163,8 +177,8 @@ files:
       color: "#5ba32b"
       restart: true
       note:
-        ar: إعدادات السيرفر الأساسية — الاسم، عدد اللاعبين، الصعوبة، ووضع اللعب. أي تعديل يبي إعادة تشغيل.
-        en: The core server settings — name, player slots, difficulty and game mode. Any change needs a restart.
+        ar: "إعدادات السيرفر الأساسية: الاسم وعدد اللاعبين والصعوبة ووضع اللعب. أي تعديل يتطلب ريستارت."
+        en: "The core server settings: name, player slots, difficulty and game mode. Any change needs a restart."
     - match: world
       label:
         ar: الماب
@@ -172,8 +186,8 @@ files:
       icon: map
       color: "#4a8fd4"
       note:
-        ar: الماب حقك. لا تحذفه إلا وأنت متأكد، وخذ نسخة احتياطية قبل أي تعديل.
-        en: Your world. Do not delete it unless you are sure, and take a backup before touching it.
+        ar: مابك. لا تحذفها إلا إذا كنت متأكدًا، وخذ نسخة احتياطية قبل أي تعديل.
+        en: Your world. Don't delete it unless you're sure, and take a backup before you change it.
     - match: "world/**"
       label:
         ar: بيانات الماب
@@ -181,7 +195,7 @@ files:
       icon: map
       color: "#4a8fd4"
       note:
-        ar: جزء من بيانات الماب. تعديله وأنت شغّال ممكن يخرب حفظ اللعبة.
+        ar: جزء من بيانات الماب. تعديله والسيرفر شغّال قد يتلف حفظ اللعبة.
         en: Part of your world data. Editing it while the server runs can corrupt the save.
     - match: plugins
       label:
@@ -191,8 +205,8 @@ files:
       color: "#c77dff"
       restart: true
       note:
-        ar: مجلد الإضافات. حط ملفات jar هنا وأعد التشغيل عشان تشتغل.
-        en: Your plugins folder. Drop jar files here and restart for them to load.
+        ar: مجلد الإضافات. ضع ملفات jar هنا، وتشتغل بعد الريستارت.
+        en: Your plugins folder. Drop jar files here. They load after a restart.
     - match: mods
       label:
         ar: المودات
@@ -201,7 +215,7 @@ files:
       color: "#c77dff"
       restart: true
       note:
-        ar: مجلد المودات. لازم كل اللاعبين يكون عندهم نفس المودات عشان يدخلون.
+        ar: مجلد المودات. يلزم أن تكون لدى كل اللاعبين المودات نفسها ليتمكنوا من الدخول.
         en: Your mods folder. Every player needs the same mods to be able to join.
     - match: ops.json
       label:
@@ -210,7 +224,7 @@ files:
       icon: shield
       color: "#e0a458"
       note:
-        ar: قائمة الأدمن. اللي هنا يقدر يستخدم أوامر الإدارة داخل اللعبة.
+        ar: قائمة الأدمن. يستطيع من فيها استخدام أوامر الإدارة داخل اللعبة.
         en: The admin list. Anyone here can run operator commands in game.
     - match: whitelist.json
       label:
@@ -219,11 +233,11 @@ files:
       icon: users
       color: "#e0a458"
       note:
-        ar: القائمة البيضاء. إذا كانت مفعّلة، بس اللي هنا يقدر يدخل.
-        en: The whitelist. When it is on, only the players listed here can join.
+        ar: القائمة البيضاء. عند تفعيلها، لا يدخل إلا اللاعبون المضافون هنا.
+        en: The whitelist. When it's on, only the players listed here can join.
     - match: banned-players.json
       label:
-        ar: محظورين
+        ar: المحظورون
         en: Banned
       icon: shield
       color: "#d64545"
@@ -232,21 +246,21 @@ files:
         en: The list of banned players.
     - match: banned-ips.json
       label:
-        ar: محظورين
+        ar: المحظورون
         en: Banned
       icon: shield
       color: "#d64545"
       note:
-        ar: قائمة الـ IP المحظورة.
+        ar: قائمة عناوين الـ IP المحظورة.
         en: The list of banned IP addresses.
     - match: "logs/**"
       label:
-        ar: اللوق
+        ar: السجلات
         en: Logs
       icon: command
       color: "#8d99ae"
       note:
-        ar: ملفات اللوق. ارجع لها إذا صار خلل وتبي تعرف وش صار.
+        ar: ملفات السجل. ارجع إليها عند حدوث خلل لمعرفة سببه.
         en: Log files. Check these when something breaks and you need to know why.
 
 guideTags:
@@ -265,8 +279,8 @@ guides:
       ar: البدء بسيرفرك
       en: Getting started
     summary:
-      ar: من إنشاء السيرفر حتى دخول أول لاعب — كل شيء خلال دقائق.
-      en: From creating the server to the first player joining — all in minutes.
+      ar: من إنشاء السيرفر حتى دخول أول لاعب، خلال دقائق.
+      en: From creating the server to the first player joining, all in minutes.
     tags:
       - start
     surfaces:
@@ -278,10 +292,10 @@ guides:
       en: guides/getting-started/en.md
   - id: server-type
     title:
-      ar: نوع السيرفر والنسخة — وش يصير لمابك
-      en: Server type and version — what happens to your world
+      ar: "نوع السيرفر والإصدار: ما يحدث لمابك"
+      en: "Server type and version: what happens to your world"
     summary:
-      ar: بدّل بين فانيلا و Paper و Purpur و Fabric و Forge و NeoForge، أو غيّر نسختك، وأنت عارف وش يبقى ووش يروح.
+      ar: انتقل بين Vanilla و Paper و Purpur و Fabric و Forge و NeoForge، أو غيّر إصدارك، وأنت تعرف ما يبقى وما يُحذف.
       en: Move between Vanilla, Paper, Purpur, Fabric, Forge and NeoForge, or change your version, knowing what stays and what goes.
     tags:
       - features
@@ -293,11 +307,11 @@ guides:
       en: guides/server-type/en.md
   - id: crossplay
     title:
-      ar: كروس بلاي — لاعبي بيدروك في سيرفرك
-      en: Crossplay — Bedrock players on your server
+      ar: "الكروس بلاي: لاعبو بيدروك في سيرفرك"
+      en: "Crossplay: Bedrock players on your server"
     summary:
-      ar: فعّل زر واحد وخل أصحابك من الجوال والكونسول وويندوز يدخلون سيرفر الجافا حقك.
-      en: Flip one switch and let friends on phone, console and Windows join your Java server.
+      ar: فعّل مفتاحًا واحدًا، ويدخل أصحابك من الجوال والكونسول وويندوز إلى سيرفر جافا الخاص بك.
+      en: Turn on one switch and let friends on phone, console and Windows join your Java server.
     tags:
       - features
     surfaces:
@@ -308,10 +322,10 @@ guides:
       en: guides/crossplay/en.md
   - id: modpacks
     title:
-      ar: المودباك — سيرفر جاهز بضغطة
-      en: Modpacks — a ready-made server in one click
+      ar: "المودباك: سيرفر جاهز بضغطة"
+      en: "Modpacks: a ready-made server in one click"
     summary:
-      ar: اختر مودباك من الكتالوج وإحنا نركّب المودات والإعدادات ونجهّز سيرفرك عليه.
+      ar: اختر مودباكًا من الكتالوج، ونثبّت مودات المودباك وإعداداته ونجهّز سيرفرك عليه.
       en: Pick a modpack from the catalog and we install its mods and configs and set your server up for it.
     tags:
       - features
@@ -323,11 +337,11 @@ guides:
       en: guides/modpacks/en.md
   - id: version-compat
     title:
-      ar: توافق النسخ — نسخ جافا الثانية في سيرفرك
-      en: Version compatibility — other Java versions on your server
+      ar: "توافق الإصدارات: إصدارات جافا الأخرى في سيرفرك"
+      en: "Version compatibility: other Java versions on your server"
     summary:
-      ar: فعّل زر واحد وخل أصحابك يدخلون بنسخة جافا أحدث أو أقدم من نسخة سيرفرك.
-      en: Flip one switch and let friends join on a Java version newer or older than your server.
+      ar: فعّل مفتاحًا واحدًا، ويدخل أصحابك بإصدار جافا أحدث أو أقدم من إصدار سيرفرك.
+      en: Turn on one switch and let friends join on a Java version newer or older than your server.
     tags:
       - features
     surfaces:
@@ -338,11 +352,11 @@ guides:
       en: guides/version-compat/en.md
   - id: worlds
     title:
-      ar: المابات — بدّل وارفع وصفّر
-      en: Worlds — switch, upload and reset
+      ar: "المابات: التبديل والرفع والريسيت"
+      en: "Worlds: switch, upload and reset"
     summary:
-      ar: بدّل الماب الشغّالة، ارفع ماب من جهازك، صفّر النذر والإند، واحذف اللي ما تحتاجه.
-      en: Switch the active world, upload one from your computer, reset the Nether and the End, and delete what you do not need.
+      ar: بدّل الماب المفعّلة، وارفع ماب من جهازك، ونفّذ ريسيت للنذر والإند، واحذف ما لا تحتاجه.
+      en: Switch the active world, upload one from your computer, reset the Nether and the End, and delete what you don't need.
     tags:
       - features
     surfaces:

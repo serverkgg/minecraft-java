@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, it } from "bun:test";
 import type { SidecarEntry } from "./addonSidecar";
 import type { ResolvedAddon } from "./dependencies";
 import { assertInstallSafety } from "./installSafety";
@@ -36,7 +36,7 @@ const present =
 	async (filename: string) =>
 		names.includes(filename);
 
-test("rejects another tracked project's filename even when its binary is parked", async () => {
+it("rejects another tracked project's filename even when its binary is parked", async () => {
 	await expect(
 		assertInstallSafety(
 			[
@@ -50,7 +50,7 @@ test("rejects another tracked project's filename even when its binary is parked"
 		),
 	).rejects.toThrow();
 });
-test("rejects same project id owned by another provider", async () => {
+it("rejects same project id owned by another provider", async () => {
 	await expect(
 		assertInstallSafety(
 			[
@@ -64,7 +64,7 @@ test("rejects same project id owned by another provider", async () => {
 		),
 	).rejects.toThrow();
 });
-test("protects manually uploaded enabled and disabled files", async () => {
+it("protects manually uploaded enabled and disabled files", async () => {
 	for (const filename of [
 		"new.jar",
 		"new.jar.disabled",
@@ -81,7 +81,7 @@ test("protects manually uploaded enabled and disabled files", async () => {
 		).rejects.toThrow();
 	}
 });
-test("permits replacing the selected addon's own disabled binary", async () => {
+it("permits replacing the selected addon's own disabled binary", async () => {
 	await assertInstallSafety(
 		[
 			addon("root"),
@@ -93,7 +93,7 @@ test("permits replacing the selected addon's own disabled binary", async () => {
 		present("root.jar.disabled"),
 	);
 });
-test("blocks an enabled addon that requires a disabled library before downloads", async () => {
+it("blocks an enabled addon that requires a disabled library before downloads", async () => {
 	await expect(
 		assertInstallSafety(
 			[
@@ -108,7 +108,7 @@ test("blocks an enabled addon that requires a disabled library before downloads"
 		),
 	).rejects.toThrow();
 });
-test("accepts existing enabled dependencies and rejects duplicate planned destinations", async () => {
+it("accepts existing enabled dependencies and rejects duplicate planned destinations", async () => {
 	await assertInstallSafety(
 		[
 			addon("root"),

@@ -18,7 +18,7 @@ const PENDING_EXTENSIONS = [
 ];
 
 const CURSEFORGE_NOTE: Bridge.Text = {
-	ar: "صاحب هذا المود ما يسمح بتحميله إلا من كيرس فورج، فنزّله من صفحته وارفعه هنا.",
+	ar: "صاحب هذا المود لا يسمح بتنزيله إلا من CurseForge، لذلك نزّله من صفحته وارفعه هنا.",
 	en: "This mod's author allows downloads only from CurseForge, so download it from its page and upload it here.",
 };
 
@@ -65,8 +65,8 @@ export const pending: Bridge.Pending = {
 
 		if (!sidecar || sidecar.pending.length === 0) {
 			throw new BridgeUserError({
-				ar: "ما فيه ملفات ناقصة عشان ترفعها",
-				en: "no files are missing, so there is nothing to upload",
+				ar: "لا توجد ملفات ناقصة لرفعها",
+				en: "No files are missing, so there's nothing to upload",
 			});
 		}
 
@@ -74,8 +74,8 @@ export const pending: Bridge.Pending = {
 
 		if (source === null) {
 			throw new BridgeUserError({
-				ar: "ما لقينا الملف اللي رفعته",
-				en: "the uploaded file was not found",
+				ar: "تعذّر العثور على الملف المرفوع",
+				en: "We couldn't find the uploaded file",
 			});
 		}
 
@@ -110,7 +110,7 @@ export const pending: Bridge.Pending = {
 		context.activity.report({
 			name: BridgeEventName.ModInstalled,
 			text: {
-				ar: `تم رفع ${file.fileName} الناقص لمودباك ${sidecar.title}`,
+				ar: `تم رفع ${file.fileName} الناقص إلى مودباك ${sidecar.title}`,
 				en: `Uploaded the missing ${file.fileName} for modpack ${sidecar.title}`,
 			},
 			subject: file.name,

@@ -21,8 +21,8 @@ export const pendingMismatchMessage = (pending: PendingFile[]): Bridge.Text => {
 	const names = pending.map((file) => file.fileName).join(NAME_SEPARATOR);
 
 	return {
-		ar: `هذا مو الملف اللي ننتظره. المطلوب: ${names}`,
-		en: `this is not a file we are waiting for, we need: ${names}`,
+		ar: `هذا الملف ليس من الملفات الناقصة. المطلوب: ${names}`,
+		en: `This isn't one of the missing files. We need: ${names}`,
 	};
 };
 

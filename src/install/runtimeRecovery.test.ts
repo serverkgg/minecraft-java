@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, it } from "bun:test";
 import type { Bridge } from "@serverkgg/bridge";
 import { ServerVariant } from "../shared";
 import type { InstallStamp } from "./installStamp";
@@ -39,7 +39,7 @@ const fixture = (recorded: InstallStamp) => {
 	};
 };
 
-test("runtime recovery refuses a different Minecraft build", async () => {
+it("runtime recovery refuses a different Minecraft build", async () => {
 	const { context, copies } = fixture({
 		...stamp,
 		build: "999",
@@ -48,7 +48,7 @@ test("runtime recovery refuses a different Minecraft build", async () => {
 	expect(copies).toHaveLength(0);
 });
 
-test("runtime recovery reuses only the exact preserved identity", async () => {
+it("runtime recovery reuses only the exact preserved identity", async () => {
 	const { context, copies } = fixture(stamp);
 	expect(await recoverRuntime(context, stamp)).toBe(true);
 	expect(copies).toEqual([

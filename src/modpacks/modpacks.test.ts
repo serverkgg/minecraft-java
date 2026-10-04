@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { type Bridge, BridgeNetError, BridgeUserError } from "@serverkgg/bridge";
 import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { CatalogProviderId, encodeProviderRef } from "../providers";
@@ -86,7 +86,7 @@ const catalogContext = (sidecar: string | null = null) => {
 };
 
 describe("choosing a modpack from the catalog", () => {
-	test("reports the modpack as selected, not yet installed", async () => {
+	it("reports the modpack as selected, not yet installed", async () => {
 		const { context, reported } = catalogContext();
 
 		await modpacks.install(context, encodeProviderRef(CatalogProviderId.Modrinth, "atm9"));
@@ -109,7 +109,7 @@ describe("choosing a modpack from the catalog", () => {
 		]);
 	});
 
-	test("previewing the same modpack reports nothing", async () => {
+	it("previewing the same modpack reports nothing", async () => {
 		const { context, reported } = catalogContext();
 
 		await modpacks.preview?.(context, encodeProviderRef(CatalogProviderId.Modrinth, "atm9"));
@@ -117,7 +117,7 @@ describe("choosing a modpack from the catalog", () => {
 		expect(reported).toEqual([]);
 	});
 
-	test("updating an installed modpack reports the versions it moves between", async () => {
+	it("updating an installed modpack reports the versions it moves between", async () => {
 		const { context, reported } = catalogContext(INSTALLED);
 
 		const answer = await modpackStatus.actions?.[MODPACK_UPDATE_ACTION]?.(context, {});
@@ -145,7 +145,7 @@ describe("choosing a modpack from the catalog", () => {
 		]);
 	});
 
-	test("a modpack the source no longer has is named as not found", async () => {
+	it("a modpack the source no longer has is named as not found", async () => {
 		const original = new BridgeNetError(404, "api.modrinth.com answered 404");
 		const context = {
 			secret: () => null,
@@ -164,12 +164,12 @@ describe("choosing a modpack from the catalog", () => {
 
 		expect(error).toBeInstanceOf(BridgeUserError);
 		expect((error as BridgeUserError).text.en).toBe(
-			"We could not find this modpack at its source. Search for it again or pick another modpack.",
+			"We couldn't find this modpack at its source. Search for it again or pick another modpack.",
 		);
 		expect((error as BridgeUserError).cause).toBe(original);
 	});
 
-	test("a source failing on its side is not read as not found", async () => {
+	it("a source failing on its side is not read as not found", async () => {
 		const context = {
 			secret: () => null,
 			variable: () => null,
@@ -185,6 +185,8 @@ describe("choosing a modpack from the catalog", () => {
 			(thrown: unknown) => thrown,
 		);
 
-		expect((error as BridgeUserError).text.en).toBe("The source of the modpack is down right now. Try again in a bit.");
+		expect((error as BridgeUserError).text.en).toBe(
+			"The source of the modpack is down right now. Try again in a moment.",
+		);
 	});
 });

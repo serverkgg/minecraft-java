@@ -16,8 +16,8 @@ export const installFabric = async (context: Bridge.Context, gameVersion: string
 
 	if (!installer) {
 		throw new BridgeUserError({
-			ar: "Fabric ما عنده أداة تثبيت مستقرة الحين. جرّب بعد شوي أو اختَر نوع سيرفر ثاني من تبويب النسخة.",
-			en: "Fabric has no stable installer right now. Try again in a bit or pick another server type in the Version tab.",
+			ar: "لا تتوفر لـ Fabric أداة تثبيت مستقرة حاليًا. جرب مرة ثانية بعد لحظة أو اختر نوع سيرفر آخر من تبويب الإصدار.",
+			en: "Fabric has no stable installer right now. Try again in a moment or pick another server type in the Version tab.",
 		});
 	}
 

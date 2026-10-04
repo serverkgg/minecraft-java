@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import type { CurseforgeFile } from "@serverkgg/bridge/catalogs";
 import {
 	curseforgeFilesExhausted,
@@ -35,7 +35,7 @@ const entry = (overrides: Partial<CurseforgeFile> = {}): CurseforgeFile => {
 };
 
 describe("reading a curseforge modpack release", () => {
-	test("lowers the loader tag out of the game versions so the server type resolves", () => {
+	it("lowers the loader tag out of the game versions so the server type resolves", () => {
 		const release = curseforgeReleaseOf(
 			entry({
 				gameVersions: [
@@ -55,7 +55,7 @@ describe("reading a curseforge modpack release", () => {
 		]);
 	});
 
-	test("marks a release build stable and carries the file id as the version", () => {
+	it("marks a release build stable and carries the file id as the version", () => {
 		const release = curseforgeReleaseOf(entry());
 
 		expect(release?.stable).toBe(true);
@@ -63,7 +63,7 @@ describe("reading a curseforge modpack release", () => {
 		expect(release?.file.digest).toBe("sha1:0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33");
 	});
 
-	test("treats a beta build as unstable", () => {
+	it("treats a beta build as unstable", () => {
 		expect(
 			curseforgeReleaseOf(
 				entry({
@@ -73,7 +73,7 @@ describe("reading a curseforge modpack release", () => {
 		).toBe(false);
 	});
 
-	test("leaves out the author's own server pack", () => {
+	it("leaves out the author's own server pack", () => {
 		expect(
 			curseforgeReleaseOf(
 				entry({
@@ -83,7 +83,7 @@ describe("reading a curseforge modpack release", () => {
 		).toBeNull();
 	});
 
-	test("leaves out a file curseforge no longer serves", () => {
+	it("leaves out a file curseforge no longer serves", () => {
 		expect(
 			curseforgeReleaseOf(
 				entry({
@@ -93,7 +93,7 @@ describe("reading a curseforge modpack release", () => {
 		).toBeNull();
 	});
 
-	test("prefers the url curseforge handed us over the id split", () => {
+	it("prefers the url curseforge handed us over the id split", () => {
 		const release = curseforgeReleaseOf(
 			entry({
 				downloadUrl: "https://edge.forgecdn.net/files/7000/123/BMC5 [NEOFORGE] 1.21.1 v52.zip",
@@ -103,7 +103,7 @@ describe("reading a curseforge modpack release", () => {
 		expect(release?.file.url).toBe("https://edge.forgecdn.net/files/7000/123/BMC5%20%5BNEOFORGE%5D%201.21.1%20v52.zip");
 	});
 
-	test("falls back to the id split url when the pack blocks direct downloads", () => {
+	it("falls back to the id split url when the pack blocks direct downloads", () => {
 		const release = curseforgeReleaseOf(
 			entry({
 				downloadUrl: null,
@@ -113,7 +113,7 @@ describe("reading a curseforge modpack release", () => {
 		expect(release?.file.url).toBe("https://edge.forgecdn.net/files/4712/868/jei-1.20.1-forge-15.3.0.4.jar");
 	});
 
-	test("refuses a blocked file we could not checksum", () => {
+	it("refuses a blocked file we could not checksum", () => {
 		expect(
 			curseforgeReleaseOf(
 				entry({
@@ -124,7 +124,7 @@ describe("reading a curseforge modpack release", () => {
 		).toBeNull();
 	});
 
-	test("refuses a download from a host that is not curseforge", () => {
+	it("refuses a download from a host that is not curseforge", () => {
 		const release = curseforgeReleaseOf(
 			entry({
 				downloadUrl: "https://example.com/files/jei.jar",
@@ -160,23 +160,23 @@ const page = (count: number, totalCount?: number) => {
 };
 
 describe("paging through every file a curseforge project published", () => {
-	test("stops on a page shorter than the page size", () => {
+	it("stops on a page shorter than the page size", () => {
 		expect(curseforgeFilesExhausted(PAGE_SIZE + 3, page(3, 400))).toBe(true);
 	});
 
-	test("stops on an empty page", () => {
+	it("stops on an empty page", () => {
 		expect(curseforgeFilesExhausted(PAGE_SIZE, page(0, 400))).toBe(true);
 	});
 
-	test("keeps going while the project has more files than we hold", () => {
+	it("keeps going while the project has more files than we hold", () => {
 		expect(curseforgeFilesExhausted(PAGE_SIZE, page(PAGE_SIZE, 120))).toBe(false);
 	});
 
-	test("stops once we hold everything the project counts", () => {
+	it("stops once we hold everything the project counts", () => {
 		expect(curseforgeFilesExhausted(PAGE_SIZE * 2, page(PAGE_SIZE, 100))).toBe(true);
 	});
 
-	test("keeps going when the project counts nothing", () => {
+	it("keeps going when the project counts nothing", () => {
 		expect(curseforgeFilesExhausted(PAGE_SIZE, page(PAGE_SIZE))).toBe(false);
 	});
 });
@@ -195,7 +195,7 @@ describe("pairing a curseforge modpack file with the author's server pack", () =
 		parentProjectFileId: 7000,
 	});
 
-	test("takes the server pack the client file points at", () => {
+	it("takes the server pack the client file points at", () => {
 		expect(
 			curseforgeServerPackOf(client, [
 				entry({
@@ -206,7 +206,7 @@ describe("pairing a curseforge modpack file with the author's server pack", () =
 		).toBe(7001);
 	});
 
-	test("takes the server pack that points back at the client file", () => {
+	it("takes the server pack that points back at the client file", () => {
 		expect(
 			curseforgeServerPackOf(
 				entry({
@@ -219,7 +219,7 @@ describe("pairing a curseforge modpack file with the author's server pack", () =
 		).toBe(7001);
 	});
 
-	test("finds nothing when no file links either way", () => {
+	it("finds nothing when no file links either way", () => {
 		expect(
 			curseforgeServerPackOf(client, [
 				entry({
@@ -231,7 +231,7 @@ describe("pairing a curseforge modpack file with the author's server pack", () =
 		).toBeNull();
 	});
 
-	test("carries the server pack onto the release", () => {
+	it("carries the server pack onto the release", () => {
 		const release = curseforgeReleaseOf(client, [
 			serverPack,
 		]);
@@ -240,7 +240,7 @@ describe("pairing a curseforge modpack file with the author's server pack", () =
 		expect(release?.serverPacks.at(0)?.digest).toBe("sha1:0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33");
 	});
 
-	test("refuses a server pack curseforge hands us no direct url for", () => {
+	it("refuses a server pack curseforge hands us no direct url for", () => {
 		expect(
 			curseforgeReleaseOf(client, [
 				entry({
@@ -252,7 +252,7 @@ describe("pairing a curseforge modpack file with the author's server pack", () =
 		).toEqual([]);
 	});
 
-	test("leaves the server packs out when the release has none", () => {
+	it("leaves the server packs out when the release has none", () => {
 		expect(curseforgeReleaseOf(entry())?.serverPacks).toEqual([]);
 	});
 });
@@ -283,7 +283,7 @@ describe("choosing which server packs a blocked file may be rescued from", () =>
 		return candidates.map((candidate) => candidate.id);
 	};
 
-	test("keeps the server pack the client file links first", () => {
+	it("keeps the server pack the client file links first", () => {
 		expect(
 			idsOf(
 				curseforgeServerPacksOf(
@@ -313,7 +313,7 @@ describe("choosing which server packs a blocked file may be rescued from", () =>
 		]);
 	});
 
-	test("takes only the server packs built for the client file's minecraft version", () => {
+	it("takes only the server packs built for the client file's minecraft version", () => {
 		expect(
 			idsOf(
 				curseforgeServerPacksOf(client, [
@@ -334,7 +334,7 @@ describe("choosing which server packs a blocked file may be rescued from", () =>
 		]);
 	});
 
-	test("takes the newest server pack first", () => {
+	it("takes the newest server pack first", () => {
 		expect(
 			idsOf(
 				curseforgeServerPacksOf(client, [
@@ -354,7 +354,7 @@ describe("choosing which server packs a blocked file may be rescued from", () =>
 		]);
 	});
 
-	test("never takes more than the candidate cap", () => {
+	it("never takes more than the candidate cap", () => {
 		expect(
 			curseforgeServerPacksOf(client, [
 				pack({
@@ -373,7 +373,7 @@ describe("choosing which server packs a blocked file may be rescued from", () =>
 		).toBe(SERVER_PACK_CANDIDATES);
 	});
 
-	test("takes the linked server pack once", () => {
+	it("takes the linked server pack once", () => {
 		expect(
 			idsOf(
 				curseforgeServerPacksOf(
@@ -397,7 +397,7 @@ describe("choosing which server packs a blocked file may be rescued from", () =>
 		]);
 	});
 
-	test("leaves out a server pack curseforge hands us no direct url for", () => {
+	it("leaves out a server pack curseforge hands us no direct url for", () => {
 		expect(
 			idsOf(
 				curseforgeServerPacksOf(client, [
@@ -415,7 +415,7 @@ describe("choosing which server packs a blocked file may be rescued from", () =>
 		]);
 	});
 
-	test("finds nothing when the project publishes no server pack", () => {
+	it("finds nothing when the project publishes no server pack", () => {
 		expect(
 			curseforgeServerPacksOf(client, [
 				entry({

@@ -5,7 +5,7 @@ import { generateRconPassword, rconPasswordOf, readInstallStamp, writeInstallSta
 
 export const rconAccess = createRconAccess({
 	tools: {
-		ar: "mcrcon و RCON Console و Tempest كلها تشتغل مع سيرفرات جافا.",
+		ar: "تشتغل mcrcon و RCON Console و Tempest كلها مع سيرفرات جافا.",
 		en: "mcrcon, RCON Console and Tempest all work with Java servers.",
 	},
 	async password(context) {
@@ -16,8 +16,8 @@ export const rconAccess = createRconAccess({
 
 		if (!stamp) {
 			throw new BridgeUserError({
-				ar: "شغّل سيرفرك مرة عشان تتولد كلمة المرور، وبعدها غيّرها.",
-				en: "start your server once so the password is generated, then rotate it",
+				ar: "شغّل سيرفرك مرة واحدة لتوليد كلمة المرور، ثم غيّرها.",
+				en: "Start your server once so the password is generated, then change it.",
 			});
 		}
 

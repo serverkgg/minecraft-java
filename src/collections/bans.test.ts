@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import type { Bridge } from "@serverkgg/bridge";
 import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { bans } from "./bans";
@@ -56,7 +56,7 @@ const contextWith = (options: {
 };
 
 describe("reading who is banned from the server", () => {
-	test("a server with no bans asks the console once and lists nothing", async () => {
+	it("a server with no bans asks the console once and lists nothing", async () => {
 		const sent: string[] = [];
 
 		expect(
@@ -71,7 +71,7 @@ describe("reading who is banned from the server", () => {
 		]);
 	});
 
-	test("each ban becomes a row keyed by the player name", async () => {
+	it("each ban becomes a row keyed by the player name", async () => {
 		expect(
 			await bans.list(
 				contextWith({
@@ -97,7 +97,7 @@ describe("reading who is banned from the server", () => {
 		]);
 	});
 
-	test("an entry the server writes after the header is waited for instead of being missed", async () => {
+	it("an entry the server writes after the header is waited for instead of being missed", async () => {
 		expect(
 			await bans.list(
 				contextWith({
@@ -123,7 +123,7 @@ describe("reading who is banned from the server", () => {
 		]);
 	});
 
-	test("an entry that never arrives lists what the console did print instead of hanging", async () => {
+	it("an entry that never arrives lists what the console did print instead of hanging", async () => {
 		expect(
 			await bans.list(
 				contextWith({
@@ -140,7 +140,7 @@ describe("reading who is banned from the server", () => {
 });
 
 describe("lifting a ban", () => {
-	test("pardons the player by name and reports who was unbanned", async () => {
+	it("pardons the player by name and reports who was unbanned", async () => {
 		const sent: string[] = [];
 		const reported: Bridge.Activity[] = [];
 

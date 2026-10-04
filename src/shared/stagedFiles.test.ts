@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, it } from "bun:test";
 import type { Bridge } from "@serverkgg/bridge";
 import { replaceFiles } from "./stagedFiles";
 
@@ -51,7 +51,7 @@ const replacement = [
 	},
 ];
 
-test("a failed download preserves the old installation", async () => {
+it("a failed download preserves the old installation", async () => {
 	const { context, files } = fixture(true);
 	await expect(
 		replaceFiles(
@@ -66,7 +66,7 @@ test("a failed download preserves the old installation", async () => {
 	expect(files.get("mods/old.jar")).toBe("old");
 });
 
-test("a failed replacement restores parked files", async () => {
+it("a failed replacement restores parked files", async () => {
 	const { context, files } = fixture(false, true);
 	await expect(
 		replaceFiles(
@@ -81,7 +81,7 @@ test("a failed replacement restores parked files", async () => {
 	expect(files.get("mods/old.jar")).toBe("old");
 });
 
-test("a failed metadata commit rolls back binary changes", async () => {
+it("a failed metadata commit rolls back binary changes", async () => {
 	const { context, files } = fixture();
 	await expect(
 		replaceFiles(
@@ -99,7 +99,7 @@ test("a failed metadata commit rolls back binary changes", async () => {
 	expect(files.has("mods/new.jar")).toBe(false);
 });
 
-test("successful replacement commits metadata and removes staging", async () => {
+it("successful replacement commits metadata and removes staging", async () => {
 	const { context, files } = fixture();
 	let committed = false;
 	await replaceFiles(

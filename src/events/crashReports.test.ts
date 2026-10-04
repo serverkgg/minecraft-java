@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { readCrashAttribution, readLogAttribution } from "./crashReports";
 
 const FORGE_REPORT = `---- Minecraft Crash Report ----
@@ -45,7 +45,7 @@ java.lang.OutOfMemoryError: Java heap space
 `;
 
 describe("reading the crash report the last start left behind", () => {
-	test("names the jar, the mod and the failure from a forge report", () => {
+	it("names the jar, the mod and the failure from a forge report", () => {
 		expect(readCrashAttribution(FORGE_REPORT)).toEqual({
 			jar: "MissingModsChecker-1.20.1-1.1.jar",
 			mod: "missingmodschecker",
@@ -53,7 +53,7 @@ describe("reading the crash report the last start left behind", () => {
 		});
 	});
 
-	test("reads a neoforge report, which spells the labels differently", () => {
+	it("reads a neoforge report, which spells the labels differently", () => {
 		expect(readCrashAttribution(NEOFORGE_REPORT)).toEqual({
 			jar: "entity_texture_features_neoforge_1.21.1-6.2.9.jar",
 			mod: "entity_texture_features",
@@ -62,11 +62,11 @@ describe("reading the crash report the last start left behind", () => {
 		});
 	});
 
-	test("stays quiet on a crash no mod is named in", () => {
+	it("stays quiet on a crash no mod is named in", () => {
 		expect(readCrashAttribution(VANILLA_REPORT)).toBeNull();
 	});
 
-	test("falls back to the report's own description when no mod failure message is given", () => {
+	it("falls back to the report's own description when no mod failure message is given", () => {
 		const attribution = readCrashAttribution(`---- Minecraft Crash Report ----
 Description: Exception in server tick loop
 
@@ -79,7 +79,7 @@ Details:
 		expect(attribution?.jar).toBe("create-1.20.1-0.5.1.f.jar");
 	});
 
-	test("ignores a mod file entry that is not a jar", () => {
+	it("ignores a mod file entry that is not a jar", () => {
 		const attribution = readCrashAttribution(`-- MOD minecraft --
 Details:
 	Mod File: NO FILE INFO
@@ -97,7 +97,7 @@ java.lang.RuntimeException: Attempted to load class net/minecraft/client/multipl
 `;
 
 describe("reading the game log when the crash report came back empty", () => {
-	test("names the mod and the class the console gave away", () => {
+	it("names the mod and the class the console gave away", () => {
 		expect(readLogAttribution(EMPTY_REPORT_LOG)).toEqual({
 			jar: null,
 			mod: "wakes",
@@ -105,11 +105,11 @@ describe("reading the game log when the crash report came back empty", () => {
 		});
 	});
 
-	test("stays quiet when the log names no mod", () => {
+	it("stays quiet when the log names no mod", () => {
 		expect(readLogAttribution('[12:00:00] [Server thread/INFO]: Done (12.345s)! For help, type "help"')).toBeNull();
 	});
 
-	test("stays quiet when nothing but a client class is named", () => {
+	it("stays quiet when nothing but a client class is named", () => {
 		expect(
 			readLogAttribution(
 				"[14:38:26] [Server thread/ERROR]: Attempted to load class net/minecraft/client/gui/screens/Screen for invalid dist DEDICATED_SERVER",

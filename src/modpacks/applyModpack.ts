@@ -431,12 +431,12 @@ const stageCurseforge = async (context: Bridge.Context, archive: string) => {
 };
 
 const UNKNOWN_VERSION: Bridge.Text = {
-	ar: "نسخة ما نعرفها",
+	ar: "إصدار غير معروف",
 	en: "an unknown version",
 };
 
 const UNKNOWN_LOADER: Bridge.Text = {
-	ar: "مشغّل ما نعرفه",
+	ar: "مشغّل غير معروف",
 	en: "an unknown loader",
 };
 
@@ -467,7 +467,7 @@ export const releaseIdentity = (release: ModpackRelease, version: string): Bridg
 
 const modpackMismatch = (wants: Bridge.Text, server: string) => {
 	return new BridgeUserError({
-		ar: `المودباك يشتغل على ${wants.ar} وسيرفرك على ${server} الحين. اختَر النوع والنسخة من تبويب النسخة وركّب المودباك مرة ثانية.`,
+		ar: `المودباك يشتغل على ${wants.ar}، وسيرفرك حاليًا على ${server}. اختر النوع والإصدار من تبويب الإصدار، ثم ثبّت المودباك مرة ثانية.`,
 		en: `This modpack runs on ${wants.en}, and your server is set to ${server}. Pick that type and version in the Version tab, then install the modpack again.`,
 	});
 };
@@ -475,8 +475,8 @@ const modpackMismatch = (wants: Bridge.Text, server: string) => {
 const sourceUnavailable = (source: ModpackSource, cause?: unknown) => {
 	return new BridgeUserError(
 		{
-			ar: `مصدر المودباك ${source.label.ar} مو متاح الحين. جرّب بعد شوي أو اختَر مودباك من مصدر ثاني؛ ما غيّرنا ملفاتك.`,
-			en: `The modpack source ${source.label.en} is not available right now. Try again in a bit or pick a modpack from another source; your files were not changed.`,
+			ar: `مصدر المودباك ${source.label.ar} غير متاح حاليًا. جرب مرة ثانية بعد لحظة أو اختر مودباكًا من مصدر آخر. لم تتغيّر ملفاتك.`,
+			en: `The modpack source ${source.label.en} isn't available right now. Try again in a moment or pick a modpack from another source. Your files weren't changed.`,
 		},
 		{
 			cause,
@@ -487,8 +487,8 @@ const sourceUnavailable = (source: ModpackSource, cause?: unknown) => {
 const releaseMissing = (cause?: unknown) => {
 	return new BridgeUserError(
 		{
-			ar: "ما لقينا إصدار المودباك هذا عند مصدره. اختَر المودباك مرة ثانية من تبويب المودباكات؛ ما غيّرنا ملفاتك.",
-			en: "We could not find this modpack release at its source. Pick the modpack again from the Modpacks tab; your files were not changed.",
+			ar: "تعذّر العثور على هذا الإصدار من المودباك لدى مصدره. اختر المودباك مرة ثانية من تبويب المودباك. لم تتغيّر ملفاتك.",
+			en: "We couldn't find this modpack version at its source. Pick the modpack again from the Modpacks tab. Your files weren't changed.",
 		},
 		{
 			cause,
@@ -552,8 +552,8 @@ export const stageModpack = async (
 		});
 
 		throw new BridgeUserError({
-			ar: "هذا المودباك من مصدر ما نثبّت منه. اختَر مودباك ثاني من تبويب المودباكات؛ ما غيّرنا ملفاتك.",
-			en: "This modpack comes from a source we cannot install from. Pick another modpack from the Modpacks tab; your files were not changed.",
+			ar: "هذا المودباك من مصدر لا نثبّت منه. اختر مودباكًا آخر من تبويب المودباك. لم تتغيّر ملفاتك.",
+			en: "This modpack comes from a source we can't install from. Pick another modpack from the Modpacks tab. Your files weren't changed.",
 		});
 	}
 
@@ -671,8 +671,8 @@ export const modpackInstalledText = (title: string, version: string, pending: nu
 	}
 
 	return {
-		ar: `${installed.ar}، وناقص ${pending === 1 ? "ملف واحد لازم ترفعه" : pending === 2 ? "ملفين لازم ترفعهم" : pending <= 10 ? `${pending} ملفات لازم ترفعها` : `${pending} ملف لازم ترفعها`} بنفسك`,
-		en: `${installed.en}, ${pending === 1 ? "1 file is" : `${pending} files are`} missing and must be uploaded by you`,
+		ar: `${installed.ar}، ويلزم رفع ${pending === 1 ? "ملف واحد ناقص" : pending === 2 ? "ملفين ناقصين" : pending <= 10 ? `${pending} ملفات ناقصة` : `${pending} ملفًا ناقصًا`} يدويًا`,
+		en: `${installed.en}, ${pending === 1 ? "1 file is" : `${pending} files are`} missing and need to be uploaded manually`,
 	};
 };
 
@@ -811,7 +811,7 @@ export const modpackRemovedActivity = (title: string): Bridge.Activity => {
 	return {
 		name: BridgeEventName.ModpackRemoved,
 		text: {
-			ar: `تمت إزالة ${named ? `مودباك ${title}` : "المودباك"} وموداته، وبدأ السيرفر بماب جديد`,
+			ar: `تمت إزالة ${named ? `مودباك ${title}` : "المودباك"} وموداته، وبدأ السيرفر بماب جديدة`,
 			en: `Removed ${named ? `modpack ${title}` : "the modpack"} and its mods, and the server started over with a fresh world`,
 		},
 		...(named

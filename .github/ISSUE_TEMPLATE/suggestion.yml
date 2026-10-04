@@ -1,19 +1,19 @@
 name: اقتراح / Suggestion
-description: فكرة تحسّن الحزمة — إعداد جديد، مود، تبويب في اللوحة / An idea that improves the package — a setting, a mod, a panel tab
+description: فكرة تحسّن الحزمة: إعداد جديد، أو مود، أو تبويب في اللوحة / An idea that improves the package: a setting, a mod or a panel tab
 labels:
   - suggestion
 body:
   - type: textarea
     id: idea
     attributes:
-      label: وش الفكرة؟ / What is the idea?
-      description: اشرح الاقتراح وليش يفيد أصحاب السيرفرات / Explain the suggestion and why server owners benefit
+      label: ما الفكرة؟ / What is the idea?
+      description: اشرح الاقتراح وفائدته لأصحاب السيرفرات / Explain the suggestion and why server owners benefit
     validations:
       required: true
   - type: textarea
     id: alternatives
     attributes:
       label: البدائل / Alternatives
-      description: جربت شيء ثاني يحل نفس الشيء؟ / Anything else that solves the same need?
+      description: هل جربت حلًا آخر للحاجة نفسها؟ / Anything else that solves the same need?
     validations:
       required: false

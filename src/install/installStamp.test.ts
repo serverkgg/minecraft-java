@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { ServerVariant } from "../shared";
 import type { InstallIdentity, InstallStamp } from "./installStamp";
 import { matchesStamp, parseInstallStamp } from "./installStamp";
@@ -26,13 +26,13 @@ const identity = (overrides: Partial<InstallIdentity> = {}): InstallIdentity => 
 });
 
 describe("reading the record of what is already installed", () => {
-	test("a complete stamp is read back whole", () => {
+	it("a complete stamp is read back whole", () => {
 		const written = stamp();
 
 		expect(parseInstallStamp(JSON.stringify(written))).toEqual(written);
 	});
 
-	test("a vanilla stamp carries no build", () => {
+	it("a vanilla stamp carries no build", () => {
 		const written = stamp({
 			variant: ServerVariant.Vanilla,
 			build: null,
@@ -45,7 +45,7 @@ describe("reading the record of what is already installed", () => {
 		expect(parseInstallStamp(JSON.stringify(written))).toEqual(written);
 	});
 
-	test("a stamp written before remote access existed is kept, with no rcon password yet", () => {
+	it("a stamp written before remote access existed is kept, with no rcon password yet", () => {
 		const { rconPassword, rconPasswordNext, ...legacy } = stamp();
 
 		expect(parseInstallStamp(JSON.stringify(legacy))).toEqual({
@@ -57,7 +57,7 @@ describe("reading the record of what is already installed", () => {
 		expect(rconPasswordNext).toBeNull();
 	});
 
-	test("a pending rcon password rides the stamp beside the live one", () => {
+	it("a pending rcon password rides the stamp beside the live one", () => {
 		const written = stamp({
 			rconPasswordNext: "next-password",
 		});
@@ -65,7 +65,7 @@ describe("reading the record of what is already installed", () => {
 		expect(parseInstallStamp(JSON.stringify(written))).toEqual(written);
 	});
 
-	test("an empty rcon password is read as none", () => {
+	it("an empty rcon password is read as none", () => {
 		expect(
 			parseInstallStamp(
 				JSON.stringify({
@@ -76,7 +76,7 @@ describe("reading the record of what is already installed", () => {
 		).toBeNull();
 	});
 
-	test("a build that is not text is read as no build rather than rejecting the stamp", () => {
+	it("a build that is not text is read as no build rather than rejecting the stamp", () => {
 		expect(
 			parseInstallStamp(
 				JSON.stringify({
@@ -87,7 +87,7 @@ describe("reading the record of what is already installed", () => {
 		).toBeNull();
 	});
 
-	test("a stamp written by a version we no longer know is thrown away, so the install runs again", () => {
+	it("a stamp written by a version we no longer know is thrown away, so the install runs again", () => {
 		expect(
 			parseInstallStamp(
 				JSON.stringify({
@@ -98,7 +98,7 @@ describe("reading the record of what is already installed", () => {
 		).toBeNull();
 	});
 
-	test("a stamp missing the version, the java major or the launch plan is thrown away", () => {
+	it("a stamp missing the version, the java major or the launch plan is thrown away", () => {
 		expect(
 			parseInstallStamp(
 				JSON.stringify({
@@ -125,7 +125,7 @@ describe("reading the record of what is already installed", () => {
 		).toBeNull();
 	});
 
-	test("a launch plan with an unknown kind or an empty target is thrown away", () => {
+	it("a launch plan with an unknown kind or an empty target is thrown away", () => {
 		expect(
 			parseInstallStamp(
 				JSON.stringify({
@@ -150,7 +150,7 @@ describe("reading the record of what is already installed", () => {
 		).toBeNull();
 	});
 
-	test("a truncated or empty file is thrown away instead of throwing", () => {
+	it("a truncated or empty file is thrown away instead of throwing", () => {
 		expect(parseInstallStamp("")).toBeNull();
 		expect(parseInstallStamp('{"variant":"neoforge"')).toBeNull();
 		expect(parseInstallStamp("null")).toBeNull();
@@ -158,15 +158,15 @@ describe("reading the record of what is already installed", () => {
 });
 
 describe("deciding whether the install on disk is the one being asked for", () => {
-	test("the same variant, version and build is a match, so nothing is reinstalled", () => {
+	it("the same variant, version and build is a match, so nothing is reinstalled", () => {
 		expect(matchesStamp(stamp(), identity())).toBe(true);
 	});
 
-	test("a server with nothing installed never matches", () => {
+	it("a server with nothing installed never matches", () => {
 		expect(matchesStamp(null, identity())).toBe(false);
 	});
 
-	test("any of the three moving parts changing is a mismatch", () => {
+	it("any of the three moving parts changing is a mismatch", () => {
 		expect(
 			matchesStamp(
 				stamp(),
@@ -193,7 +193,7 @@ describe("deciding whether the install on disk is the one being asked for", () =
 		).toBe(false);
 	});
 
-	test("a pinned build against an unpinned request is a mismatch", () => {
+	it("a pinned build against an unpinned request is a mismatch", () => {
 		expect(
 			matchesStamp(
 				stamp(),

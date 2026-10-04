@@ -1,9 +1,9 @@
-import { expect, test } from "bun:test";
+import { expect, it } from "bun:test";
 import type { Bridge } from "@serverkgg/bridge";
 import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { cloneWorld, inspectJavaWorld, worldNameArgument, worldTools } from "./worldTools";
 
-test("world names reject traversal and shell punctuation", () => {
+it("world names reject traversal and shell punctuation", () => {
 	for (const name of [
 		"../world",
 		"",
@@ -17,7 +17,7 @@ test("world names reject traversal and shell punctuation", () => {
 	expect(worldNameArgument("our-world_2")).toBe("our-world_2");
 });
 
-test("a Bedrock world is rejected before any command", async () => {
+it("a Bedrock world is rejected before any command", async () => {
 	const context = {
 		files: {
 			exists: async () => true,
@@ -26,7 +26,7 @@ test("a Bedrock world is rejected before any command", async () => {
 	await expect(inspectJavaWorld(context, "world")).rejects.toThrow();
 });
 
-test("invalid Java headers are rejected and gzip Java metadata accepted", async () => {
+it("invalid Java headers are rejected and gzip Java metadata accepted", async () => {
 	const context = (header: string) =>
 		({
 			files: {
@@ -42,7 +42,7 @@ test("invalid Java headers are rejected and gzip Java metadata accepted", async 
 	await expect(inspectJavaWorld(context("1f 8b 08"), "world")).resolves.toBeUndefined();
 });
 
-test("create preserves the old world, changes only generation settings and reports the new world", async () => {
+it("create preserves the old world, changes only generation settings and reports the new world", async () => {
 	const writes: unknown[] = [];
 	const reported: Bridge.Activity[] = [];
 	const context = {
@@ -79,8 +79,8 @@ test("create preserves the old world, changes only generation settings and repor
 		{
 			name: BridgeEventName.WorldCreated,
 			text: {
-				ar: "تم إنشاء ماب جديد new-world، ويتولّد مع التشغيل الجاي",
-				en: "Created world new-world, it generates on the next start",
+				ar: "تم إنشاء ماب جديدة new-world، وتتولد عند التشغيل التالي",
+				en: "Created world new-world, generated on the next start",
 			},
 			subject: "new-world",
 			details: {
@@ -91,7 +91,7 @@ test("create preserves the old world, changes only generation settings and repor
 	]);
 });
 
-test("clone refuses to overwrite an existing world", async () => {
+it("clone refuses to overwrite an existing world", async () => {
 	const context = {
 		files: {
 			exists: async () => true,

@@ -83,7 +83,7 @@ export const players: Bridge.Collection = {
 			context.activity.report({
 				name: BridgeEventName.AccessGranted,
 				text: {
-					ar: `تمت إضافة ${row.id} لقائمة الأدمن`,
+					ar: `تمت إضافة ${row.id} إلى قائمة الأدمن`,
 					en: `Added ${row.id} to the operator list`,
 				},
 				subject: row.id,
@@ -137,7 +137,7 @@ export const players: Bridge.Collection = {
 			context.activity.report({
 				name: BridgeEventName.PlayerChanged,
 				text: {
-					ar: `تم تغيير نمط اللعب لـ ${row.id} إلى ${label.ar}`,
+					ar: `تم تغيير وضع اللعب لـ ${row.id} إلى ${label.ar}`,
 					en: `Set ${row.id}'s game mode to ${label.en}`,
 				},
 				subject: row.id,

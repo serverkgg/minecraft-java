@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
 	type Bridge,
 	BridgeFailureCode,
@@ -167,7 +167,7 @@ const serverWith = () => {
 };
 
 describe("what the addon catalog reports", () => {
-	test("disabling and enabling a tracked mod names it", async () => {
+	it("disabling and enabling a tracked mod names it", async () => {
 		const { context, files, reported } = serverWith();
 
 		await addons.toggle?.(context, SODIUM, false);
@@ -204,7 +204,7 @@ describe("what the addon catalog reports", () => {
 		]);
 	});
 
-	test("removing a tracked mod reports its title, an untracked jar its file name", async () => {
+	it("removing a tracked mod reports its title, an untracked jar its file name", async () => {
 		const { context, files, reported } = serverWith();
 
 		await addons.remove?.(context, SODIUM);
@@ -232,7 +232,7 @@ describe("what the addon catalog reports", () => {
 		]);
 	});
 
-	test("installing a mod names it, its version and how many dependencies came with it", async () => {
+	it("installing a mod names it, its version and how many dependencies came with it", async () => {
 		const { context, files, reported } = serverWith();
 
 		await addons.install(context, encodeProviderRef(CatalogProviderId.Modrinth, "lithium"));
@@ -255,7 +255,7 @@ describe("what the addon catalog reports", () => {
 		]);
 	});
 
-	test("enabling a mod that is already enabled reports nothing", async () => {
+	it("enabling a mod that is already enabled reports nothing", async () => {
 		const { context, reported } = serverWith();
 
 		await addons.toggle?.(context, SODIUM, true);
@@ -263,7 +263,7 @@ describe("what the addon catalog reports", () => {
 		expect(reported).toEqual([]);
 	});
 
-	test("a mod the source no longer has is named as not found, and staff keep the answer", async () => {
+	it("a mod the source no longer has is named as not found, and staff keep the answer", async () => {
 		const { context } = serverWith();
 		const original = new BridgeNetError(404, "api.modrinth.com answered 404");
 		const failing = {
@@ -282,12 +282,12 @@ describe("what the addon catalog reports", () => {
 
 		expect(error).toBeInstanceOf(BridgeUserError);
 		expect((error as BridgeUserError).text.en).toBe(
-			"We could not find this mod or one of its dependencies at its source. Search for it again or pick another mod.",
+			"We couldn't find this mod or one of its dependencies at its source. Search for it again or pick another mod.",
 		);
 		expect((error as BridgeUserError).cause).toBe(original);
 	});
 
-	test("a source failing on its side says the source is down", async () => {
+	it("a source failing on its side says the source is down", async () => {
 		const { context } = serverWith();
 		const failing = {
 			...context,
@@ -303,10 +303,10 @@ describe("what the addon catalog reports", () => {
 			(thrown: unknown) => thrown,
 		);
 
-		expect((error as BridgeUserError).text.en).toBe("The source of the mod is down right now. Try again in a bit.");
+		expect((error as BridgeUserError).text.en).toBe("The source of the mod is down right now. Try again in a moment.");
 	});
 
-	test("curseforge without a key stays a secret error so the platform flags it", async () => {
+	it("curseforge without a key stays a secret error so the platform flags it", async () => {
 		const { context } = serverWith();
 
 		const error = await addons.install(context, encodeProviderRef(CatalogProviderId.CurseForge, "238222")).then(
@@ -317,7 +317,7 @@ describe("what the addon catalog reports", () => {
 		expect(error).toBeInstanceOf(BridgeSecretError);
 	});
 
-	test("a hangar plugin that is gone is named as not found", async () => {
+	it("a hangar plugin that is gone is named as not found", async () => {
 		const context = {
 			variable: (key: string) => {
 				return (
@@ -344,12 +344,12 @@ describe("what the addon catalog reports", () => {
 		);
 
 		expect((error as BridgeUserError).text).toEqual({
-			ar: "ما لقينا الإضافة أو وحدة من متطلباتها عند مصدرها. دوّر عليها مرة ثانية أو اختَر إضافة ثانية.",
-			en: "We could not find this plugin or one of its dependencies at its source. Search for it again or pick another plugin.",
+			ar: "تعذّر العثور على الإضافة أو أحد متطلباتها لدى مصدرها. ابحث عنها مرة ثانية أو اختر إضافة أخرى.",
+			en: "We couldn't find this plugin or one of its dependencies at its source. Search for it again or pick another plugin.",
 		});
 	});
 
-	test("a hangar rate limit keeps its failure code", async () => {
+	it("a hangar rate limit keeps its failure code", async () => {
 		const context = {
 			variable: (key: string) => {
 				return (

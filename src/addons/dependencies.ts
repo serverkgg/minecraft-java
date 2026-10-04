@@ -37,8 +37,8 @@ export const resolveDependencies = async (
 		const previous = constraints.get(dependency.project);
 		if (dependency.version && previous && previous !== dependency.version) {
 			throw new BridgeUserError({
-				ar: `الإضافات تطلب إصدارات مختلفة من ${dependency.project}. اختَر إصدارات متوافقة.`,
-				en: `Conflicting required versions of ${dependency.project}. Choose compatible releases.`,
+				ar: `الإضافات تتطلب إصدارات مختلفة من ${dependency.project}. اختر إصدارات متوافقة.`,
+				en: `These add-ons need different versions of ${dependency.project}. Choose compatible versions.`,
 			});
 		}
 		if (dependency.version) {
@@ -50,15 +50,15 @@ export const resolveDependencies = async (
 		}
 		if (selected.size >= 128 && !existing) {
 			throw new BridgeUserError({
-				ar: "الإضافة تحتاج أكثر من 128 إضافة. ركّبها كمودباك.",
-				en: "This dependency graph exceeds 128 projects. Install it as a modpack.",
+				ar: "الإضافة تتطلب أكثر من 128 إضافة. ثبّتها كمودباك.",
+				en: "This add-on needs more than 128 projects. Install it as a modpack.",
 			});
 		}
 		const release = await resolve(dependency.project, dependency.version);
 		if (!release || (dependency.version && release.versionId !== dependency.version)) {
 			throw new BridgeUserError({
-				ar: `ما لقينا إصدار متوافق من ${dependency.project}. ما غيّرنا إضافاتك.`,
-				en: `Required dependency ${dependency.project} has no compatible release. Your addons were not changed.`,
+				ar: `تعذّر العثور على إصدار متوافق من ${dependency.project}. لم تتغيّر إضافاتك.`,
+				en: `We couldn't find a compatible version of ${dependency.project}. Your add-ons weren't changed.`,
 			});
 		}
 		selected.set(dependency.project, {
@@ -72,7 +72,7 @@ export const resolveDependencies = async (
 		if (installed && (!conflict.version || installed.release.versionId === conflict.version)) {
 			throw new BridgeUserError({
 				ar: `الإضافات المختارة تتعارض مع ${conflict.project}.`,
-				en: `The selected addons conflict with ${conflict.project}.`,
+				en: `The selected add-ons conflict with ${conflict.project}.`,
 			});
 		}
 	}

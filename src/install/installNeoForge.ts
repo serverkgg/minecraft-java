@@ -25,7 +25,7 @@ export const installNeoForge = async (
 
 	if (!plan) {
 		throw new BridgeUserError({
-			ar: `أداة تثبيت NeoForge خلصت بدون ما تجهّز ملف تشغيل السيرفر للإصدار ${build}. اختَر إصدار NeoForge ثاني أو نسخة ماينكرافت ثانية من تبويب النسخة.`,
+			ar: `انتهت أداة تثبيت NeoForge دون تجهيز ملف تشغيل السيرفر للإصدار ${build}. اختر إصدار NeoForge آخر أو إصدار ماينكرافت آخر من تبويب الإصدار.`,
 			en: `The NeoForge installer finished without a server launcher for ${build}. Pick another NeoForge build or Minecraft version in the Version tab.`,
 		});
 	}

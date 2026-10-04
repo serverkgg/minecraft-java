@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { type Bridge, BridgeDownloadError, BridgeUserError } from "@serverkgg/bridge";
 import { installPurpur } from "./installPurpur";
 
@@ -23,7 +23,7 @@ const thrownBy = async (context: Bridge.Context) => {
 };
 
 describe("installing Purpur on a version it has no build for", () => {
-	test("a 404 on the jar becomes text the customer can act on", async () => {
+	it("a 404 on the jar becomes text the customer can act on", async () => {
 		const error = await thrownBy(contextWith(new BridgeDownloadError(404, "api.purpurmc.org answered 404")));
 
 		expect(error).toBeInstanceOf(BridgeUserError);
@@ -31,18 +31,18 @@ describe("installing Purpur on a version it has no build for", () => {
 			"Purpur has no build for Minecraft 1.99 yet. Pick another version or server type.",
 		);
 		expect((error as BridgeUserError).text.ar).toBe(
-			"ما فيه إصدار من Purpur لماينكرافت 1.99 لين الحين. اختر نسخة ثانية أو نوع سيرفر ثاني.",
+			"لا يتوفر إصدار من Purpur لـ ماينكرافت 1.99 حتى الآن. اختر إصدارًا آخر أو نوع سيرفر آخر.",
 		);
 	});
 
-	test("any other download failure keeps its own path", async () => {
+	it("any other download failure keeps its own path", async () => {
 		const failure = new BridgeDownloadError(503, "api.purpurmc.org answered 503");
 		const error = await thrownBy(contextWith(failure));
 
 		expect(error).toBe(failure);
 	});
 
-	test("a version Purpur does build installs as before", async () => {
+	it("a version Purpur does build installs as before", async () => {
 		expect(await thrownBy(contextWith(null))).toBeNull();
 	});
 });

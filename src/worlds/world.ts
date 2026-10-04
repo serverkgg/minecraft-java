@@ -232,8 +232,8 @@ export const freeWorldName = async (context: Bridge.Context, base: string): Prom
 	}
 
 	throw new BridgeUserError({
-		ar: `عندك مابات كثيرة بنفس الاسم "${base}". احذف اللي ما تحتاجه وارفع الماب مرة ثانية.`,
-		en: `Too many worlds are already named "${base}". Delete the ones you do not need and upload again.`,
+		ar: `لديك مابات كثيرة بالاسم نفسه «${base}». احذف ما لا تحتاجه منها وارفع الماب مرة ثانية.`,
+		en: `Too many worlds are already named "${base}". Delete the ones you don't need and upload again.`,
 	});
 };
 
@@ -247,14 +247,14 @@ export const worldRenameSentence = (folder: string, name: string): Bridge.Text |
 
 	if (base !== name) {
 		return {
-			ar: `أضفنا الماب "${folder}" باسم "${name}" لأن عندك ماب اسمها "${base}".`,
+			ar: `تمت إضافة الماب «${folder}» باسم «${name}» لأن لديك ماب باسم «${base}».`,
 			en: `The world "${folder}" was added as "${name}" because a world named "${base}" is already here.`,
 		};
 	}
 
 	if (safeWorldName(folder).length === 0) {
 		return {
-			ar: `أضفنا الماب "${folder}" باسم "${name}" لأن اسم مجلدها ما فيه حروف إنجليزية ولا أرقام.`,
+			ar: `تمت إضافة الماب «${folder}» باسم «${name}» لأن اسم مجلدها لا يحتوي على حروف إنجليزية أو أرقام.`,
 			en: `The world "${folder}" was added as "${name}" because its folder name has no Latin letters or digits.`,
 		};
 	}

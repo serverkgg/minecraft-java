@@ -5,8 +5,8 @@ import { safeWorldName, setActiveWorld, worldPaths } from "./world";
 export const worldNameArgument = (value: unknown) => {
 	if (typeof value !== "string" || value.length === 0 || safeWorldName(value) !== value) {
 		throw new BridgeUserError({
-			ar: "سمّ الماب بـ 1 إلى 32 حرف إنجليزي أو رقم، وتقدر تستخدم - أو _ بين الحروف.",
-			en: "Use a world name of 1–32 Latin letters or digits, with - or _ between characters.",
+			ar: "اسم الماب من 1 إلى 32 حرفًا إنجليزيًا أو رقمًا، ويمكن استخدام - أو _ بين الحروف.",
+			en: "Use a world name of 1 to 32 Latin letters or digits, with - or _ between characters.",
 		});
 	}
 	return value;
@@ -16,7 +16,7 @@ export const assertNewWorld = async (context: Bridge.Context, name: string) => {
 	for (const path of worldPaths(name)) {
 		if (await context.files.exists(path)) {
 			throw new BridgeUserError({
-				ar: "فيه ماب بنفس الاسم. اختَر اسم ثاني.",
+				ar: "توجد ماب بالاسم نفسه. اختر اسمًا آخر.",
 				en: "A world already uses that name. Choose another name.",
 			});
 		}
@@ -26,14 +26,14 @@ export const assertNewWorld = async (context: Bridge.Context, name: string) => {
 export const inspectJavaWorld = async (context: Bridge.Context, directory: string) => {
 	if (await context.files.exists(`${directory}/db`)) {
 		throw new BridgeUserError({
-			ar: "هذي ماب بيدروك. ارفعها على سيرفر بيدروك؛ سيرفر جافا ما يفتحها.",
-			en: "This is a Bedrock world. Import it on a native Bedrock server; Java cannot open it.",
+			ar: "هذه ماب بيدروك، ولا يستطيع سيرفر جافا فتحها. ارفعها على سيرفر بيدروك.",
+			en: "This is a Bedrock world, and Java can't open it. Upload it to a Bedrock server.",
 		});
 	}
 	if ((await context.files.size(`${directory}/level.dat`)) > 16 * 1024 * 1024) {
 		throw new BridgeUserError({
-			ar: "ملف بيانات الماب أكبر من الحد المسموح. تأكد إنك رفعت الماب الصحيحة.",
-			en: "The world metadata exceeds the size limit. Check the uploaded world.",
+			ar: "ملف بيانات الماب أكبر من الحد المسموح. تأكد من أنك رفعت الماب الصحيحة.",
+			en: "The world data file is over the size limit. Check that you uploaded the right world.",
 		});
 	}
 
@@ -50,8 +50,8 @@ export const inspectJavaWorld = async (context: Bridge.Context, directory: strin
 	const bytes = header.stdout.trim().split(/\s+/);
 	if (header.code !== 0 || bytes[0] !== "1f" || bytes[1] !== "8b" || bytes[2] !== "08") {
 		throw new BridgeUserError({
-			ar: "ملف الماب ما يشبه ماب جافا سليمة. صدّر الماب من اللعبة وارفعها مرة ثانية.",
-			en: "The world metadata is not a Java world file. Export the world from the game and upload it again.",
+			ar: "ملف الماب لا يبدو ماب جافا سليمة. صدّر الماب من اللعبة وارفعها مرة ثانية.",
+			en: "The world file doesn't look like a valid Java world. Export the world from the game and upload it again.",
 		});
 	}
 	const valid = await context.exec(
@@ -68,7 +68,7 @@ export const inspectJavaWorld = async (context: Bridge.Context, directory: strin
 	if (valid.code !== 0) {
 		throw new BridgeUserError({
 			ar: "ملف بيانات الماب تالف. صدّرها من اللعبة وارفعها مرة ثانية.",
-			en: "The world metadata is corrupt. Export it from the game and upload it again.",
+			en: "The world data file is corrupt. Export it from the game and upload it again.",
 		});
 	}
 };
@@ -92,8 +92,8 @@ export const cloneWorld = async (context: Bridge.Context, source: string, name: 
 		]);
 		if (links.code !== 0 || links.stdout.trim().length > 0) {
 			throw new BridgeUserError({
-				ar: "الماب فيها رابط ملفات. احذفه قبل نسخ الماب.",
-				en: "The world contains a symbolic link. Remove it before cloning.",
+				ar: "تحتوي الماب على رابط ملفات. احذفه قبل نسخ الماب.",
+				en: "The world contains a symbolic link. Delete it before copying the world.",
 			});
 		}
 	}
@@ -124,8 +124,8 @@ export const cloneWorld = async (context: Bridge.Context, source: string, name: 
 			);
 			if (result.code !== 0) {
 				throw new BridgeUserError({
-					ar: "ما قدرنا ننسخ الماب. تأكد من المساحة وجرّب مرة ثانية.",
-					en: "Could not clone the world. Check disk space and retry.",
+					ar: "تعذّر نسخ الماب. تأكد من المساحة وجرب مرة ثانية.",
+					en: "We couldn't copy the world. Check disk space and try again.",
 				});
 			}
 			await context.files.remove(`${target}/uid.dat`);
@@ -153,8 +153,8 @@ export const worldTools: Bridge.Actions = {
 				].some((character) => character.charCodeAt(0) < 32)
 			) {
 				throw new BridgeUserError({
-					ar: "السيد طويل أو فيه أحرف ما تنقبل. اكتب سيد أقصر من 65 حرف.",
-					en: "Use a seed of at most 64 characters without line breaks.",
+					ar: "السيد طويل أو يحتوي على أحرف غير مقبولة. اكتب سيدًا من 64 حرفًا أو أقل.",
+					en: "The seed is too long or has characters we can't accept. Use a seed of at most 64 characters without line breaks.",
 				});
 			}
 			await context.codec.javaProperties.merge("server.properties", {
@@ -167,8 +167,8 @@ export const worldTools: Bridge.Actions = {
 			context.activity.report({
 				name: BridgeEventName.WorldCreated,
 				text: {
-					ar: `تم إنشاء ماب جديد ${name}، ويتولّد مع التشغيل الجاي`,
-					en: `Created world ${name}, it generates on the next start`,
+					ar: `تم إنشاء ماب جديدة ${name}، وتتولد عند التشغيل التالي`,
+					en: `Created world ${name}, generated on the next start`,
 				},
 				subject: name,
 				details: {
@@ -207,8 +207,8 @@ export const exportWorld = async (context: Bridge.Context, name: string) => {
 	]);
 	if (links.code !== 0 || links.stdout.trim().length > 0) {
 		throw new BridgeUserError({
-			ar: "الماب فيها رابط ملفات ما نقدر نصدّره. احذف الرابط وجرّب مرة ثانية.",
-			en: "The world contains a symbolic link and cannot be exported. Remove the link and retry.",
+			ar: "تحتوي الماب على رابط ملفات لا يمكن تصديره. احذف الرابط وجرب مرة ثانية.",
+			en: "The world contains a symbolic link that can't be exported. Delete the link and try again.",
 		});
 	}
 	const result = await context.exec(
@@ -226,8 +226,8 @@ export const exportWorld = async (context: Bridge.Context, name: string) => {
 	if (result.code !== 0) {
 		await context.files.remove(pending);
 		throw new BridgeUserError({
-			ar: "ما قدرنا نصدّر الماب. تأكد من المساحة وجرّب مرة ثانية.",
-			en: "Could not export the world. Check disk space and retry.",
+			ar: "تعذّر تصدير الماب. تأكد من المساحة وجرب مرة ثانية.",
+			en: "We couldn't export the world. Check disk space and try again.",
 		});
 	}
 	await context.files.move(pending, archive);

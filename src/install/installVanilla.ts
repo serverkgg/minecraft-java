@@ -18,7 +18,7 @@ export const installVanilla = async (context: Bridge.Context, gameVersion: strin
 
 	if (!entry) {
 		throw new BridgeUserError({
-			ar: `ماينكرافت ما فيها نسخة اسمها ${gameVersion}. اختَر نسخة ثانية من تبويب النسخة.`,
+			ar: `لا يوجد في ماينكرافت إصدار باسم ${gameVersion}. اختر إصدارًا آخر من تبويب الإصدار.`,
 			en: `Minecraft has no version called ${gameVersion}. Pick another version in the Version tab.`,
 		});
 	}

@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, it } from "bun:test";
 import type { Bridge } from "@serverkgg/bridge";
 import { ServerVariant } from "../shared";
 import { resolveNext } from "./installIdentity";
@@ -30,7 +30,7 @@ const contextWith = (variables: Record<string, string>) =>
 		},
 	}) as unknown as Bridge.Context;
 
-test("latest selectors reuse the archived exact identity even with runtime files missing", async () => {
+it("latest selectors reuse the archived exact identity even with runtime files missing", async () => {
 	const result = await resolveNext(
 		contextWith({
 			SERVER_TYPE: "paper",
@@ -46,7 +46,7 @@ test("latest selectors reuse the archived exact identity even with runtime files
 	});
 });
 
-test("an explicit selected build overrides the archived build", async () => {
+it("an explicit selected build overrides the archived build", async () => {
 	const result = await resolveNext(
 		contextWith({
 			SERVER_TYPE: "paper",

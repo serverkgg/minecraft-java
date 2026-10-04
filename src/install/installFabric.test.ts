@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { type Bridge, BridgeUserError } from "@serverkgg/bridge";
 import type { FabricEntry } from "../shared";
 import { installFabric } from "./installFabric";
@@ -17,7 +17,7 @@ const context = {
 } as unknown as Bridge.Context;
 
 describe("installing Fabric on a version it has no loader build for", () => {
-	test("the customer is told which type and version, and what to do", async () => {
+	it("the customer is told which type and version, and what to do", async () => {
 		const error = await installFabric(context, "1.99", null).then(
 			() => null,
 			(thrown: unknown) => thrown,
@@ -33,7 +33,7 @@ describe("installing Fabric on a version it has no loader build for", () => {
 });
 
 describe("installing Fabric while it has no stable installer", () => {
-	test("the customer is told to wait or pick another type", async () => {
+	it("the customer is told to wait or pick another type", async () => {
 		const unstable = {
 			net: {
 				json: async () => [
@@ -52,7 +52,7 @@ describe("installing Fabric while it has no stable installer", () => {
 
 		expect(error).toBeInstanceOf(BridgeUserError);
 		expect((error as BridgeUserError).text.en).toBe(
-			"Fabric has no stable installer right now. Try again in a bit or pick another server type in the Version tab.",
+			"Fabric has no stable installer right now. Try again in a moment or pick another server type in the Version tab.",
 		);
 	});
 });
