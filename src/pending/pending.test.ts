@@ -18,12 +18,12 @@ const pending = (overrides: Partial<PendingFile> = {}): PendingFile => ({
 });
 
 describe("describing a file the player still owes us", () => {
-	it("names the file id, the jar and the mod's page", () => {
+	it("names the file id, the jar and the page of that exact file", () => {
 		expect(pendingFileOf(pending())).toMatchObject({
 			id: "6620555",
 			fileName: "bmcpalegardenpatcher-0.3.0.jar",
 			sizeBytes: 4096,
-			sourceUrl: "https://www.curseforge.com/minecraft/mc-mods/bmc-patcher",
+			sourceUrl: "https://www.curseforge.com/minecraft/mc-mods/bmc-patcher/files/6620555",
 		});
 	});
 

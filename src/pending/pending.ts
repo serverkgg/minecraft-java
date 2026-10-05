@@ -18,8 +18,12 @@ const PENDING_EXTENSIONS = [
 ];
 
 const CURSEFORGE_NOTE: Bridge.Text = {
-	ar: "صاحب هذا المود لا يسمح بتنزيله إلا من CurseForge، لذلك نزّله من صفحته وارفعه هنا.",
-	en: "This mod's author allows downloads only from CurseForge, so download it from its page and upload it here.",
+	ar: "صاحب هذا المود لا يسمح بتنزيله إلا من CurseForge، لذلك نزّل هذا الملف نفسه من صفحته وارفعه هنا.",
+	en: "This mod's author allows downloads only from CurseForge, so download this exact file from its page and upload it here.",
+};
+
+const filePage = (entry: PendingFile) => {
+	return entry.pageUrl === null ? null : `${entry.pageUrl.replace(/\/+$/, "")}/files/${entry.fileId}`;
 };
 
 export const pendingFileOf = (entry: PendingFile): Bridge.PendingFile => {
@@ -32,7 +36,7 @@ export const pendingFileOf = (entry: PendingFile): Bridge.PendingFile => {
 		fileName: entry.fileName,
 		sizeBytes: entry.sizeBytes,
 		digest: `${SHA1_ALGORITHM}:${entry.sha1}`,
-		sourceUrl: entry.pageUrl,
+		sourceUrl: filePage(entry),
 		note: CURSEFORGE_NOTE,
 	};
 };
