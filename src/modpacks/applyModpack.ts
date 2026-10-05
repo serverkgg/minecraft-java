@@ -28,7 +28,7 @@ import {
 	type ModpackIndex,
 	modPath,
 	parseModpackIndex,
-	variantForLoaders,
+	variantsForLoaders,
 } from "./modpackIndex";
 import { MODPACK_MANIFEST, parseCurseforgeManifest, resolveCurseforgeFiles } from "./modpackManifest";
 import { reconcilePendingFiles } from "./modpackPendingFiles";
@@ -53,6 +53,8 @@ const PACK_STAGING = `${STAGING_ROOT}/pack`;
 const MODRINTH_ARCHIVE = `${PACK_STAGING}/modpack.mrpack`;
 
 const CURSEFORGE_ARCHIVE = `${PACK_STAGING}/modpack.zip`;
+
+const IDENTITY_STAGING = `${STAGING_ROOT}/pack-identity`;
 
 const MODRINTH_OVERRIDES = [
 	"overrides",
@@ -375,8 +377,6 @@ const downloadArchive = async (
 	release: ModpackRelease,
 	project: ModpackProject,
 ) => {
-	await clearStaging(context);
-
 	try {
 		await context.files.download(archive, release.file.url, {
 			cache: true,
@@ -393,6 +393,39 @@ const downloadArchive = async (
 		});
 	} catch (error) {
 		throw downloadFailure(error, `${project.title} ${release.version}`);
+	}
+};
+
+export const readModpackIdentity = async (
+	context: Bridge.Context,
+	provider: CatalogProviderId,
+	release: ModpackRelease,
+	project: ModpackProject,
+) => {
+	const curseforge = provider === CatalogProviderId.CurseForge;
+	const archive = `${IDENTITY_STAGING}/${curseforge ? "modpack.zip" : "modpack.mrpack"}`;
+	const declaration = curseforge ? MODPACK_MANIFEST : MODPACK_INDEX;
+
+	await context.files.remove(IDENTITY_STAGING);
+
+	try {
+		await downloadArchive(context, archive, release, project);
+		await context.files.extract(archive, IDENTITY_STAGING, {
+			tree: true,
+			selects: [
+				declaration,
+			],
+		});
+
+		const raw = await context.files.read(`${IDENTITY_STAGING}/${declaration}`);
+		const declared = curseforge ? parseCurseforgeManifest(raw) : parseModpackIndex(raw);
+
+		return {
+			variant: declared.variant,
+			mcVersion: declared.mcVersion,
+		};
+	} finally {
+		await context.files.remove(IDENTITY_STAGING);
 	}
 };
 
@@ -452,12 +485,15 @@ const textOf = (value: string, fallback: Bridge.Text): Bridge.Text => {
 };
 
 export const releaseIdentity = (release: ModpackRelease, version: string): Bridge.Text => {
-	const variant = variantForLoaders(release.loaders);
+	const variants = variantsForLoaders(release.loaders);
 	const mcVersion = textOf(
 		pickModpackVersion(release.gameVersions, version) ?? release.gameVersions.join(" / "),
 		UNKNOWN_VERSION,
 	);
-	const loader = textOf(variant === null ? release.loaders.join(" / ") : VARIANT_LABELS[variant], UNKNOWN_LOADER);
+	const loader = textOf(
+		(variants.length === 0 ? release.loaders : variants.map((variant) => VARIANT_LABELS[variant])).join(" / "),
+		UNKNOWN_LOADER,
+	);
 
 	return {
 		ar: `${mcVersion.ar}${IDENTITY_SEPARATOR}${loader.ar}`,
@@ -576,7 +612,7 @@ export const stageModpack = async (
 		throw releaseMissing();
 	}
 
-	if (variantForLoaders(release.loaders) !== variant || !release.gameVersions.includes(version)) {
+	if (!variantsForLoaders(release.loaders).includes(variant) || !release.gameVersions.includes(version)) {
 		context.log.warn("the modpack does not match this server type or version, leaving it out", {
 			project: ref.project,
 			wants: `${release.loaders.join("/")} ${release.gameVersions.join("/")}`,
@@ -601,6 +637,7 @@ export const stageModpack = async (
 		sizeBytes: release.file.sizeBytes,
 	});
 
+	await clearStaging(context);
 	await downloadArchive(context, archive, release, project);
 
 	const staged =

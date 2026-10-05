@@ -1,11 +1,11 @@
 import type { Bridge } from "@serverkgg/bridge";
 import type { ModpackProject, ModpackRelease, ModpackSource } from "../providers";
 import { gameVersionOf, variantOf } from "../shared";
-import { variantForLoaders } from "./modpackIndex";
+import { variantsForLoaders } from "./modpackIndex";
 import type { ModpackSidecar } from "./modpackSidecar";
 
 export const serverRelease = (releases: ModpackRelease[]) => {
-	const supported = releases.filter((release) => variantForLoaders(release.loaders) !== null);
+	const supported = releases.filter((release) => variantsForLoaders(release.loaders).length > 0);
 
 	return supported.find((release) => release.stable) ?? supported.at(0) ?? null;
 };

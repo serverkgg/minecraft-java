@@ -96,16 +96,12 @@ interface RawIndex {
 	files?: unknown;
 }
 
-export const variantForLoaders = (loaders: string[]): ServerVariant | null => {
-	for (const loader of loaders) {
-		const variant = LOADER_VARIANTS[loader.toLowerCase()];
+export const variantsForLoaders = (loaders: string[]): ServerVariant[] => {
+	const variants = loaders.flatMap((loader) => LOADER_VARIANTS[loader.toLowerCase()] ?? []);
 
-		if (variant) {
-			return variant;
-		}
-	}
-
-	return null;
+	return [
+		...new Set(variants),
+	];
 };
 
 export const usesQuilt = (loaders: string[]) => {

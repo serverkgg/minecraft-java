@@ -86,6 +86,67 @@ const catalogContext = (sidecar: string | null = null) => {
 };
 
 describe("choosing a modpack from the catalog", () => {
+	it("reads the server type from the modpack itself when its release is tagged with two", async () => {
+		const removed: string[] = [];
+		const downloaded: string[] = [];
+		const context = {
+			secret: () => null,
+			variable: () => null,
+			files: {
+				remove: async (path: string) => {
+					removed.push(path);
+				},
+				download: async (_path: string, url: string) => {
+					downloaded.push(url);
+				},
+				extract: async () => {},
+				read: async () => {
+					return JSON.stringify({
+						formatVersion: 1,
+						game: "minecraft",
+						name: "All the Mods 9",
+						dependencies: {
+							minecraft: "1.21.1",
+							neoforge: "21.1.255",
+						},
+						files: [],
+					});
+				},
+			},
+			net: {
+				json: async (url: string) => {
+					if (url.endsWith("/version")) {
+						return [
+							{
+								...VERSION,
+								loaders: [
+									"forge",
+									"neoforge",
+								],
+							},
+						];
+					}
+
+					return url.endsWith("/members") ? [] : PROJECT;
+				},
+			},
+		} as unknown as Bridge.Context;
+
+		const preview = await modpacks.preview?.(context, encodeProviderRef(CatalogProviderId.Modrinth, "atm9"));
+
+		expect(preview?.variables).toMatchObject({
+			SERVER_TYPE: "neoforge",
+			MC_VERSION: "1.21.1",
+		});
+		expect(downloaded).toEqual([
+			"https://cdn.modrinth.com/data/atm9/versions/Xy12/atm9-0.3.2.mrpack",
+		]);
+		expect(removed).toEqual([
+			".serverk-staging/pack-identity",
+			".serverk-staging/pack-identity",
+		]);
+	});
+
 	it("reports the modpack as selected, not yet installed", async () => {
 		const { context, reported } = catalogContext();
 

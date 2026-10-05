@@ -9,9 +9,9 @@ import {
 import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { decodeProviderRef, encodeProviderRef, explainLookup, modpackSourceById, modpackSources } from "../providers";
 import { addonDirectory, requestedGameVersion } from "../shared";
-import { MODPACK_VARIABLE } from "./applyModpack";
+import { MODPACK_VARIABLE, readModpackIdentity } from "./applyModpack";
 import { describeProject, identityMismatched, outdated, serverRelease } from "./modpackFreshness";
-import { usesQuilt, variantForLoaders } from "./modpackIndex";
+import { usesQuilt, variantsForLoaders } from "./modpackIndex";
 import { decodeModpackRef, encodeModpackRef } from "./modpackRef";
 import { MODPACK_SIDECAR, modpackIdentity, readModpackSidecar } from "./modpackSidecar";
 import { pickModpackVersion } from "./modpackVersion";
@@ -103,10 +103,10 @@ export const installModpack = async (
 		);
 	}
 
-	const variant = variantForLoaders(release.loaders);
-	const mcVersion = pickModpackVersion(release.gameVersions, requestedGameVersion(context)) ?? "";
+	const [tagged, ...alternatives] = variantsForLoaders(release.loaders);
+	const taggedVersion = pickModpackVersion(release.gameVersions, requestedGameVersion(context)) ?? "";
 
-	if (!variant || mcVersion.length === 0) {
+	if (!tagged || taggedVersion.length === 0) {
 		throw new BridgeFailureError(
 			BridgeFailureCode.NoCatalogVersionAvailable,
 			"this modpack does not say which minecraft version it runs on",
@@ -114,6 +114,13 @@ export const installModpack = async (
 	}
 
 	const project = await explainLookup(() => source.project(context, decoded.project), MODPACK_MISSING, MODPACK_SUBJECT);
+	const { variant, mcVersion } =
+		alternatives.length > 0
+			? await readModpackIdentity(context, source.id, release, project)
+			: {
+					variant: tagged,
+					mcVersion: taggedVersion,
+				};
 
 	return {
 		id: encodeProviderRef(source.id, project.id),
@@ -201,7 +208,7 @@ export const modpacks: Bridge.Catalog = {
 			return [];
 		}
 		return (await modpackSourceById(ref.provider).releases(context, ref.project))
-			.filter((release) => variantForLoaders(release.loaders))
+			.filter((release) => variantsForLoaders(release.loaders).length > 0)
 			.map((release) => ({
 				id: release.versionId,
 				label: release.version,

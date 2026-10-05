@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { parseModpackIndex } from "./modpackIndex";
+import { ServerVariant } from "../shared";
+import { parseModpackIndex, variantsForLoaders } from "./modpackIndex";
 
 const SHA512 = "a".repeat(128);
 
@@ -170,5 +171,21 @@ describe("reading a modpack index", () => {
 		);
 
 		expect(parsed.files.at(0)?.path).toBe("mods/alpha.jar");
+	});
+});
+
+describe("reading the server types a modpack release is tagged with", () => {
+	it("keeps every server type we run and drops the rest", () => {
+		expect(
+			variantsForLoaders([
+				"Forge",
+				"quilt",
+				"NeoForge",
+				"forge",
+			]),
+		).toEqual([
+			ServerVariant.Forge,
+			ServerVariant.NeoForge,
+		]);
 	});
 });
