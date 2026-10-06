@@ -72,7 +72,7 @@ export const transitionPreview: Bridge.Preview = {
 
 		if (refusal) {
 			return {
-				confirm: BridgeConfirm.Strong,
+				confirm: BridgeConfirm.Normal,
 				lines: [
 					refusal,
 				],
@@ -82,7 +82,7 @@ export const transitionPreview: Bridge.Preview = {
 
 		if (detaching) {
 			return {
-				confirm: BridgeConfirm.Strong,
+				confirm: BridgeConfirm.Normal,
 				lines: modpackDetachLines(next, await archiveNameOf(context, plan.sidecar?.title ?? "")),
 			};
 		}
@@ -107,7 +107,7 @@ export const transitionPreview: Bridge.Preview = {
 			const transitionPlan = await transitionFor(context, stamp, next);
 
 			return {
-				confirm: transitionPlan.confirm,
+				confirm: BridgeConfirm.Normal,
 				lines: [
 					...transitionLines(stamp, next, transitionPlan),
 					...companions,
@@ -115,7 +115,7 @@ export const transitionPreview: Bridge.Preview = {
 			};
 		} catch {
 			return {
-				confirm: BridgeConfirm.Strong,
+				confirm: BridgeConfirm.Normal,
 				lines: [
 					...versionOrderUnknownLines(),
 					...companions,

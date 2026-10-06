@@ -90,7 +90,7 @@ describe("transitionPreview", () => {
 			);
 
 			expect(preview).toEqual({
-				confirm: BridgeConfirm.Strong,
+				confirm: BridgeConfirm.Normal,
 				lines: [
 					{
 						ar: "لا يتوفر إصدار مستقر من Paper لـ ماينكرافت 26.3 حتى الآن. اختر إصدارًا آخر أو نوع سيرفر آخر.",
@@ -389,7 +389,7 @@ describe("transitionPreview", () => {
 			);
 
 			expect(preview).toEqual({
-				confirm: BridgeConfirm.Strong,
+				confirm: BridgeConfirm.Normal,
 				lines: [
 					{
 						ar: "الإصدار 0.17.2 من Paper لم يعد منشورًا. اختر إصدارًا آخر من المشغّل.",

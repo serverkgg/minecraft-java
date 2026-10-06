@@ -47,7 +47,7 @@ const modpackStatusSection: Bridge.Section = {
 	module: "modpackStatus",
 	reinstall: true,
 	variable: MODPACK_VARIABLE,
-	confirm: BridgeConfirm.Strong,
+	confirm: BridgeConfirm.Normal,
 	confirmText: {
 		ar: "إزالة المودباك تحذفه مع موداته، وتبقى الماب التي بنيتها عليه محفوظة باسم جديد في تبويب المابات، ويعود سيرفرك إلى النوع والإصدار نفسيهما دون مودباك وبماب جديدة. يبقى ما ثبّته بنفسك.",
 		en: "Removing the modpack deletes it and its mods, keeps the world you built on it under a new name in the Worlds tab, and leaves your server on the same type and version without a modpack and with a fresh world. Anything you installed yourself stays.",
@@ -59,7 +59,7 @@ const modpackStatusSection: Bridge.Section = {
 				ar: "حدّث المودباك",
 				en: "Update modpack",
 			},
-			confirm: BridgeConfirm.Strong,
+			confirm: BridgeConfirm.Normal,
 			confirmText: {
 				ar: "نثبّت آخر إصدار من المودباك نفسه. تبقى مابك إذا كان الإصدار الجديد على النوع نفسه وعلى إصدار ماينكرافت نفسه أو أحدث.",
 				en: "We install the latest release of the same pack. Your world stays as long as the new release is on the same type and the same version or newer.",
@@ -102,7 +102,7 @@ const versionTab: Bridge.Tab = {
 			target: BridgeFormTarget.Variables,
 			module: "version",
 			reinstall: true,
-			confirm: BridgeConfirm.Strong,
+			confirm: BridgeConfirm.Normal,
 			confirmText: {
 				ar: "حسب التغيير، إما أن تبقى مابك في مكانها، أو ننقل ملفاتها إلى المكان الجديد، أو يُفقد كل ما أضافته المودات إليها. والرجوع إلى إصدار أقدم يبدأ ماب جديدة دائمًا.",
 				en: "Depending on the change, your world may stay where it is, be moved into place, or lose what mods added to it. Going back to an older version always starts a fresh world.",
@@ -188,7 +188,7 @@ const modpacksTab: Bridge.Tab = {
 			module: "modpacks",
 			reinstall: true,
 			variable: MODPACK_VARIABLE,
-			confirm: BridgeConfirm.Strong,
+			confirm: BridgeConfirm.Normal,
 			confirmText: {
 				ar: "تثبيت المودباك يعيد بناء سيرفرك: يحذف مجلدات المودات والإعدادات بالكامل، بما فيها المودات التي ثبّتها بنفسك. تبقى مابك في مكانها إلا إذا تطلب المودباك إصدارًا أقدم من إصدارك، وإذا كان سيرفرك على مشغّل مودات وانتقلت منه يُفقد كل ما أضافته المودات إلى مابك. وإزالة المودباك تحذفه مع موداته، وتبقى الماب التي بنيتها عليه محفوظة باسم جديد في تبويب المابات، ويعود سيرفرك دون مودباك وبماب جديدة.",
 				en: "Installing a modpack rebuilds your server: the mods and config folders are deleted, including mods you installed yourself. Your world stays unless the pack needs an older version than yours, and if you leave a mod loader everything the mods added to your world is lost. Removing the modpack takes it and its mods, keeps the world you built on it under a new name in the Worlds tab, and leaves your server without a modpack and with a fresh world.",
@@ -493,7 +493,7 @@ const playersTab: Bridge.Tab = {
 						ar: "اجعله أدمن",
 						en: "Make operator",
 					},
-					confirm: BridgeConfirm.Strong,
+					confirm: BridgeConfirm.Normal,
 				},
 				{
 					id: "xp",

@@ -15,7 +15,7 @@
 		"test": "bun test --parallel"
 	},
 	"dependencies": {
-		"@serverkgg/bridge": "0.1.3"
+		"@serverkgg/bridge": "0.1.4"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.5.7",

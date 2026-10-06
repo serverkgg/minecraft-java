@@ -219,7 +219,7 @@ export const modpacks: Bridge.Catalog = {
 		const entry = await installModpack(context, id, releaseId);
 		return {
 			variables: entry.variables ?? undefined,
-			confirm: BridgeConfirm.Strong,
+			confirm: BridgeConfirm.Normal,
 			lines: [
 				{
 					ar: `${entry.title}: ${entry.version} · ${entry.gameVersion}`,

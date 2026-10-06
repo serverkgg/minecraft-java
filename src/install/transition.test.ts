@@ -1,5 +1,4 @@
 import { describe, expect, it } from "bun:test";
-import { BridgeConfirm } from "@serverkgg/bridge";
 import { eraOf, layoutOf, ServerVariant, StorageEra, VARIANT_LABELS, WorldLayout } from "../shared";
 import {
 	AddonOutcome,
@@ -233,7 +232,6 @@ for (const era of [
 				expect(plan.worldLoss).toBe(row.worldLoss);
 				expect(plan.addons).toBe(row.addons);
 				expect(plan.relocation).toBe(relocationOf(row, era));
-				expect(plan.confirm).toBe(row.worldLoss === WorldLoss.ModContent ? BridgeConfirm.Strong : BridgeConfirm.Normal);
 			});
 		}
 	});
@@ -249,7 +247,6 @@ describe("the version step decides the world", () => {
 			expect(plan.addons).toBe(AddonOutcome.Removed);
 			expect(plan.relocation).toBeNull();
 			expect(plan.relocations).toEqual([]);
-			expect(plan.confirm).toBe(BridgeConfirm.Strong);
 		}
 	});
 
@@ -259,7 +256,6 @@ describe("the version step decides the world", () => {
 
 			expect(plan.world).toBe(WorldOutcome.Kept);
 			expect(plan.notes).toContain(TransitionNote.VersionUnknown);
-			expect(plan.confirm).toBe(BridgeConfirm.Strong);
 		}
 	});
 

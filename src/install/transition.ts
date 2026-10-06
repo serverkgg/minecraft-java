@@ -1,4 +1,3 @@
-import { BridgeConfirm } from "@serverkgg/bridge";
 import { END_SUFFIX, NETHER_SUFFIX, ServerVariant, StorageEra, VANILLA_END, VANILLA_NETHER } from "../shared";
 
 export const WORLD_TOKEN = "<world>";
@@ -75,7 +74,6 @@ export interface TransitionPlan {
 	relocation: RelocationKind | null;
 	relocations: WorldRelocation[];
 	notes: TransitionNote[];
-	confirm: BridgeConfirm;
 }
 
 const ECOSYSTEM_BY_VARIANT: Record<ServerVariant, Ecosystem> = {
@@ -178,8 +176,6 @@ export const planTransition = (from: TransitionSide, to: TransitionSide, step: V
 		notes.push(TransitionNote.VersionUnknown);
 	}
 
-	const strong = world === WorldOutcome.Wiped || worldLoss === WorldLoss.ModContent || step === VersionStep.Unknown;
-
 	return {
 		step,
 		world,
@@ -188,6 +184,5 @@ export const planTransition = (from: TransitionSide, to: TransitionSide, step: V
 		relocation,
 		relocations: relocation === null ? [] : RELOCATIONS_BY_KIND[relocation],
 		notes,
-		confirm: strong ? BridgeConfirm.Strong : BridgeConfirm.Normal,
 	};
 };
