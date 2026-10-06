@@ -2,10 +2,13 @@ import { describe, expect, it } from "bun:test";
 import type { Bridge } from "@serverkgg/bridge";
 import { WorldLayout } from "../shared";
 import {
+	archivedWorldName,
+	archiveWorld,
 	discoveredWorlds,
 	freeWorldName,
 	levelDirectories,
 	mainLevelDirectories,
+	planWorldArchive,
 	safeWorldName,
 	suffixedWorldName,
 	worldBaseName,
@@ -309,5 +312,138 @@ describe("telling the player why an imported world changed its name", () => {
 		expect(notice?.ar.split("\n")).toHaveLength(2);
 		expect(notice?.en.split("\n").at(0)).toContain(`"world-2"`);
 		expect(notice?.ar.split("\n").at(1)).toContain("حروف إنجليزية");
+	});
+});
+
+describe("archivedWorldName", () => {
+	it("joins the world, the pack and old", () => {
+		expect(archivedWorldName("world", "All the Mods 9")).toBe("world-all-the-mods-9-old");
+	});
+
+	it("stays a valid world name of 32 characters at most, ending in -old", () => {
+		const name = archivedWorldName("survival", "Better Minecraft [FORGE] - MC 1.20.1 Edition");
+
+		expect(name.length).toBeLessThanOrEqual(32);
+		expect(name.endsWith("-old")).toBe(true);
+		expect(safeWorldName(name)).toBe(name);
+		expect(name).toBe("survival-better-minecraft-fo-old");
+	});
+
+	it("a pack name with no Latin letters keeps just the world", () => {
+		expect(archivedWorldName("world", "مودباك")).toBe("world-old");
+	});
+});
+
+const volumeWith = (paths: string[], properties = true) => {
+	const files = new Set(paths);
+	const moves: string[][] = [];
+	const merged: Record<string, string | number | boolean>[] = [];
+	const under = (path: string, root: string) => path === root || path.startsWith(`${root}/`);
+
+	const context = {
+		files: {
+			exists: async (path: string) =>
+				path === "server.properties"
+					? properties
+					: [
+							...files,
+						].some((entry) => under(entry, path)),
+			move: async (from: string, to: string) => {
+				moves.push([
+					from,
+					to,
+				]);
+
+				for (const entry of [
+					...files,
+				]) {
+					if (under(entry, from)) {
+						files.delete(entry);
+						files.add(`${to}${entry.slice(from.length)}`);
+					}
+				}
+			},
+		},
+		codec: {
+			javaProperties: {
+				read: async () => {
+					return {
+						"level-name": "world",
+					};
+				},
+				merge: async (_path: string, values: Record<string, string | number | boolean>) => {
+					merged.push(values);
+				},
+			},
+		},
+	} as unknown as Bridge.Context;
+
+	return {
+		context,
+		files,
+		moves,
+		merged,
+	};
+};
+
+describe("archiveWorld", () => {
+	it("moves the world with its nether and end under the archived name and starts a fresh world", async () => {
+		const { context, files, moves, merged } = volumeWith([
+			"world/level.dat",
+			"world_nether/DIM-1/region",
+			"world_the_end/DIM1/region",
+		]);
+
+		const archive = await planWorldArchive(context, "RLCraft");
+
+		expect(archive).toEqual({
+			from: "world",
+			to: "world-rlcraft-old",
+			fresh: "world",
+		});
+
+		if (archive) {
+			await archiveWorld(context, archive);
+		}
+
+		expect(moves).toEqual([
+			[
+				"world",
+				"world-rlcraft-old",
+			],
+			[
+				"world_nether",
+				"world-rlcraft-old_nether",
+			],
+			[
+				"world_the_end",
+				"world-rlcraft-old_the_end",
+			],
+		]);
+		expect(
+			[
+				...files,
+			].some((path) => path.startsWith("world/")),
+		).toBe(false);
+		expect(merged).toEqual([
+			{
+				"level-name": "world",
+			},
+		]);
+	});
+
+	it("takes the next free name when the archived name is already used", async () => {
+		const { context } = volumeWith([
+			"world/level.dat",
+			"world-rlcraft-old/level.dat",
+		]);
+
+		expect((await planWorldArchive(context, "RLCraft"))?.to).toBe("world-rlcraft-old-2");
+	});
+
+	it("has nothing to archive when the active world was never generated", async () => {
+		const { context } = volumeWith([]);
+
+		expect(await planWorldArchive(context, "RLCraft")).toBeNull();
 	});
 });

@@ -1,58 +1,42 @@
 import { describe, expect, it } from "bun:test";
-import { type Bridge, BridgeUserError } from "@serverkgg/bridge";
-import type { FabricEntry } from "../shared";
+import type { Bridge } from "@serverkgg/bridge";
 import { installFabric } from "./installFabric";
 
-const STABLE_INSTALLERS: FabricEntry[] = [
-	{
-		version: "1.1.0",
-		stable: true,
-	},
-];
-
-const context = {
-	net: {
-		json: async () => STABLE_INSTALLERS,
-	},
-} as unknown as Bridge.Context;
-
-describe("installing Fabric on a version it has no loader build for", () => {
-	it("the customer is told which type and version, and what to do", async () => {
-		const error = await installFabric(context, "1.99", null).then(
-			() => null,
-			(thrown: unknown) => thrown,
-		);
-
-		expect(error).toBeInstanceOf(BridgeUserError);
-		expect((error as BridgeUserError).text.en).toBe(
-			"Fabric has no build for Minecraft 1.99 yet. Pick another version or server type.",
-		);
-		expect((error as BridgeUserError).text.ar).toContain("Fabric");
-		expect((error as BridgeUserError).text.ar).toContain("1.99");
-	});
-});
-
-describe("installing Fabric while it has no stable installer", () => {
-	it("the customer is told to wait or pick another type", async () => {
-		const unstable = {
-			net: {
-				json: async () => [
-					{
-						version: "1.2.0",
-						stable: false,
-					},
-				],
+describe("installFabric", () => {
+	it("downloads the server jar it was given and prepares the mods folder", async () => {
+		const downloads: string[][] = [];
+		const ensured: string[] = [];
+		const context = {
+			files: {
+				download: async (path: string, url: string) => {
+					downloads.push([
+						path,
+						url,
+					]);
+				},
+				ensure: async (...paths: string[]) => {
+					ensured.push(...paths);
+				},
 			},
 		} as unknown as Bridge.Context;
 
-		const error = await installFabric(unstable, "1.21.1", "0.16.0").then(
-			() => null,
-			(thrown: unknown) => thrown,
-		);
+		const url = "https://meta.fabricmc.net/v2/versions/loader/1.21.1/0.16.0/1.1.0/server/jar";
 
-		expect(error).toBeInstanceOf(BridgeUserError);
-		expect((error as BridgeUserError).text.en).toBe(
-			"Fabric has no stable installer right now. Try again in a moment or pick another server type in the Version tab.",
-		);
+		await installFabric(context, {
+			build: "0.16.0",
+			url,
+			digest: null,
+			sizeBytes: null,
+		});
+
+		expect(downloads).toEqual([
+			[
+				"server.jar",
+				url,
+			],
+		]);
+		expect(ensured).toEqual([
+			"mods",
+		]);
 	});
 });

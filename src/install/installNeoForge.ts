@@ -1,15 +1,16 @@
 import { type Bridge, BridgeUserError } from "@serverkgg/bridge";
-import { NEOFORGE_MAVEN, ServerVariant } from "../shared";
-import { buildUnavailable } from "./buildUnavailable";
+import { type AcceptedBuild, buildUnavailable, ServerVariant } from "../shared";
 import type { LaunchPlan } from "./launchPlan";
 import { runLoaderInstaller } from "./loaderInstaller";
 
 export const installNeoForge = async (
 	context: Bridge.Context,
 	gameVersion: string,
-	build: string | null,
+	accepted: AcceptedBuild,
 	javaMajor: number,
 ): Promise<LaunchPlan> => {
+	const { build } = accepted;
+
 	if (!build) {
 		throw buildUnavailable(ServerVariant.NeoForge, gameVersion);
 	}
@@ -17,7 +18,8 @@ export const installNeoForge = async (
 	const plan = await runLoaderInstaller(context, {
 		name: "NeoForge",
 		release: build,
-		installerUrl: `${NEOFORGE_MAVEN}/${build}/neoforge-${build}-installer.jar`,
+		installerUrl: accepted.url,
+		digest: accepted.digest,
 		javaMajor,
 	});
 

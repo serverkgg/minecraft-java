@@ -117,3 +117,94 @@ describe("reading the game log when the crash report came back empty", () => {
 		).toBeNull();
 	});
 });
+
+const DUPLICATE_REPORT = `---- Minecraft Crash Report ----
+Time: 2026-10-06 04:20:00
+Description: Mod loading failures have occurred; consult the issue messages for more details
+
+-- Mod loading issue --
+Details:
+	Failure message: Mod sodium is present in multiple files: sodium-neoforge-0.6.0+mc1.21.1.jar, sodium-neoforge-0.6.5+mc1.21.1.jar
+`;
+
+const MIXIN_REPORT = `---- Minecraft Crash Report ----
+Time: 2026-10-06 04:20:00
+Description: Mod loading failures have occurred; consult the issue messages for more details
+
+-- Mod loading issue for: seasons --
+Details:
+	Mod file: /data/mods/seasons-neoforge-1.21.1-2.4.jar
+	Failure message: Mixin application of com.example.seasons.mixin.BiomeMixin from Seasons (seasons) has failed
+	Mod version: 2.4
+`;
+
+const MIXIN_STACK_REPORT = `---- Minecraft Crash Report ----
+Description: Exception in server tick loop
+
+java.lang.RuntimeException: Mixin transformation of net.minecraft.class_1297 failed
+Caused by: org.spongepowered.asm.mixin.transformer.throwables.MixinTransformerError: An unexpected critical error was encountered
+Caused by: org.spongepowered.asm.mixin.injection.throwables.InjectionError: Critical injection failure: Callback method setInWater(Z)Z in expandability-common.mixins.json:swimming.EntityMixin from mod expandability failed injection check, (3/4) succeeded. Scanned 0 target(s). Using refmap expandability-common-refmap.json
+`;
+
+describe("readCrashAttribution", () => {
+	it("marks a report whose neoforge failure message names two jars for one mod", () => {
+		expect(readCrashAttribution(DUPLICATE_REPORT)).toEqual({
+			jar: null,
+			mod: null,
+			detail:
+				"Mod sodium is present in multiple files: sodium-neoforge-0.6.0+mc1.21.1.jar, sodium-neoforge-0.6.5+mc1.21.1.jar",
+			reason: "duplicate",
+		});
+	});
+
+	it("marks a report whose failure is a mixin", () => {
+		expect(readCrashAttribution(MIXIN_REPORT)).toEqual({
+			jar: "seasons-neoforge-1.21.1-2.4.jar",
+			mod: "seasons",
+			detail: "Mixin application of com.example.seasons.mixin.BiomeMixin from Seasons (seasons) has failed",
+			reason: "mixin",
+		});
+	});
+
+	it("finds the mixin and its mod in a fabric stack when no mod section was written", () => {
+		expect(readCrashAttribution(MIXIN_STACK_REPORT)).toEqual({
+			jar: null,
+			mod: "expandability",
+			detail: "Exception in server tick loop",
+			reason: "mixin",
+		});
+	});
+
+	it("leaves a mod that simply failed without a reason", () => {
+		expect(readCrashAttribution(FORGE_REPORT)?.reason).toBeUndefined();
+	});
+});
+
+describe("readLogAttribution", () => {
+	it("names the duplicate mod forge listed in the log", () => {
+		expect(
+			readLogAttribution(`[14Apr2025 11:43:04.120] [main/ERROR] [net.minecraftforge.fml.loading.UniqueModListBuilder/LOADING]: Found duplicate mods:
+	Mod ID: 'rubidium' from mod files: rubidium-mc1.20.1-0.7.1.jar, embeddium-0.3.31+mc1.20.1.jar
+[14Apr2025 11:43:04.121] [main/ERROR] [net.minecraftforge.fml.loading.moddiscovery.ModDiscoverer/SCAN]: Failed to build unique mod list after mod discovery.
+`),
+		).toEqual({
+			jar: null,
+			mod: "rubidium",
+			detail: null,
+			reason: "duplicate",
+		});
+	});
+
+	it("keeps a mixin failure that names no mod", () => {
+		expect(
+			readLogAttribution(
+				"[12:00:00] [main/ERROR] [mixin/]: Mixin apply failed seasons.mixins.json:BiomeMixin -> net.minecraft.world.level.biome.Biome: org.spongepowered.asm.mixin.injection.throwables.InvalidInjectionException Critical injection failure",
+			),
+		).toEqual({
+			jar: null,
+			mod: null,
+			detail: "seasons.mixins.json:BiomeMixin",
+			reason: "mixin",
+		});
+	});
+});

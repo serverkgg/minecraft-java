@@ -1,6 +1,5 @@
 import { type Bridge, BridgeUserError } from "@serverkgg/bridge";
-import { FORGE_MAVEN, SERVER_JAR, ServerVariant } from "../shared";
-import { buildUnavailable } from "./buildUnavailable";
+import { type AcceptedBuild, buildUnavailable, SERVER_JAR, ServerVariant } from "../shared";
 import { jarLaunch, type LaunchPlan } from "./launchPlan";
 import { runLoaderInstaller } from "./loaderInstaller";
 
@@ -14,19 +13,20 @@ const legacyJars = (release: string) => {
 export const installForge = async (
 	context: Bridge.Context,
 	gameVersion: string,
-	build: string | null,
+	accepted: AcceptedBuild,
 	javaMajor: number,
 ): Promise<LaunchPlan> => {
-	if (!build) {
+	if (!accepted.build) {
 		throw buildUnavailable(ServerVariant.Forge, gameVersion);
 	}
 
-	const release = `${gameVersion}-${build}`;
+	const release = `${gameVersion}-${accepted.build}`;
 
 	const plan = await runLoaderInstaller(context, {
 		name: "Forge",
 		release,
-		installerUrl: `${FORGE_MAVEN}/${release}/forge-${release}-installer.jar`,
+		installerUrl: accepted.url,
+		digest: accepted.digest,
 		javaMajor,
 	});
 

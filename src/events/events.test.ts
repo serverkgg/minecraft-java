@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+import { BridgeStream } from "@serverkgg/bridge";
 import { events } from "./events";
 
 const emitted = (line: string) => {
@@ -10,6 +11,7 @@ const emitted = (line: string) => {
 			: [
 					{
 						emit: pattern.emit,
+						stream: pattern.stream ?? null,
 						payload: {
 							...pattern.payload,
 						},
@@ -33,6 +35,12 @@ const advanced = (line: string) => {
 
 const undersized = (line: string) => {
 	return emitted(line).filter((event) => event.emit === "MemoryUndersized");
+};
+
+const lastOf = (line: string, name: string) => {
+	return emitted(line)
+		.filter((event) => event.emit === name)
+		.at(-1);
 };
 
 describe("naming the mod that stopped a server from booting", () => {
@@ -370,6 +378,236 @@ describe("naming the memory a pack asks for", () => {
 		]) {
 			expect(undersized(line)).toEqual([]);
 		}
+	});
+});
+
+describe("events", () => {
+	describe("telling the platform two jars claim one mod", () => {
+		it("reads forge's duplicate header and the mod line under it, from UniqueModListBuilder", () => {
+			const header = lastOf(
+				"[14Apr2025 11:43:04.120] [main/ERROR] [net.minecraftforge.fml.loading.UniqueModListBuilder/LOADING]: Found duplicate mods:",
+				"ModCrashed",
+			);
+			const line = lastOf(
+				"\tMod ID: 'rubidium' from mod files: rubidium-mc1.20.1-0.7.1.jar, embeddium-0.3.31+mc1.20.1.jar",
+				"ModCrashed",
+			);
+
+			expect(header?.payload.reason).toBe("duplicate");
+			expect(line?.payload.reason).toBe("duplicate");
+			expect(line?.groups.mod).toBe("rubidium");
+			expect(line?.groups.jars).toBe("rubidium-mc1.20.1-0.7.1.jar, embeddium-0.3.31+mc1.20.1.jar");
+		});
+
+		it("reads neoforge's duplicate_mod issue line from UniqueModListBuilder", () => {
+			const event = lastOf(
+				"ERROR: fml.modloadingissue.duplicate_mod [sodium; sodium-neoforge-0.6.0+mc1.21.1.jar, sodium-neoforge-0.6.5+mc1.21.1.jar]",
+				"ModCrashed",
+			);
+
+			expect(event?.payload.reason).toBe("duplicate");
+			expect(event?.payload.loader).toBe("neoforge");
+			expect(event?.groups.mod).toBe("sodium");
+			expect(event?.groups.jars).toBe("sodium-neoforge-0.6.0+mc1.21.1.jar, sodium-neoforge-0.6.5+mc1.21.1.jar");
+		});
+
+		it("reads the duplicate line forge printed on 1.7.10", () => {
+			const event = lastOf(
+				"[22:32:46] [Server thread/ERROR] [FML/]: Found a duplicate mod Baubles at [/aternos/server/mods/1.7.10/Baubles-1.7.10-1.0.1.10.jar, /aternos/server/mods/Baubles-1.7.10-1.0.1.10.jar]",
+				"ModCrashed",
+			);
+
+			expect(event?.payload.reason).toBe("duplicate");
+			expect(event?.groups.mod).toBe("Baubles");
+			expect(event?.groups.jars).toBe(
+				"/aternos/server/mods/1.7.10/Baubles-1.7.10-1.0.1.10.jar, /aternos/server/mods/Baubles-1.7.10-1.0.1.10.jar",
+			);
+		});
+
+		it("reads the duplicate versions line older fabric loaders printed", () => {
+			const event = lastOf(
+				"net.fabricmc.loader.discovery.ModResolutionException: Duplicate versions for mod ID 'fabric': [0.30.3+1.16 at /server/mods/fabric-api-0.30.3+1.16.jar]",
+				"ModCrashed",
+			);
+
+			expect(event?.payload.reason).toBe("duplicate");
+			expect(event?.groups.mod).toBe("fabric");
+		});
+
+		it("matches fabric's duplicate line from ModResolver", () => {
+			const event = lastOf(
+				"Caused by: net.fabricmc.loader.impl.discovery.ModResolutionException: duplicate mod sodium",
+				"ModCrashed",
+			);
+
+			expect(event?.payload.reason).toBe("duplicate");
+			expect(event?.groups.mod).toBe("sodium");
+		});
+
+		it("says nothing about a library listed twice or a dependency line", () => {
+			for (const line of [
+				"[12:00:00] [main/ERROR]: Found duplicate plugins or libraries:",
+				"[12:00:00] [main/INFO]: Loading 214 mods:",
+			]) {
+				expect(lastOf(line, "ModCrashed")).toBeUndefined();
+			}
+		});
+	});
+
+	describe("telling the platform a mixin could not be applied", () => {
+		it("marks the fabric mixin line it already read", () => {
+			const event = lastOf(
+				"[22:51:01] [main/ERROR]: Mixin apply for mod seasons failed seasons.mixins.json:BiomeMixin from mod seasons -> net.minecraft.class_1959",
+				"ModCrashed",
+			);
+
+			expect(event?.payload.reason).toBe("mixin");
+			expect(event?.payload.loader).toBe("fabric");
+			expect(event?.groups.mod).toBe("seasons");
+		});
+
+		it("leaves the bare transformer error alone and reads the injection failure that names the mod", () => {
+			const transformer = lastOf(
+				"Caused by: org.spongepowered.asm.mixin.transformer.throwables.MixinTransformerError: An unexpected critical error was encountered",
+				"ModCrashed",
+			);
+			const injection = lastOf(
+				"Caused by: org.spongepowered.asm.mixin.injection.throwables.InjectionError: Critical injection failure: Callback method setInWater(Z)Z in expandability-common.mixins.json:swimming.EntityMixin from mod expandability failed injection check, (3/4) succeeded. Scanned 0 target(s). Using refmap expandability-common-refmap.json",
+				"ModCrashed",
+			);
+
+			expect(transformer).toBeUndefined();
+			expect(injection?.payload.reason).toBe("mixin");
+			expect(injection?.groups.mod).toBe("expandability");
+			expect(injection?.groups.detail).toBe("expandability-common.mixins.json:swimming.EntityMixin");
+		});
+
+		it("reads the apply line upstream Mixin's MixinProcessor prints on forge", () => {
+			const event = lastOf(
+				"[12:00:00] [main/ERROR] [mixin/]: Mixin apply failed seasons.mixins.json:BiomeMixin -> net.minecraft.world.level.biome.Biome: org.spongepowered.asm.mixin.injection.throwables.InvalidInjectionException Critical injection failure",
+				"ModCrashed",
+			);
+
+			expect(event?.payload.reason).toBe("mixin");
+			expect(event?.groups.detail).toBe("seasons.mixins.json:BiomeMixin");
+		});
+
+		it("reads MixinProcessor's apply error with and without the mod fabric adds", () => {
+			const upstream = lastOf(
+				"Caused by: org.spongepowered.asm.mixin.throwables.MixinApplyError: Mixin [seasons.mixins.json:BiomeMixin] from phase [DEFAULT] in config [seasons.mixins.json] FAILED during APPLY",
+				"ModCrashed",
+			);
+			const fabric = lastOf(
+				"Caused by: org.spongepowered.asm.mixin.throwables.MixinApplyError: Mixin [seasons.mixins.json:BiomeMixin from mod seasons] from phase [DEFAULT] in config [seasons.mixins.json] FAILED during APPLY",
+				"ModCrashed",
+			);
+
+			expect(upstream?.payload.reason).toBe("mixin");
+			expect(upstream?.groups.detail).toBe("seasons.mixins.json:BiomeMixin");
+			expect(upstream?.groups.mod).toBeUndefined();
+			expect(fabric?.groups.mod).toBe("seasons");
+		});
+
+		it("reads the mixin failure neoforge's FMLModContainer logs with the mod", () => {
+			const event = lastOf(
+				"[12:00:00] [modloading-worker-0/ERROR] [ne.ne.fm.ja.FMLModContainer/LOADING]: Failed to apply mixin. Mixin Class: com.example.seasons.mixin.BiomeMixin, ModID: seasons",
+				"ModCrashed",
+			);
+
+			expect(event?.payload.reason).toBe("mixin");
+			expect(event?.payload.loader).toBe("neoforge");
+			expect(event?.groups.mod).toBe("seasons");
+			expect(event?.groups.detail).toBe("com.example.seasons.mixin.BiomeMixin");
+		});
+
+		it("says nothing about a mixin that only warns", () => {
+			for (const line of [
+				"[19:11:23] [main/WARN]: @Mixin target net.minecraft.class_287 was not found owo.mixins.json:BufferBuilderAccessor from mod owo",
+				"[19:11:24] [main/INFO]: Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.4.1).",
+			]) {
+				expect(lastOf(line, "ModCrashed")).toBeUndefined();
+			}
+		});
+	});
+
+	describe("telling the platform a world came from a newer game", () => {
+		it("reads the chunk paper refuses to downgrade, as paper's troubleshooting docs show it", () => {
+			const event = lastOf(
+				"java.lang.RuntimeException: Server attempted to load chunk saved with newer version of minecraft! 3955 > 3465",
+				"WorldCorrupt",
+			);
+
+			expect(event?.payload.reason).toBe("newer-version");
+			expect(event?.groups.worldDataVersion).toBe("3955");
+			expect(event?.groups.serverDataVersion).toBe("3465");
+		});
+
+		it("reads the line vanilla 1.21.11's Main logs when both level.dat files fail", () => {
+			const event = lastOf(
+				"[12:00:00] [main/ERROR]: Failed to load world data from ./world/level.dat and ./world/level.dat_old. World files may be corrupted. Shutting down.",
+				"WorldCorrupt",
+			);
+
+			expect(event?.payload.reason).toBeUndefined();
+			expect(event?.groups.path).toBe("./world/level.dat");
+		});
+
+		it("reads the wording vanilla 26.1 and paper's WorldMigrationSupport share", () => {
+			const event = lastOf(
+				"[12:00:00 ERROR]: Failed to load world data. World files may be corrupted. Shutting down.",
+				"WorldCorrupt",
+			);
+
+			expect(event).toBeDefined();
+			expect(event?.groups.path).toBeUndefined();
+		});
+
+		it("waits while vanilla still tries the backup level.dat", () => {
+			expect(
+				lastOf("[12:00:00] [main/WARN]: Failed to load world data from ./world/level.dat", "WorldCorrupt"),
+			).toBeUndefined();
+		});
+
+		it("keeps a damaged level.dat without a reason", () => {
+			const event = lastOf("[12:00:00] [main/ERROR]: Failed to read world/level.dat", "WorldCorrupt");
+
+			expect(event?.payload.reason).toBeUndefined();
+			expect(event?.groups.path).toBe("world/level.dat");
+		});
+	});
+
+	describe("telling threads apart from the heap when java runs out of memory", () => {
+		it("reads the thread limit in openjdk's current wording, from stderr only", () => {
+			const event = lastOf(
+				"java.lang.OutOfMemoryError: unable to create native thread: possibly out of memory or process/resource limits reached",
+				"ServerCrashed",
+			);
+
+			expect(event?.payload.reason).toBe("threads");
+			expect(event?.stream).toBe(BridgeStream.Stderr);
+			expect(event?.groups.error).toBe(
+				"java.lang.OutOfMemoryError: unable to create native thread: possibly out of memory or process/resource limits reached",
+			);
+		});
+
+		it("reads the java 8 wording too", () => {
+			const event = lastOf(
+				'Exception in thread "Server thread" java.lang.OutOfMemoryError: unable to create new native thread',
+				"ServerCrashed",
+			);
+
+			expect(event?.payload.reason).toBe("threads");
+		});
+
+		it("keeps the plain heap case without a reason", () => {
+			const crashed = emitted("java.lang.OutOfMemoryError: Java heap space").filter(
+				(event) => event.emit === "ServerCrashed",
+			);
+
+			expect(crashed).toHaveLength(1);
+			expect(crashed[0]?.payload.reason).toBeUndefined();
+			expect(crashed[0]?.groups.error).toBe("java.lang.OutOfMemoryError: Java heap space");
+		});
 	});
 });
 

@@ -59,11 +59,11 @@ When the pack publishes a new release, an **Update available** badge appears on 
 
 ## Remove it
 
-Press **Remove** on the Version tab, or the delete icon in the Modpacks tab. We take a backup first, then remove the pack, the mods and configs we put there, and the world with them. Anything you installed yourself stays. Your server goes back to the same type and version without a modpack, with a fresh world.
+Press **Remove** on the Version tab, or the delete icon in the Modpacks tab. We take a backup first, then remove the pack and the mods and configs we put there. Anything you installed yourself stays. The world you built on the pack is kept under a new name, such as `world-rlcraft-old`, and your server goes back to the same type and version without a modpack, with a fresh world.
 
-> [!warning] A world generated on a modpack can't open without the pack's mods, so the server crashes instead of starting. That's why we start you on a fresh world. If you want the old one, download it from the **Worlds** tab before you remove the pack, or restore the backup.
+> [!warning] A world generated on a modpack can't open without the pack's mods, so the server crashes instead of starting. That's why we start you on a fresh world and keep the old one aside in the **Worlds** tab. Download it from there, or delete it once you no longer need it, since every world goes into your backups.
 
-Changing your server type or version while a pack is applied removes it the same way: the pack, its mods and the world go, and your server comes back on the type and version you picked.
+Changing your server type or version while a pack is applied removes it the same way: the pack and its mods go, the world is kept under a new name, and your server comes back on the type and version you picked.
 
 When that happens, or when an install never finished, the pack keeps showing on the Version tab with a **Not installed yet** badge, and in the Modpacks tab with an **Outdated** badge, so you know your server isn't on it. Press **Remove** to clear it for good.
 

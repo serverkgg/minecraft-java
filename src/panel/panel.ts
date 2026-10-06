@@ -49,8 +49,8 @@ const modpackStatusSection: Bridge.Section = {
 	variable: MODPACK_VARIABLE,
 	confirm: BridgeConfirm.Strong,
 	confirmText: {
-		ar: "إزالة المودباك تحذفه مع موداته والماب التي بنيتها عليه، ويعود سيرفرك إلى النوع والإصدار نفسيهما دون مودباك وبماب جديدة. يبقى ما ثبّته بنفسك.",
-		en: "Removing the modpack deletes it, its mods and the world you built on it, and leaves your server on the same type and version without a modpack and with a fresh world. Anything you installed yourself stays.",
+		ar: "إزالة المودباك تحذفه مع موداته، وتبقى الماب التي بنيتها عليه محفوظة باسم جديد في تبويب المابات، ويعود سيرفرك إلى النوع والإصدار نفسيهما دون مودباك وبماب جديدة. يبقى ما ثبّته بنفسك.",
+		en: "Removing the modpack deletes it and its mods, keeps the world you built on it under a new name in the Worlds tab, and leaves your server on the same type and version without a modpack and with a fresh world. Anything you installed yourself stays.",
 	},
 	actions: [
 		{
@@ -165,8 +165,8 @@ const versionTab: Bridge.Tab = {
 				{
 					variable: MODPACK_VARIABLE,
 					warning: {
-						ar: "سيرفرك على مودباك. أي تغيير هنا يزيل المودباك وموداته والماب التي بنيتها عليه، ويعيد سيرفرك إلى النوع والإصدار اللذين تختارهما بماب جديدة.",
-						en: "Your server runs a modpack. Any change here removes the pack, its mods and the world you built on it, and puts your server on the type and version you pick with a fresh world.",
+						ar: "سيرفرك على مودباك. أي تغيير هنا يزيل المودباك وموداته، ويحفظ الماب التي بنيتها عليه باسم جديد في تبويب المابات، ويعيد سيرفرك إلى النوع والإصدار اللذين تختارهما بماب جديدة.",
+						en: "Your server runs a modpack. Any change here removes the pack and its mods, keeps the world you built on it under a new name in the Worlds tab, and puts your server on the type and version you pick with a fresh world.",
 					},
 				},
 			],
@@ -190,8 +190,8 @@ const modpacksTab: Bridge.Tab = {
 			variable: MODPACK_VARIABLE,
 			confirm: BridgeConfirm.Strong,
 			confirmText: {
-				ar: "تثبيت المودباك يعيد بناء سيرفرك: يحذف مجلدات المودات والإعدادات بالكامل، بما فيها المودات التي ثبّتها بنفسك. تبقى مابك في مكانها إلا إذا تطلب المودباك إصدارًا أقدم من إصدارك، وإذا كان سيرفرك على مشغّل مودات وانتقلت منه يُفقد كل ما أضافته المودات إلى مابك. وإزالة المودباك تحذفه مع موداته والماب التي بنيتها عليه، ويعود سيرفرك دون مودباك وبماب جديدة.",
-				en: "Installing a modpack rebuilds your server: the mods and config folders are deleted, including mods you installed yourself. Your world stays unless the pack needs an older version than yours, and if you leave a mod loader everything the mods added to your world is lost. Removing the modpack takes it, its mods and the world you built on it, and leaves your server without a modpack and with a fresh world.",
+				ar: "تثبيت المودباك يعيد بناء سيرفرك: يحذف مجلدات المودات والإعدادات بالكامل، بما فيها المودات التي ثبّتها بنفسك. تبقى مابك في مكانها إلا إذا تطلب المودباك إصدارًا أقدم من إصدارك، وإذا كان سيرفرك على مشغّل مودات وانتقلت منه يُفقد كل ما أضافته المودات إلى مابك. وإزالة المودباك تحذفه مع موداته، وتبقى الماب التي بنيتها عليه محفوظة باسم جديد في تبويب المابات، ويعود سيرفرك دون مودباك وبماب جديدة.",
+				en: "Installing a modpack rebuilds your server: the mods and config folders are deleted, including mods you installed yourself. Your world stays unless the pack needs an older version than yours, and if you leave a mod loader everything the mods added to your world is lost. Removing the modpack takes it and its mods, keeps the world you built on it under a new name in the Worlds tab, and leaves your server without a modpack and with a fresh world.",
 			},
 			empty: {
 				ar: "لا يوجد مودباك مثبّت. ابحث عن مودباك في الأعلى واختره، ونجهّز سيرفرك عليه.",

@@ -286,3 +286,61 @@ export const worldSize = async (context: Bridge.Context, name: string) => {
 
 	return total;
 };
+
+const ARCHIVE_SUFFIX = "-old";
+
+export interface WorldArchive {
+	from: string;
+	to: string;
+	fresh: string;
+}
+
+export const archivedWorldName = (world: string, pack: string) => {
+	const slug = safeWorldName(pack.toLowerCase());
+
+	const stem = safeWorldName(slug.length > 0 ? `${world}-${slug}` : world)
+		.slice(0, NAME_LIMIT - ARCHIVE_SUFFIX.length)
+		.replace(EDGE_CHARACTERS, "");
+
+	return `${stem.length > 0 ? stem : DEFAULT_WORLD}${ARCHIVE_SUFFIX}`;
+};
+
+const worldExists = async (context: Bridge.Context, name: string) => {
+	for (const path of worldPaths(name)) {
+		if (await context.files.exists(path)) {
+			return true;
+		}
+	}
+
+	return false;
+};
+
+export const planWorldArchive = async (context: Bridge.Context, pack: string): Promise<WorldArchive | null> => {
+	const from = await activeWorld(context);
+
+	if (!(await worldExists(context, from))) {
+		return null;
+	}
+
+	return {
+		from,
+		to: await freeWorldName(context, archivedWorldName(from, pack)),
+		fresh: from === DEFAULT_WORLD ? DEFAULT_WORLD : await freeWorldName(context, DEFAULT_WORLD),
+	};
+};
+
+export const archiveWorld = async (context: Bridge.Context, archive: WorldArchive) => {
+	const destinations = worldPaths(archive.to);
+
+	for (const [index, path] of worldPaths(archive.from).entries()) {
+		const destination = destinations[index];
+
+		if (destination && (await context.files.exists(path))) {
+			await context.files.move(path, destination);
+		}
+	}
+
+	if (await context.files.exists(PROPERTIES_FILE)) {
+		await setActiveWorld(context, archive.fresh);
+	}
+};

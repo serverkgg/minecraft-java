@@ -1,4 +1,5 @@
 import type { Bridge } from "@serverkgg/bridge";
+import { type CompanionFeature, CompanionReadiness, CROSSPLAY, VERSION_COMPAT } from "../companions";
 import { VARIANT_LABELS } from "../shared";
 import type { InstallIdentity } from "./installStamp";
 import {
@@ -32,11 +33,20 @@ export const unchangedLines = (next: InstallIdentity): Bridge.Text[] => {
 	];
 };
 
-export const modpackDetachLines = (next: InstallIdentity): Bridge.Text[] => {
+export const modpackDetachLines = (next: InstallIdentity, archived: string | null): Bridge.Text[] => {
+	if (archived === null) {
+		return [
+			{
+				ar: `نزيل المودباك وموداته، ويعود سيرفرك إلى ${nameOf(next)} دون مودباك وبماب جديدة.`,
+				en: `We remove the modpack and its mods, and your server returns to ${nameOf(next)} without a modpack and with a fresh world.`,
+			},
+		];
+	}
+
 	return [
 		{
-			ar: `نزيل المودباك وموداته والماب التي بنيتها عليه، ويعود سيرفرك إلى ${nameOf(next)} دون مودباك وبماب جديدة.`,
-			en: `We remove the modpack, its mods and the world you built on it, and your server returns to ${nameOf(next)} without a modpack and with a fresh world.`,
+			ar: `نزيل المودباك وموداته، ونحفظ الماب التي بنيتها عليه باسم «${archived}» في تبويب المابات، ويعود سيرفرك إلى ${nameOf(next)} دون مودباك وبماب جديدة.`,
+			en: `We remove the modpack and its mods, keep the world you built on it as "${archived}" in the Worlds tab, and your server returns to ${nameOf(next)} without a modpack and with a fresh world.`,
 		},
 	];
 };
@@ -124,6 +134,82 @@ export const transitionLines = (from: InstallIdentity, to: InstallIdentity, plan
 	}
 
 	return lines;
+};
+
+export interface CompanionNotice {
+	feature: CompanionFeature;
+	readiness: CompanionReadiness;
+}
+
+const variantsOf = (feature: CompanionFeature): Bridge.Text => {
+	const labels = feature.variants.map((variant) => VARIANT_LABELS[variant]);
+	const last = labels.at(-1) ?? "";
+	const rest = labels.slice(0, -1);
+
+	return {
+		ar: [
+			...rest,
+			last,
+		].join(" أو "),
+		en: rest.length === 0 ? last : `${rest.join(", ")} or ${last}`,
+	};
+};
+
+const crossplayLine = (to: InstallIdentity, readiness: CompanionReadiness): Bridge.Text | null => {
+	if (readiness === CompanionReadiness.Unresolved) {
+		return {
+			ar: `لن يعمل الكروس بلاي على ${nameOf(to)} حتى يدعمه Geyser. يبقى مفعّلًا ويعود تلقائيًا عندما يتوفر.`,
+			en: `Crossplay won't work on ${nameOf(to)} until Geyser supports it. It stays on and comes back on its own once it does.`,
+		};
+	}
+
+	if (readiness === CompanionReadiness.Unsupported) {
+		const variants = variantsOf(CROSSPLAY);
+
+		return {
+			ar: `لا يعمل الكروس بلاي على ${VARIANT_LABELS[to.variant]}. يبقى مفعّلًا ويعود تلقائيًا عند العودة إلى ${variants.ar}.`,
+			en: `Crossplay doesn't run on ${VARIANT_LABELS[to.variant]}. It stays on and comes back on its own when you switch back to ${variants.en}.`,
+		};
+	}
+
+	return null;
+};
+
+const versionCompatLine = (to: InstallIdentity, readiness: CompanionReadiness): Bridge.Text | null => {
+	if (readiness === CompanionReadiness.Unresolved) {
+		return {
+			ar: `لن يعمل توافق الإصدارات على ${nameOf(to)} حتى يدعمه ViaVersion. يبقى مفعّلًا ويعود تلقائيًا عندما يتوفر.`,
+			en: `Version compatibility won't work on ${nameOf(to)} until ViaVersion supports it. It stays on and comes back on its own once it does.`,
+		};
+	}
+
+	if (readiness === CompanionReadiness.Unsupported) {
+		const variants = variantsOf(VERSION_COMPAT);
+
+		return {
+			ar: `لا يعمل توافق الإصدارات على ${VARIANT_LABELS[to.variant]}. يبقى مفعّلًا ويعود تلقائيًا عند العودة إلى ${variants.ar}.`,
+			en: `Version compatibility doesn't run on ${VARIANT_LABELS[to.variant]}. It stays on and comes back on its own when you switch back to ${variants.en}.`,
+		};
+	}
+
+	return null;
+};
+
+export const companionLines = (to: InstallIdentity, notices: CompanionNotice[]): Bridge.Text[] => {
+	return notices.flatMap(({ feature, readiness }) => {
+		const line =
+			feature === CROSSPLAY
+				? crossplayLine(to, readiness)
+				: feature === VERSION_COMPAT
+					? versionCompatLine(to, readiness)
+					: null;
+
+		return line
+			? [
+					line,
+				]
+			: [];
+	});
 };
 
 export const transitionActivityText = (

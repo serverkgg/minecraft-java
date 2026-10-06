@@ -1,7 +1,15 @@
 import type { Bridge } from "@serverkgg/bridge";
-import { installedGameVersion } from "../install";
+import { installedGameVersion } from "../install/installStamp";
 import { modrinthLoaderRelease } from "../providers";
-import { addonDirectory, DISABLED_SUFFIX, enabledName, replaceFiles, variantOf } from "../shared";
+import {
+	addonDirectory,
+	addonDirectoryFor,
+	DISABLED_SUFFIX,
+	enabledName,
+	replaceFiles,
+	type ServerVariant,
+	variantOf,
+} from "../shared";
 import {
 	COMPANION_FEATURES,
 	type Companion,
@@ -47,6 +55,13 @@ interface ResolvedFeature {
 
 interface ConfigPass {
 	pending: number;
+}
+
+export enum CompanionReadiness {
+	Ready = "ready",
+	Unsupported = "unsupported",
+	Unresolved = "unresolved",
+	Unknown = "unknown",
 }
 
 const PIN_ATTEMPTS = 12;
@@ -167,10 +182,17 @@ const resolveRequirement = async (
 const resolveFeature = async (
 	context: Bridge.Context,
 	members: Companion[],
+	variant: ServerVariant,
 	directory: string,
 	gameVersion: string | null,
+	quiet = false,
 ): Promise<ResolvedFeature | null> => {
-	const variant = variantOf(context);
+	const warn: Bridge.Context["log"]["warn"] = (message, details) => {
+		if (!quiet) {
+			context.log.warn(message, details);
+		}
+	};
+
 	const resolved: ResolvedCompanion[] = [];
 	const requirements = new Map<string, ResolvedRequirement>();
 
@@ -178,7 +200,7 @@ const resolveFeature = async (
 		const artifact = companion.artifacts[variant];
 
 		if (!artifact) {
-			context.log.warn("this server type has no build of a companion", {
+			warn("this server type has no build of a companion", {
 				feature: companion.feature.id,
 				companion: companion.id,
 				variant,
@@ -190,7 +212,7 @@ const resolveFeature = async (
 		const candidate = await resolveCompanion(context, companion, artifact, gameVersion);
 
 		if (!candidate) {
-			context.log.warn("could not find a download for a companion", {
+			warn("could not find a download for a companion", {
 				feature: companion.feature.id,
 				companion: companion.id,
 				variant,
@@ -210,7 +232,7 @@ const resolveFeature = async (
 			const found = await resolveRequirement(context, requirement, gameVersion);
 
 			if (!found) {
-				context.log.warn("a companion needs a library we could not find for this version", {
+				warn("a companion needs a library we could not find for this version", {
 					feature: companion.feature.id,
 					companion: companion.id,
 					requirement: requirement.title,
@@ -384,7 +406,7 @@ const syncFeature = async (context: Bridge.Context, feature: CompanionFeature) =
 
 	try {
 		const gameVersion = await installedGameVersion(context);
-		const resolved = await resolveFeature(context, members, directory, gameVersion);
+		const resolved = await resolveFeature(context, members, variantOf(context), directory, gameVersion);
 
 		if (!resolved) {
 			if (!(await preserveFeature(context, members, sidecar))) {
@@ -409,6 +431,32 @@ const syncFeature = async (context: Bridge.Context, feature: CompanionFeature) =
 
 	if (JSON.stringify(sidecar) !== before) {
 		await writeCompanionSidecar(context, sidecar);
+	}
+};
+
+export const companionReadiness = async (
+	context: Bridge.Context,
+	feature: CompanionFeature,
+	variant: ServerVariant,
+	gameVersion: string,
+): Promise<CompanionReadiness> => {
+	if (!feature.variants.includes(variant)) {
+		return CompanionReadiness.Unsupported;
+	}
+
+	try {
+		const resolved = await resolveFeature(
+			context,
+			companionsOf(feature),
+			variant,
+			addonDirectoryFor(variant),
+			gameVersion,
+			true,
+		);
+
+		return resolved ? CompanionReadiness.Ready : CompanionReadiness.Unresolved;
+	} catch {
+		return CompanionReadiness.Unknown;
 	}
 };
 

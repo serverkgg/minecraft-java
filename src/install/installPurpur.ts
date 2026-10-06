@@ -1,11 +1,10 @@
 import { type Bridge, BridgeDownloadError } from "@serverkgg/bridge";
-import { PURPUR_PROJECT, SERVER_JAR, ServerVariant } from "../shared";
-import { buildUnavailable } from "./buildUnavailable";
+import { type AcceptedBuild, buildUnavailable, downloadCheck, SERVER_JAR, ServerVariant } from "../shared";
 import { jarLaunch } from "./launchPlan";
 
-const downloadJar = async (context: Bridge.Context, gameVersion: string, build: string | null) => {
+export const installPurpur = async (context: Bridge.Context, gameVersion: string, accepted: AcceptedBuild) => {
 	try {
-		await context.files.download(SERVER_JAR, `${PURPUR_PROJECT}/${gameVersion}/${build ?? "latest"}/download`);
+		await context.files.download(SERVER_JAR, accepted.url, downloadCheck(accepted));
 	} catch (error) {
 		if (error instanceof BridgeDownloadError && error.status === 404) {
 			throw buildUnavailable(ServerVariant.Purpur, gameVersion);
@@ -13,10 +12,6 @@ const downloadJar = async (context: Bridge.Context, gameVersion: string, build: 
 
 		throw error;
 	}
-};
-
-export const installPurpur = async (context: Bridge.Context, gameVersion: string, build: string | null) => {
-	await downloadJar(context, gameVersion, build);
 
 	await context.files.ensure("plugins");
 

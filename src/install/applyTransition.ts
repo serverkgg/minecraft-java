@@ -44,7 +44,7 @@ const parentOf = (path: string) => {
 	return path.split("/").slice(0, -1).join("/");
 };
 
-export const wipeData = async (context: Bridge.Context) => {
+const wipeData = async (context: Bridge.Context) => {
 	for (const directory of WIPE_DIRECTORIES) {
 		await context.files.remove(directory);
 	}
@@ -104,7 +104,7 @@ const relocate = async (context: Bridge.Context, relocation: WorldRelocation) =>
 	}
 };
 
-const removeAddons = async (context: Bridge.Context) => {
+export const removeAddons = async (context: Bridge.Context) => {
 	for (const directory of ADDON_DIRECTORIES) {
 		await context.files.remove(directory);
 	}

@@ -1,6 +1,6 @@
 import { type Bridge, BridgeUserError } from "@serverkgg/bridge";
 import { describeExecFailure } from "@serverkgg/bridge/utils";
-import { javaBinary, mavenDigest } from "../shared";
+import { javaBinary } from "../shared";
 import { detectLoaderLaunch, type LaunchPlan } from "./launchPlan";
 
 const INSTALLER_JAR = "loader-installer.jar";
@@ -13,6 +13,7 @@ export interface LoaderInstall {
 	name: string;
 	release: string;
 	installerUrl: string;
+	digest: string | null;
 	javaMajor: number;
 }
 
@@ -20,17 +21,13 @@ export const runLoaderInstaller = async (
 	context: Bridge.Context,
 	install: LoaderInstall,
 ): Promise<LaunchPlan | null> => {
-	const digest = await mavenDigest(context, install.installerUrl);
+	if (install.digest === null) {
+		throw new Error(`the ${install.name} installer has no sha1 to verify it against: ${install.installerUrl}`);
+	}
 
-	await context.files.download(
-		INSTALLER_JAR,
-		install.installerUrl,
-		digest
-			? {
-					digest,
-				}
-			: {},
-	);
+	await context.files.download(INSTALLER_JAR, install.installerUrl, {
+		digest: install.digest,
+	});
 
 	context.log("running the installer", {
 		loader: install.name,

@@ -842,15 +842,29 @@ export const detachModpack = async (context: Bridge.Context) => {
 	await clearStaging(context);
 };
 
-export const modpackRemovedActivity = (title: string): Bridge.Activity => {
+const removedText = (title: string, archived: string | null): Bridge.Text => {
+	const pack = title.length > 0 ? `مودباك ${title}` : "المودباك";
+	const packEn = title.length > 0 ? `modpack ${title}` : "the modpack";
+
+	if (archived === null) {
+		return {
+			ar: `تمت إزالة ${pack} وموداته، وبدأ السيرفر بماب جديدة`,
+			en: `Removed ${packEn} and its mods, and the server started over with a fresh world`,
+		};
+	}
+
+	return {
+		ar: `تمت إزالة ${pack} وموداته، وحُفظت الماب القديمة باسم «${archived}» في تبويب المابات، وبدأ السيرفر بماب جديدة`,
+		en: `Removed ${packEn} and its mods, kept the old world as "${archived}" in the Worlds tab, and the server started over with a fresh world`,
+	};
+};
+
+export const modpackRemovedActivity = (title: string, archived: string | null): Bridge.Activity => {
 	const named = title.length > 0;
 
 	return {
 		name: BridgeEventName.ModpackRemoved,
-		text: {
-			ar: `تمت إزالة ${named ? `مودباك ${title}` : "المودباك"} وموداته، وبدأ السيرفر بماب جديدة`,
-			en: `Removed ${named ? `modpack ${title}` : "the modpack"} and its mods, and the server started over with a fresh world`,
-		},
+		text: removedText(title, archived),
 		...(named
 			? {
 					subject: title,

@@ -1,32 +1,30 @@
 import { describe, expect, it } from "bun:test";
-import { type Bridge, BridgeUserError } from "@serverkgg/bridge";
+import type { Bridge } from "@serverkgg/bridge";
 import { installVanilla } from "./installVanilla";
 
-const context = {
-	net: {
-		json: async () => {
-			return {
-				latest: {
-					release: "1.21.4",
-					snapshot: "1.21.4",
+describe("installVanilla", () => {
+	it("downloads the server jar against Mojang's sha1 and size", async () => {
+		const checks: unknown[] = [];
+		const context = {
+			files: {
+				download: async (_path: string, _url: string, check: unknown) => {
+					checks.push(check);
 				},
-				versions: [],
-			};
-		},
-	},
-} as unknown as Bridge.Context;
+			},
+		} as unknown as Bridge.Context;
 
-describe("installing a minecraft version mojang does not list", () => {
-	it("the customer is told to pick another version", async () => {
-		const error = await installVanilla(context, "1.99").then(
-			() => null,
-			(thrown: unknown) => thrown,
-		);
+		await installVanilla(context, {
+			build: null,
+			url: "https://piston-data.mojang.com/server.jar",
+			digest: "sha1:def",
+			sizeBytes: 7,
+		});
 
-		expect(error).toBeInstanceOf(BridgeUserError);
-		expect((error as BridgeUserError).text.en).toBe(
-			"Minecraft has no version called 1.99. Pick another version in the Version tab.",
-		);
-		expect((error as BridgeUserError).text.ar).toContain("1.99");
+		expect(checks).toEqual([
+			{
+				digest: "sha1:def",
+				sizeBytes: 7,
+			},
+		]);
 	});
 });

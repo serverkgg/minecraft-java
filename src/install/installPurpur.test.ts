@@ -2,6 +2,13 @@ import { describe, expect, it } from "bun:test";
 import { type Bridge, BridgeDownloadError, BridgeUserError } from "@serverkgg/bridge";
 import { installPurpur } from "./installPurpur";
 
+const ACCEPTED = {
+	build: "2400",
+	url: "https://api.purpurmc.org/v2/purpur/1.99/2400/download",
+	digest: null,
+	sizeBytes: null,
+};
+
 const contextWith = (failure: Error | null) => {
 	return {
 		files: {
@@ -16,7 +23,7 @@ const contextWith = (failure: Error | null) => {
 };
 
 const thrownBy = async (context: Bridge.Context) => {
-	return await installPurpur(context, "1.99", null).then(
+	return await installPurpur(context, "1.99", ACCEPTED).then(
 		() => null,
 		(error: unknown) => error,
 	);
@@ -28,10 +35,10 @@ describe("installing Purpur on a version it has no build for", () => {
 
 		expect(error).toBeInstanceOf(BridgeUserError);
 		expect((error as BridgeUserError).text.en).toBe(
-			"Purpur has no build for Minecraft 1.99 yet. Pick another version or server type.",
+			"Purpur has no stable build for Minecraft 1.99 yet. Pick another version or server type.",
 		);
 		expect((error as BridgeUserError).text.ar).toBe(
-			"لا يتوفر إصدار من Purpur لـ ماينكرافت 1.99 حتى الآن. اختر إصدارًا آخر أو نوع سيرفر آخر.",
+			"لا يتوفر إصدار مستقر من Purpur لـ ماينكرافت 1.99 حتى الآن. اختر إصدارًا آخر أو نوع سيرفر آخر.",
 		);
 	});
 

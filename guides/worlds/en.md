@@ -56,7 +56,7 @@ The export stays in `.serverk-exports` until you replace it or delete it from Fi
 
 **Delete** deletes the world with its Nether and End for good. You can't delete the active world, so activate another one first.
 
-Before a delete or a dimension reset, we take a backup, and if it fails, we don't go ahead. Restore that backup to undo a deletion or a dimension reset:
+A delete or a dimension reset can't be undone, and we don't take a backup before it. Take a backup first, and restore it to bring the world back:
 
 @[open](backups)
 

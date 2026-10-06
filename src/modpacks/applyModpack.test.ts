@@ -336,7 +336,7 @@ describe("what installing a modpack reports", () => {
 	});
 
 	it("removing the modpack names it", () => {
-		expect(modpackRemovedActivity("All the Mods 9")).toEqual({
+		expect(modpackRemovedActivity("All the Mods 9", null)).toEqual({
 			name: BridgeEventName.ModpackRemoved,
 			text: {
 				ar: "تمت إزالة مودباك All the Mods 9 وموداته، وبدأ السيرفر بماب جديدة",
@@ -347,7 +347,14 @@ describe("what installing a modpack reports", () => {
 				title: "All the Mods 9",
 			},
 		});
-		expect(modpackRemovedActivity("").subject).toBeUndefined();
+		expect(modpackRemovedActivity("", null).subject).toBeUndefined();
+	});
+
+	it("removing the modpack says where the old world was kept", () => {
+		expect(modpackRemovedActivity("All the Mods 9", "world-all-the-mods-9-old").text).toEqual({
+			ar: "تمت إزالة مودباك All the Mods 9 وموداته، وحُفظت الماب القديمة باسم «world-all-the-mods-9-old» في تبويب المابات، وبدأ السيرفر بماب جديدة",
+			en: 'Removed modpack All the Mods 9 and its mods, kept the old world as "world-all-the-mods-9-old" in the Worlds tab, and the server started over with a fresh world',
+		});
 	});
 });
 

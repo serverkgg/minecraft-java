@@ -12,8 +12,16 @@ import {
 	stageModpack,
 } from "../modpacks";
 import { SEEDED_PROPERTIES } from "../settings";
-import { addonDirectory, javaMajorFor, ServerVariant, VARIANT_LABELS } from "../shared";
-import { applyTransition, transitionFor, wipeData } from "./applyTransition";
+import {
+	type AcceptedBuild,
+	acceptedBuild,
+	addonDirectory,
+	javaMajorFor,
+	ServerVariant,
+	VARIANT_LABELS,
+} from "../shared";
+import { archiveWorld, planWorldArchive } from "../worlds";
+import { applyTransition, removeAddons, transitionFor } from "./applyTransition";
 import { installFabric } from "./installFabric";
 import { installForge } from "./installForge";
 import { resolveNext } from "./installIdentity";
@@ -21,27 +29,74 @@ import { installNeoForge } from "./installNeoForge";
 import { installPaper } from "./installPaper";
 import { installPurpur } from "./installPurpur";
 import { pinRconProperties } from "./installRcon";
-import { type InstallIdentity, type InstallStamp, matchesStamp, readInstallStamp } from "./installStamp";
+import {
+	type InstallIdentity,
+	type InstallStamp,
+	matchesStamp,
+	readInstallStamp,
+	writeInstallStamp,
+} from "./installStamp";
 import { installVanilla } from "./installVanilla";
 import type { LaunchPlan } from "./launchPlan";
 import { LOADER_ARTIFACTS, preserveRuntime, recoverRuntime } from "./runtimeRecovery";
-import type { TransitionPlan } from "./transition";
+import { AddonOutcome, type TransitionPlan } from "./transition";
 import { transitionActivityText } from "./transitionText";
 
 type Installer = (
 	context: Bridge.Context,
 	gameVersion: string,
-	build: string | null,
+	accepted: AcceptedBuild,
 	javaMajor: number,
 ) => Promise<LaunchPlan>;
 
 const INSTALL_BY_VARIANT: Record<ServerVariant, Installer> = {
-	[ServerVariant.Fabric]: (context, gameVersion, build) => installFabric(context, gameVersion, build),
+	[ServerVariant.Fabric]: (context, _gameVersion, accepted) => installFabric(context, accepted),
 	[ServerVariant.Forge]: installForge,
 	[ServerVariant.NeoForge]: installNeoForge,
-	[ServerVariant.Paper]: (context, gameVersion, build) => installPaper(context, gameVersion, build),
-	[ServerVariant.Purpur]: (context, gameVersion, build) => installPurpur(context, gameVersion, build),
-	[ServerVariant.Vanilla]: (context, gameVersion) => installVanilla(context, gameVersion),
+	[ServerVariant.Paper]: (context, _gameVersion, accepted) => installPaper(context, accepted),
+	[ServerVariant.Purpur]: (context, gameVersion, accepted) => installPurpur(context, gameVersion, accepted),
+	[ServerVariant.Vanilla]: (context, _gameVersion, accepted) => installVanilla(context, accepted),
+};
+
+const restorePrevious = async (context: Bridge.Context, stamp: InstallStamp) => {
+	try {
+		if (!(await recoverRuntime(context, stamp))) {
+			context.log.warn("the install failed and no previous server files were saved to put back", {
+				variant: stamp.variant,
+				version: stamp.version,
+			});
+
+			return;
+		}
+
+		await writeInstallStamp(context, stamp);
+
+		context.log.warn("the install failed, the previous server files are back in place", {
+			variant: stamp.variant,
+			version: stamp.version,
+			build: stamp.build ?? "",
+		});
+	} catch (error) {
+		context.log.warn("the install failed and the previous server files could not be put back", {
+			reason: error instanceof Error ? error.message : String(error),
+		});
+	}
+};
+
+const installOrRestore = async (
+	context: Bridge.Context,
+	stamp: InstallStamp | null,
+	run: () => Promise<LaunchPlan>,
+) => {
+	try {
+		return await run();
+	} catch (error) {
+		if (stamp) {
+			await restorePrevious(context, stamp);
+		}
+
+		throw error;
+	}
 };
 
 const finalize = async (context: Bridge.Context, stamp?: InstallStamp) => {
@@ -105,27 +160,10 @@ export const install: Bridge.Install = {
 		const stamp = await readInstallStamp(context);
 		const { next, plan } = await resolveNext(context, stamp);
 		const { variant, version } = next;
-		const javaMajor = stamp?.version === version ? stamp.java : await javaMajorFor(context, version);
+		const detaching = plan.kind === ModpackPlanKind.Detach;
+		const current = plan.kind !== ModpackPlanKind.Apply && !detaching && matchesStamp(stamp, next);
 
-		const staged =
-			plan.kind === ModpackPlanKind.Apply && plan.ref ? await stageModpack(context, plan.ref, variant, version) : null;
-
-		let transition: TransitionPlan | null = null;
-
-		if (
-			stamp
-			&& (!matchesStamp(stamp, next) || plan.kind === ModpackPlanKind.Apply || plan.kind === ModpackPlanKind.Detach)
-		) {
-			await preserveRuntime(context, stamp);
-		}
-
-		if (plan.kind === ModpackPlanKind.Detach) {
-			context.log("removing the modpack, and the world it built goes with it", {
-				modpack: plan.sidecar?.title ?? "",
-			});
-
-			await wipeData(context);
-		} else if (plan.kind !== ModpackPlanKind.Apply && matchesStamp(stamp, next) && stamp) {
+		if (current && stamp) {
 			if ((await context.files.exists(stamp.launch.target)) || (await recoverRuntime(context, stamp))) {
 				context.log("install is current", {
 					variant,
@@ -143,9 +181,34 @@ export const install: Bridge.Install = {
 				version,
 				target: stamp.launch.target,
 			});
-		} else if (stamp) {
-			transition = await transitionFor(context, stamp, next);
+		}
 
+		const javaMajor = stamp?.version === version ? stamp.java : await javaMajorFor(context, version);
+
+		const staged =
+			plan.kind === ModpackPlanKind.Apply && plan.ref ? await stageModpack(context, plan.ref, variant, version) : null;
+
+		const build = staged ? staged.index.loaderVersion : next.build;
+		const accepted = await acceptedBuild(context, variant, version, build);
+		const changing = stamp !== null && !current && !(detaching && matchesStamp(stamp, next));
+		const transition = stamp && changing ? await transitionFor(context, stamp, next) : null;
+		const archive = detaching ? await planWorldArchive(context, plan.sidecar?.title ?? "") : null;
+
+		if (stamp && !current) {
+			await preserveRuntime(context, stamp);
+		}
+
+		if (detaching) {
+			context.log("removing the modpack, the world it built is kept under a new name", {
+				modpack: plan.sidecar?.title ?? "",
+				world: archive?.from ?? "",
+				archived: archive?.to ?? "",
+			});
+
+			if (transition && transition.addons === AddonOutcome.Removed) {
+				await removeAddons(context);
+			}
+		} else if (stamp && transition) {
 			context.log("reinstalling", {
 				from: `${stamp.variant} ${stamp.version}`,
 				to: `${variant} ${version}`,
@@ -161,18 +224,16 @@ export const install: Bridge.Install = {
 			await context.files.remove(artifact);
 		}
 
-		const detaching = plan.kind === ModpackPlanKind.Detach;
-
-		const build = staged ? staged.index.loaderVersion : next.build;
-
 		context.log("installing minecraft", {
 			variant,
 			version,
-			build,
+			build: accepted.build,
 			java: javaMajor,
 		});
 
-		const launch = await INSTALL_BY_VARIANT[variant](context, version, build, javaMajor);
+		const launch = await installOrRestore(context, stamp, () => {
+			return INSTALL_BY_VARIANT[variant](context, version, accepted, javaMajor);
+		});
 
 		let pending: PendingFile[] = [];
 		let modpackActivity: Bridge.Activity | null = null;
@@ -183,9 +244,13 @@ export const install: Bridge.Install = {
 			pending = applied.pending;
 			modpackActivity = applied.activity;
 		} else if (detaching) {
+			if (archive) {
+				await archiveWorld(context, archive);
+			}
+
 			await detachModpack(context);
 
-			modpackActivity = modpackRemovedActivity(plan.sidecar?.title ?? "");
+			modpackActivity = modpackRemovedActivity(plan.sidecar?.title ?? "", archive?.to ?? null);
 		} else {
 			pending = await settlePendingFiles(context);
 		}
@@ -207,7 +272,7 @@ export const install: Bridge.Install = {
 			launch: launch.kind,
 		});
 
-		reportInstalled(context, stamp, next, build, javaMajor, transition);
+		reportInstalled(context, stamp, next, build, javaMajor, detaching ? null : transition);
 
 		if (modpackActivity) {
 			context.activity.report(modpackActivity);

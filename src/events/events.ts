@@ -197,6 +197,14 @@ export const events: Bridge.Events = {
 			stream: BridgeStream.Stderr,
 		},
 		{
+			match: /(?<error>java\.lang\.OutOfMemoryError: unable to create (?:new )?native thread[^\r\n]{0,200})/,
+			emit: "ServerCrashed",
+			stream: BridgeStream.Stderr,
+			payload: {
+				reason: "threads",
+			},
+		},
+		{
 			match:
 				/You have allocated less memory\(\s*(?<allocatedMb>\d{2,6})\s*mb\s*\) than the recommended minimum for this pack:\s*(?<requiredMb>\d{2,6})\s*mb/i,
 			emit: "MemoryUndersized",
@@ -232,6 +240,18 @@ export const events: Bridge.Events = {
 			emit: "WorldCorrupt",
 		},
 		{
+			match: /Failed to load world data(?: from (?<path>\S{1,200}?) and \S{1,200}?)?\. World files may be corrupted/,
+			emit: "WorldCorrupt",
+		},
+		{
+			match:
+				/Server attempted to load chunk saved with newer version of minecraft! (?<worldDataVersion>\d{1,6}) > (?<serverDataVersion>\d{1,6})/,
+			emit: "WorldCorrupt",
+			payload: {
+				reason: "newer-version",
+			},
+		},
+		{
 			match:
 				/Mod ID: '(?<dependency>[^']{1,64})', Requested by: '(?<mod>[^']{1,64})', Expected range: '(?<range>[^']{0,64})', Actual version: '(?<actual>[^']{0,64})'/,
 			emit: "MissingDependency",
@@ -257,6 +277,7 @@ export const events: Bridge.Events = {
 			emit: "ModCrashed",
 			payload: {
 				loader: "fabric",
+				reason: "mixin",
 			},
 		},
 		{
@@ -278,6 +299,82 @@ export const events: Bridge.Events = {
 			emit: "ModCrashed",
 			payload: {
 				reason: "client-class",
+			},
+		},
+		{
+			match: /Mixin apply failed (?<detail>[^\s:]{1,160}:[\w.$]{1,160}) -> /,
+			emit: "ModCrashed",
+			payload: {
+				reason: "mixin",
+			},
+		},
+		{
+			match:
+				/Mixin \[(?<detail>[^\s:\]]{1,160}:[\w.$]{1,160})(?: from mod (?<mod>[\w.-]{1,64}))?\] from phase \[\w{1,32}\] in config \[[^\]]{1,160}\] FAILED during \w{1,16}/,
+			emit: "ModCrashed",
+			payload: {
+				reason: "mixin",
+			},
+		},
+		{
+			match:
+				/(?:InjectionError|InvalidInjectionException|InvalidMixinException)[^\r\n]{0,400}? in (?<detail>[^\s:]{1,160}:[\w.$]{1,160}) from mod (?<mod>[\w.-]{1,64})/,
+			emit: "ModCrashed",
+			payload: {
+				reason: "mixin",
+			},
+		},
+		{
+			match: /Failed to apply mixin\. Mixin Class: (?<detail>[\w.$]{1,160}), ModID: (?<mod>[\w.-]{1,64})/,
+			emit: "ModCrashed",
+			payload: {
+				loader: "neoforge",
+				reason: "mixin",
+			},
+		},
+		{
+			match: /Found duplicate mods:/,
+			emit: "ModCrashed",
+			payload: {
+				reason: "duplicate",
+			},
+		},
+		{
+			match: /Mod ID: '(?<mod>[^']{1,64})' from mod files: (?<jars>[^\r\n]{1,300})/,
+			emit: "ModCrashed",
+			payload: {
+				reason: "duplicate",
+			},
+		},
+		{
+			match: /fml\.modloadingissue\.duplicate_mod \[(?<mod>[^;\]]{1,64}); (?<jars>[^\]\r\n]{1,300})\]/,
+			emit: "ModCrashed",
+			payload: {
+				loader: "neoforge",
+				reason: "duplicate",
+			},
+		},
+		{
+			match: /Found a duplicate mod (?<mod>[\w.-]{1,64}) at \[(?<jars>[^\]\r\n]{1,300})\]/,
+			emit: "ModCrashed",
+			payload: {
+				reason: "duplicate",
+			},
+		},
+		{
+			match: /Duplicate versions for mod ID '(?<mod>[^']{1,64})'/,
+			emit: "ModCrashed",
+			payload: {
+				loader: "fabric",
+				reason: "duplicate",
+			},
+		},
+		{
+			match: /ModResolutionException: duplicate mod (?<mod>[\w.-]{1,64})/,
+			emit: "ModCrashed",
+			payload: {
+				loader: "fabric",
+				reason: "duplicate",
 			},
 		},
 	],

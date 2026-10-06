@@ -27,11 +27,72 @@ const DESCRIPTION_PATTERN = /^Description: (?<detail>[^\r\n]{1,200})/m;
 
 const JAR_PATTERN = /([^/\\\r\n]+\.jar)$/;
 
+const CLASSIFIED_REASONS: ReadonlySet<string> = new Set([
+	"duplicate",
+	"mixin",
+]);
+
+const DESCRIBED_REASONS = [
+	{
+		reason: "duplicate",
+		match: /\bduplicate (?:mods?|versions)\b|\bpresent in multiple files\b/i,
+	},
+	{
+		reason: "mixin",
+		match:
+			/\bMixin (?:apply|application|prepare|transformation)\b[^\r\n]{0,200}?\bfailed\b|\bMixin(?:Transformer|Apply)Error\b/,
+	},
+] as const;
+
 export interface CrashReportAttribution {
 	jar: string | null;
 	mod: string | null;
 	detail: string | null;
+	reason?: string;
 }
+
+interface CrashClassification {
+	reason: string;
+	mod: string | null;
+}
+
+const classifiedReasonOf = (pattern: Bridge.Events["patterns"][number]) => {
+	const reason = pattern.emit === MOD_CRASHED ? pattern.payload?.reason : null;
+
+	return typeof reason === "string" && CLASSIFIED_REASONS.has(reason) ? reason : null;
+};
+
+const classificationOf = (text: string, detail: string | null): CrashClassification | null => {
+	const described =
+		detail === null ? null : (DESCRIBED_REASONS.find((entry) => entry.match.test(detail))?.reason ?? null);
+
+	let reason: string | null = described;
+	let mod: string | null = null;
+
+	for (const pattern of events.patterns) {
+		const classified = classifiedReasonOf(pattern);
+
+		if (classified === null || (reason !== null && classified !== reason)) {
+			continue;
+		}
+
+		const match = pattern.match.exec(text);
+
+		if (match === null) {
+			continue;
+		}
+
+		reason ??= classified;
+		mod ??= match.groups?.mod ?? null;
+	}
+
+	return reason === null
+		? null
+		: {
+				mod,
+				reason,
+			};
+};
 
 interface CrashScanMarker {
 	report: string | null;
@@ -47,38 +108,52 @@ export const readCrashAttribution = (report: string): CrashReportAttribution | n
 	const path = MOD_FILE_PATTERN.exec(report)?.groups?.path?.trim() ?? null;
 	const jar = path === null ? null : (JAR_PATTERN.exec(fileNameOf(path))?.[1] ?? null);
 	const mod = FORGE_MOD_PATTERN.exec(report)?.groups?.mod ?? NEOFORGE_MOD_PATTERN.exec(report)?.groups?.mod ?? null;
+
 	const detail =
 		FAILURE_PATTERN.exec(report)?.groups?.detail?.trim()
 		?? DESCRIPTION_PATTERN.exec(report)?.groups?.detail?.trim()
 		?? null;
 
-	if (jar === null && mod === null) {
+	const classified = classificationOf(report, detail);
+
+	if (jar === null && mod === null && classified === null) {
 		return null;
 	}
 
 	return {
 		detail,
 		jar,
-		mod,
+		mod: mod ?? classified?.mod ?? null,
+		...(classified === null
+			? {}
+			: {
+					reason: classified.reason,
+				}),
 	};
 };
 
 export const readLogAttribution = (log: string): CrashReportAttribution | null => {
 	let mod: string | null = null;
 	let detail: string | null = null;
+	let reason: string | null = null;
 
 	for (const pattern of events.patterns) {
 		if (pattern.emit !== MOD_CRASHED) {
 			continue;
 		}
 
-		const groups = pattern.match.exec(log)?.groups;
+		const match = pattern.match.exec(log);
+		const groups = match?.groups;
 
 		mod ??= groups?.mod ?? null;
 		detail ??= groups?.detail ?? null;
+
+		if (match) {
+			reason ??= classifiedReasonOf(pattern);
+		}
 	}
 
-	if (mod === null) {
+	if (mod === null && reason === null) {
 		return null;
 	}
 
@@ -86,6 +161,11 @@ export const readLogAttribution = (log: string): CrashReportAttribution | null =
 		detail,
 		jar: null,
 		mod,
+		...(reason === null
+			? {}
+			: {
+					reason,
+				}),
 	};
 };
 
@@ -186,12 +266,18 @@ export const reportModCrash = async (context: Bridge.Context) => {
 				: {
 						detail: attribution.detail,
 					}),
+			...(attribution.reason === undefined
+				? {}
+				: {
+						reason: attribution.reason,
+					}),
 			source: named ? "crash-report" : "game-log",
 		});
 
 		context.log.warn("the last start left a crash naming a mod", {
 			jar: jar ?? "",
 			mod: attribution.mod ?? "",
+			reason: attribution.reason ?? "",
 			source: named ? "crash-report" : "game-log",
 		});
 	} catch (error) {
