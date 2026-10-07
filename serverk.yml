@@ -290,6 +290,52 @@ guides:
     bodyPath:
       ar: guides/getting-started/ar.md
       en: guides/getting-started/en.md
+  - id: players
+    title:
+      ar: "اللاعبون: الأدمن والقائمة البيضاء والحظر"
+      en: "Players: admins, the whitelist and bans"
+    summary:
+      ar: اجعل نفسك أدمن، وأغلق سيرفرك على أصحابك بالقائمة البيضاء، واطرد أو احظر من شئت، كل ذلك من صفحة اللاعبون.
+      en: Make yourself an admin, keep your server to your friends with the whitelist, and kick or ban anyone, all from the Players page.
+    tags:
+      - start
+    surfaces:
+      - panel
+      - console
+    bodyPath:
+      ar: guides/players/ar.md
+      en: guides/players/en.md
+  - id: settings
+    title:
+      ar: "الإعدادات: رسالة السيرفر والصعوبة ووضع اللعب"
+      en: "Settings: MOTD, difficulty and game mode"
+    summary:
+      ar: ما تفعله كل خانة في تبويب الإعدادات، ومتى يلزمك الريستارت، والتغييرات الفورية من تبويب اللعب.
+      en: What every field in the Settings tab does, when you need a restart, and the instant changes in the Gameplay tab.
+    tags:
+      - start
+    surfaces:
+      - panel
+      - files
+    bodyPath:
+      ar: guides/settings/ar.md
+      en: guides/settings/en.md
+  - id: plugins-mods
+    title:
+      ar: "الإضافات والمودات: ثبّتها من اللوحة"
+      en: "Plugins and mods: install them from the panel"
+    summary:
+      ar: ثبّت الإضافات والمودات من Modrinth و CurseForge و Hangar مع متطلباتها، وحدّثها وأوقفها، وارفع ملفاتك بنفسك.
+      en: Install plugins and mods from Modrinth, CurseForge and Hangar with their dependencies, update and turn them off, and upload your own files.
+    tags:
+      - start
+      - features
+    surfaces:
+      - panel
+      - files
+    bodyPath:
+      ar: guides/plugins-mods/ar.md
+      en: guides/plugins-mods/en.md
   - id: server-type
     title:
       ar: "نوع السيرفر والإصدار: ما يحدث لمابك"

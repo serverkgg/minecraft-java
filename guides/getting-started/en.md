@@ -42,13 +42,13 @@ gamemode creative Steve
 
 ### Change a setting
 
-Every server setting lives in `server.properties`.
+Your server settings sit in clear fields in the **Settings** tab. The details are in the [settings guide](/games/minecraft-java/guides/settings).
 
-@[open](files:server.properties)
+@[open](panel:settings)
 
 ### Keep it to your friends
 
-Turn the whitelist on, then add each friend by name from the console with `whitelist add playername`.
+Add each friend by name from the **Players** tab, or send your friends an [invite link](/guides/access) so each of them adds themselves, then turn the whitelist on. The details are in the [players guide](/games/minecraft-java/guides/players).
 
 If you banned someone and want them back, find them under Banned players in the **Players** tab and press Unban.
 
