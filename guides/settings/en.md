@@ -25,15 +25,6 @@ Change what you want, then pick:
 - **Allow flight** (`allow-flight`): it doesn't give anyone flight. It stops the server from kicking players who fly in Survival with a mod or a plugin. Turn it on if something on your server gives flight.
 - **Command blocks** (`enable-command-block`): lets command blocks run in your world.
 
-> [!warning] From version 1.21.9 on, Minecraft no longer reads `pvp` and `enable-command-block` from `server.properties`: they became game rules (`gamerule`) saved in the world. If your server is on one of these versions, change them with a console command while the server is running.
-
-```txt
-gamerule pvp false
-gamerule command_blocks_work true
-```
-
-On 1.21.9 and 1.21.10, the command block rule is called `commandBlocksEnabled` instead of `command_blocks_work`.
-
 > [!warning] Turning **Online mode** off lets cracked clients join under any name, yours and your admins' included. Keep it on, and if you want Bedrock players in, turn on crossplay instead.
 
 ## Game mode for existing players
