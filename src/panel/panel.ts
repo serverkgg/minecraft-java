@@ -27,6 +27,11 @@ const LOADER_TYPES = [
 	"neoforge",
 ];
 
+const GAME_RULE_HELP: Bridge.Text = {
+	ar: "اضبطها من هنا. نطبق هذه القيمة على سيرفرك مع كل تشغيل.",
+	en: "Set it here. We apply this value every time your server starts.",
+};
+
 const MESSAGE_FIELD: Bridge.Field = {
 	key: "message",
 	control: BridgeControl.Text,
@@ -350,6 +355,7 @@ const settingsTab: Bridge.Tab = {
 						ar: "قتال اللاعبين (PvP)",
 						en: "PvP",
 					},
+					help: GAME_RULE_HELP,
 				},
 				{
 					key: "online-mode",
@@ -436,6 +442,7 @@ const settingsTab: Bridge.Tab = {
 						ar: "تفعيل بلوك الأوامر",
 						en: "Command blocks",
 					},
+					help: GAME_RULE_HELP,
 				},
 			],
 		},

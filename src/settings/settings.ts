@@ -1,6 +1,5 @@
 import { type Bridge, BridgeKind } from "@serverkgg/bridge";
-
-const PROPERTIES_FILE = "server.properties";
+import { applyGameRules, changedFlags, PROPERTIES_FILE } from "./gameRules";
 
 export const settings: Bridge.Settings = {
 	kind: BridgeKind.Settings,
@@ -8,6 +7,12 @@ export const settings: Bridge.Settings = {
 		return await context.codec.javaProperties.read(PROPERTIES_FILE);
 	},
 	async write(context, values) {
+		const before = await context.codec.javaProperties.read(PROPERTIES_FILE);
+
 		await context.codec.javaProperties.merge(PROPERTIES_FILE, values);
+
+		if (context.server.running) {
+			await applyGameRules(context, changedFlags(before, values));
+		}
 	},
 };
