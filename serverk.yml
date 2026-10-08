@@ -152,22 +152,12 @@ presence:
 
 files:
   protected:
-    - libraries
-    - versions
-    - eula.txt
-    - .fabric
-    - run.sh
-    - run.bat
     - .serverk-install.json
     - .serverk-crashscan.json
     - .serverk-companions.json
     - .serverk-modpack.json
     - plugins/.serverk-catalog.json
     - mods/.serverk-catalog.json
-    - plugins/floodgate/key.pem
-    - config/floodgate/key.pem
-    - "**/session.lock"
-    - "**/level.dat_old"
   notable:
     - match: server.properties
       label:
