@@ -697,7 +697,7 @@
 					"properties": {
 						"protected": {
 							"default": [],
-							"description": "Paths the player cannot edit, rename or delete from the file manager.",
+							"description": "Platform state inside the server directory: hidden from the file manager and left out of archives and copies. Only what the bridge cannot manage without and cannot detect losing.",
 							"maxItems": 64,
 							"type": "array",
 							"items": {
@@ -1474,7 +1474,7 @@
 					"properties": {
 						"protected": {
 							"default": [],
-							"description": "Paths the player cannot edit, rename or delete from the file manager.",
+							"description": "Platform state inside the server directory: hidden from the file manager and left out of archives and copies. Only what the bridge cannot manage without and cannot detect losing.",
 							"maxItems": 64,
 							"type": "array",
 							"items": {
