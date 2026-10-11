@@ -1,8 +1,10 @@
 export const STAGING_ROOT = ".serverk-staging";
 
-export const WORLD_STAGING = `${STAGING_ROOT}/world-upload`;
+export const UPLOAD_ROOT = ".serverk-uploads";
 
-export const PENDING_STAGING = `${STAGING_ROOT}/pending-upload`;
+export const WORLD_STAGING = `${UPLOAD_ROOT}/world`;
+
+export const PENDING_STAGING = `${UPLOAD_ROOT}/pending`;
 
 export const relativeUploadPath = (input: string) => {
 	const trimmed = input.trim();

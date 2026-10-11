@@ -13,7 +13,7 @@ import { MODPACK_VARIABLE, readModpackIdentity } from "./applyModpack";
 import { describeProject, identityMismatched, outdated, serverRelease } from "./modpackFreshness";
 import { usesQuilt, variantsForLoaders } from "./modpackIndex";
 import { decodeModpackRef, encodeModpackRef } from "./modpackRef";
-import { MODPACK_SIDECAR, modpackIdentity, readModpackSidecar } from "./modpackSidecar";
+import { modpackIdentity, readModpackSidecar } from "./modpackSidecar";
 import { pickModpackVersion } from "./modpackVersion";
 
 const PAGE_SIZE = 20;
@@ -59,7 +59,7 @@ const declaredEntries = async (context: Bridge.Context): Promise<Bridge.CatalogE
 		{
 			id: ref ? encodeProviderRef(ref.provider, ref.project) : declared,
 			provider: ref?.provider ?? null,
-			path: MODPACK_SIDECAR,
+			path: addonDirectory(context),
 			title: project?.title ?? ref?.project ?? declared,
 			version: null,
 			sizeBytes: 0,
@@ -125,7 +125,7 @@ export const installModpack = async (
 	return {
 		id: encodeProviderRef(source.id, project.id),
 		provider: source.id,
-		path: MODPACK_SIDECAR,
+		path: addonDirectory(context),
 		title: project.title,
 		version: release.version,
 		sizeBytes: release.file.sizeBytes ?? 0,
@@ -189,7 +189,7 @@ export const modpacks: Bridge.Catalog = {
 			{
 				id: encodeProviderRef(sidecar.provider, sidecar.project),
 				provider: sidecar.provider,
-				path: MODPACK_SIDECAR,
+				path: addonDirectory(context),
 				title: sidecar.title,
 				version: sidecar.version,
 				sizeBytes: await context.files.size(addonDirectory(context)),

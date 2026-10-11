@@ -1,5 +1,5 @@
 import type { Bridge } from "@serverkgg/bridge";
-import { eraOf, releaseOrder, STAGING_ROOT } from "../shared";
+import { eraOf, releaseOrder, STAGING_ROOT, UPLOAD_ROOT } from "../shared";
 import { discoverWorlds, resetActiveWorld, worldPaths } from "../worlds";
 import type { InstallIdentity, InstallStamp } from "./installStamp";
 import {
@@ -36,6 +36,11 @@ export const ADDON_DIRECTORIES = [
 	"defaultconfigs",
 ];
 
+const KEPT_ROOTS = [
+	STAGING_ROOT,
+	UPLOAD_ROOT,
+];
+
 const COMPANION_SIDECAR = ".serverk-companions.json";
 
 const PARKED_SUFFIX = ".old";
@@ -56,7 +61,7 @@ const wipeData = async (context: Bridge.Context) => {
 	}
 
 	for (const entry of await context.files.list("*")) {
-		if (entry.path === STAGING_ROOT || entry.path.startsWith(`${STAGING_ROOT}/`)) {
+		if (KEPT_ROOTS.some((root) => entry.path === root || entry.path.startsWith(`${root}/`))) {
 			continue;
 		}
 		await context.files.remove(entry.path);

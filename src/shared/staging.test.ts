@@ -33,15 +33,15 @@ describe("the path an upload is allowed to land on", () => {
 
 describe("deciding whether a path sits inside a staging directory", () => {
 	it("a child of the directory is inside it", () => {
-		expect(isUnder(".serverk-staging/world-upload/level.dat", ".serverk-staging/world-upload")).toBe(true);
+		expect(isUnder(".serverk-uploads/world/level.dat", ".serverk-uploads/world")).toBe(true);
 	});
 
 	it("the directory itself is not inside itself", () => {
-		expect(isUnder(".serverk-staging/world-upload", ".serverk-staging/world-upload")).toBe(false);
-		expect(isUnder(".serverk-staging/world-upload/", ".serverk-staging/world-upload")).toBe(false);
+		expect(isUnder(".serverk-uploads/world", ".serverk-uploads/world")).toBe(false);
+		expect(isUnder(".serverk-uploads/world/", ".serverk-uploads/world")).toBe(false);
 	});
 
 	it("a sibling that merely shares the prefix is outside", () => {
-		expect(isUnder(".serverk-staging/world-upload-old/level.dat", ".serverk-staging/world-upload")).toBe(false);
+		expect(isUnder(".serverk-uploads/world-old/level.dat", ".serverk-uploads/world")).toBe(false);
 	});
 });

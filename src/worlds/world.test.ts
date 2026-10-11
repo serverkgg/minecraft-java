@@ -58,11 +58,11 @@ describe("reading the level directories out of an upload scan", () => {
 	it("the directory holding each level file is returned, sorted and deduplicated", () => {
 		expect(
 			levelDirectories(
-				".serverk-staging/world-upload/pack/world/level.dat\n.serverk-staging/world-upload/save/level.dat\n.serverk-staging/world-upload/pack/world/level.dat\n",
+				".serverk-uploads/world/pack/world/level.dat\n.serverk-uploads/world/save/level.dat\n.serverk-uploads/world/pack/world/level.dat\n",
 			),
 		).toEqual([
-			".serverk-staging/world-upload/pack/world",
-			".serverk-staging/world-upload/save",
+			".serverk-uploads/world/pack/world",
+			".serverk-uploads/world/save",
 		]);
 	});
 

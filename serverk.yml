@@ -113,6 +113,7 @@ backup:
     - cache/**
     - .fabric/**
     - .serverk-staging/**
+    - .serverk-uploads/**
     - .serverk-exports/**
     - server.jar
     - run.sh
@@ -152,6 +153,7 @@ presence:
 
 files:
   protected:
+    - .serverk-staging/**
     - .serverk-install.json
     - .serverk-crashscan.json
     - .serverk-companions.json
