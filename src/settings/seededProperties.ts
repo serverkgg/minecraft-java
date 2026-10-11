@@ -5,6 +5,7 @@ export const SEEDED_PROPERTIES: Bridge.Values = {
 	"max-players": 20,
 	gamemode: "survival",
 	difficulty: "easy",
+	hardcore: false,
 	pvp: true,
 	"online-mode": true,
 	"white-list": false,

@@ -15,6 +15,7 @@ Change what you want, then pick:
 - **Max players** (`max-players`): 1 to 200. Raising it doesn't add RAM, so pick a number that fits your plan.
 - **Game mode** (`gamemode`): Survival, Creative, Adventure or Spectator. It applies to players joining for the first time; see the next section.
 - **Difficulty** (`difficulty`): Peaceful, Easy, Normal or Hard.
+- **Hardcore** (`hardcore`): one life per player, a player who dies becomes a spectator, and difficulty stays on Hard whatever you pick in the **Difficulty** field or the **Gameplay** tab. Only a new world takes it on, so after turning it on, create one in the **Worlds** tab with **Create world**, then restart your server.
 - **PvP** (`pvp`): when it's off, players can't hurt each other.
 - **Online mode** (`online-mode`): checks that every player joins with a genuine Minecraft account.
 - **Whitelist** (`white-list`): when it's on, only players you add can join.

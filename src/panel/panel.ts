@@ -349,6 +349,18 @@ const settingsTab: Bridge.Tab = {
 					options: DIFFICULTY_OPTIONS,
 				},
 				{
+					key: "hardcore",
+					control: BridgeControl.Boolean,
+					label: {
+						ar: "الهاردكور",
+						en: "Hardcore",
+					},
+					help: {
+						ar: "حياة واحدة لكل لاعب، ومن يموت يتحول إلى وضع المشاهدة، والصعوبة دائمًا «صعب». يأخذ به الماب الجديد فقط، فبعد تفعيله أنشئ مابًا جديدًا من تبويب المابات.",
+						en: "One life per player, a player who dies becomes a spectator, and difficulty is always Hard. Only a new world takes it on, so create one in the Worlds tab after you turn it on.",
+					},
+				},
+				{
 					key: "pvp",
 					control: BridgeControl.Boolean,
 					label: {
