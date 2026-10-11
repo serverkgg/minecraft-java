@@ -79,7 +79,7 @@ it("create preserves the old world, changes only generation settings and reports
 		{
 			name: BridgeEventName.WorldCreated,
 			text: {
-				ar: "تم إنشاء ماب جديدة new-world، وتتولد عند التشغيل التالي",
+				ar: "تم إنشاء ماب جديد new-world، ويتولد عند التشغيل التالي",
 				en: "Created world new-world, generated on the next start",
 			},
 			subject: "new-world",

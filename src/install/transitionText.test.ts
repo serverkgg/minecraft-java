@@ -30,7 +30,7 @@ describe("what a finished move to another type or version says", () => {
 		expect(
 			transitionActivityText(identity(ServerVariant.Paper, "1.21.1"), identity(ServerVariant.Paper, "1.21.4"), plan),
 		).toEqual({
-			ar: "تم نقل السيرفر من Paper 1.21.1 إلى Paper 1.21.4، وبقيت الماب كما هي",
+			ar: "تم نقل السيرفر من Paper 1.21.1 إلى Paper 1.21.4، وبقي الماب كما هو",
 			en: "Moved the server from Paper 1.21.1 to Paper 1.21.4, the world was kept",
 		});
 	});

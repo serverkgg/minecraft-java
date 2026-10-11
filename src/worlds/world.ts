@@ -254,7 +254,7 @@ export const worldRenameSentence = (folder: string, name: string): Bridge.Text |
 
 	if (safeWorldName(folder).length === 0) {
 		return {
-			ar: `تمت إضافة الماب «${folder}» باسم «${name}» لأن اسم مجلدها لا يحتوي على حروف إنجليزية أو أرقام.`,
+			ar: `تمت إضافة الماب «${folder}» باسم «${name}» لأن اسم مجلده لا يحتوي على حروف إنجليزية أو أرقام.`,
 			en: `The world "${folder}" was added as "${name}" because its folder name has no Latin letters or digits.`,
 		};
 	}

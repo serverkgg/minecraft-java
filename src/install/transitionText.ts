@@ -37,7 +37,7 @@ export const modpackDetachLines = (next: InstallIdentity, archived: string | nul
 	if (archived === null) {
 		return [
 			{
-				ar: `نزيل المودباك وموداته، ويعود سيرفرك إلى ${nameOf(next)} دون مودباك وبماب جديدة.`,
+				ar: `نزيل المودباك وموداته، ويعود سيرفرك إلى ${nameOf(next)} دون مودباك وبماب جديد.`,
 				en: `We remove the modpack and its mods, and your server returns to ${nameOf(next)} without a modpack and with a fresh world.`,
 			},
 		];
@@ -45,7 +45,7 @@ export const modpackDetachLines = (next: InstallIdentity, archived: string | nul
 
 	return [
 		{
-			ar: `نزيل المودباك وموداته، ونحفظ الماب التي بنيتها عليه باسم «${archived}» في تبويب المابات، ويعود سيرفرك إلى ${nameOf(next)} دون مودباك وبماب جديدة.`,
+			ar: `نزيل المودباك وموداته، ونحفظ الماب الذي بنيته عليه باسم «${archived}» في تبويب المابات، ويعود سيرفرك إلى ${nameOf(next)} دون مودباك وبماب جديد.`,
 			en: `We remove the modpack and its mods, keep the world you built on it as "${archived}" in the Worlds tab, and your server returns to ${nameOf(next)} without a modpack and with a fresh world.`,
 		},
 	];
@@ -64,7 +64,7 @@ const worldLines = (from: InstallIdentity, to: InstallIdentity, plan: Transition
 	if (plan.world === WorldOutcome.Wiped) {
 		return [
 			{
-				ar: `لا يستطيع ماينكرافت فتح ماب شُغّلت على ${from.version} في الإصدار الأقدم ${to.version}، لذلك تُحذف مابك وإضافاتك وموداتك وإعداداتك ويبدأ سيرفر جديد.`,
+				ar: `لا يستطيع ماينكرافت فتح ماب شُغّل على ${from.version} في الإصدار الأقدم ${to.version}، لذلك يُحذف مابك وإضافاتك وموداتك وإعداداتك ويبدأ سيرفر جديد.`,
 				en: `Minecraft can't open a world made on ${from.version} in the older ${to.version}, so your world, plugins, mods and settings are deleted and a fresh server starts.`,
 			},
 		];
@@ -73,7 +73,7 @@ const worldLines = (from: InstallIdentity, to: InstallIdentity, plan: Transition
 	if (plan.relocation === RelocationKind.LegacyDimensions) {
 		return [
 			{
-				ar: "تبقى مابك في مكانها، وننقل إليها النذر والإند الخاصين بها لكي ينتقلا معها.",
+				ar: "يبقى مابك في مكانه، وننقل إليه النذر والإند الخاصين به لكي ينتقلا معه.",
 				en: "Your world stays where it is, and we move its Nether and End into it so they carry over.",
 			},
 		];
@@ -82,7 +82,7 @@ const worldLines = (from: InstallIdentity, to: InstallIdentity, plan: Transition
 	if (plan.relocation === RelocationKind.UnifiedWorldData) {
 		return [
 			{
-				ar: `تبقى مابك في مكانها، وننقل ملفات إعداداتها إلى المكان الذي يتوقعه ${VARIANT_LABELS[to.variant]}.`,
+				ar: `يبقى مابك في مكانه، وننقل ملفات إعداداته إلى المكان الذي يتوقعه ${VARIANT_LABELS[to.variant]}.`,
 				en: `Your world stays where it is, and we move its world-settings files where ${VARIANT_LABELS[to.variant]} expects them.`,
 			},
 		];
@@ -90,7 +90,7 @@ const worldLines = (from: InstallIdentity, to: InstallIdentity, plan: Transition
 
 	return [
 		{
-			ar: "تبقى مابك في مكانها كما هي.",
+			ar: "يبقى مابك في مكانه كما هو.",
 			en: "Your world stays exactly where it is.",
 		},
 	];
@@ -107,14 +107,14 @@ export const transitionLines = (from: InstallIdentity, to: InstallIdentity, plan
 
 	if (plan.worldLoss === WorldLoss.ModContent) {
 		lines.push({
-			ar: "كل ما أضافته المودات إلى مابك، من بلوكات وأغراض ومخلوقات وأبعاد، يُفقد بمجرد أن يفتحها السيرفر الجديد، وإذا كانت مابك تستخدم بُعدًا من مود فقد لا يشتغل السيرفر. النسخة الاحتياطية هي طريق الرجوع.",
+			ar: "كل ما أضافته المودات إلى مابك، من بلوكات وأغراض ومخلوقات وأبعاد، يُفقد بمجرد أن يفتحه السيرفر الجديد، وإذا كان مابك يستخدم بُعدًا من مود فقد لا يشتغل السيرفر. النسخة الاحتياطية هي طريق الرجوع.",
 			en: "Everything the mods added to your world (blocks, items, creatures and mod dimensions) is lost the moment the new server opens it, and if your world used a mod dimension, the new server may not start. The backup is the way back.",
 		});
 	}
 
 	if (plan.notes.includes(TransitionNote.VersionUnknown)) {
 		lines.push({
-			ar: `لا يمكن التأكد مما إذا كان ${to.version} أقدم من ${from.version}. تبقى مابك في مكانها، لكن إذا كان أقدم فقد لا يفتحها ماينكرافت أو قد يتلفها.`,
+			ar: `لا يمكن التأكد مما إذا كان ${to.version} أقدم من ${from.version}. يبقى مابك في مكانه، لكن إذا كان أقدم فقد لا يفتحه ماينكرافت أو قد يتلفه.`,
 			en: `We can't tell whether ${to.version} is older than ${from.version}. Your world is kept, but if it's older, Minecraft may fail to open it or damage it.`,
 		});
 	}
@@ -231,13 +231,13 @@ export const transitionActivityText = (
 
 	if (plan.addons === AddonOutcome.Removed) {
 		return {
-			ar: `${moved.ar}، وبقيت الماب كما هي، وتمت إزالة الإضافات والمودات لأنها لا تشتغل على ${VARIANT_LABELS[to.variant]}`,
+			ar: `${moved.ar}، وبقي الماب كما هو، وتمت إزالة الإضافات والمودات لأنها لا تشتغل على ${VARIANT_LABELS[to.variant]}`,
 			en: `${moved.en}, the world was kept, and plugins and mods were removed because they don't run on ${VARIANT_LABELS[to.variant]}`,
 		};
 	}
 
 	return {
-		ar: `${moved.ar}، وبقيت الماب كما هي`,
+		ar: `${moved.ar}، وبقي الماب كما هو`,
 		en: `${moved.en}, the world was kept`,
 	};
 };

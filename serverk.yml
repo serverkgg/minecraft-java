@@ -176,7 +176,7 @@ files:
       icon: map
       color: "#4a8fd4"
       note:
-        ar: مابك. لا تحذفها إلا إذا كنت متأكدًا، وخذ نسخة احتياطية قبل أي تعديل.
+        ar: مابك. لا تحذفه إلا إذا كنت متأكدًا، وخذ نسخة احتياطية قبل أي تعديل.
         en: Your world. Don't delete it unless you're sure, and take a backup before you change it.
     - match: "world/**"
       label:
@@ -391,7 +391,7 @@ guides:
       ar: "المابات: التبديل والرفع والريسيت"
       en: "Worlds: switch, upload and reset"
     summary:
-      ar: بدّل الماب المفعّلة، وارفع ماب من جهازك، ونفّذ ريسيت للنذر والإند، واحذف ما لا تحتاجه.
+      ar: بدّل الماب المفعّل، وارفع ماب من جهازك، ونفّذ ريسيت للنذر والإند، واحذف ما لا تحتاجه.
       en: Switch the active world, upload one from your computer, reset the Nether and the End, and delete what you don't need.
     tags:
       - features

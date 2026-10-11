@@ -54,7 +54,7 @@ const modpackStatusSection: Bridge.Section = {
 	variable: MODPACK_VARIABLE,
 	confirm: BridgeConfirm.Normal,
 	confirmText: {
-		ar: "إزالة المودباك تحذفه مع موداته، وتبقى الماب التي بنيتها عليه محفوظة باسم جديد في تبويب المابات، ويعود سيرفرك إلى النوع والإصدار نفسيهما دون مودباك وبماب جديدة. يبقى ما ثبّته بنفسك.",
+		ar: "إزالة المودباك تحذفه مع موداته، ويبقى الماب الذي بنيته عليه محفوظًا باسم جديد في تبويب المابات، ويعود سيرفرك إلى النوع والإصدار نفسيهما دون مودباك وبماب جديد. يبقى ما ثبّته بنفسك.",
 		en: "Removing the modpack deletes it and its mods, keeps the world you built on it under a new name in the Worlds tab, and leaves your server on the same type and version without a modpack and with a fresh world. Anything you installed yourself stays.",
 	},
 	actions: [
@@ -66,7 +66,7 @@ const modpackStatusSection: Bridge.Section = {
 			},
 			confirm: BridgeConfirm.Normal,
 			confirmText: {
-				ar: "نثبّت آخر إصدار من المودباك نفسه. تبقى مابك إذا كان الإصدار الجديد على النوع نفسه وعلى إصدار ماينكرافت نفسه أو أحدث.",
+				ar: "نثبّت آخر إصدار من المودباك نفسه. يبقى مابك إذا كان الإصدار الجديد على النوع نفسه وعلى إصدار ماينكرافت نفسه أو أحدث.",
 				en: "We install the latest release of the same pack. Your world stays as long as the new release is on the same type and the same version or newer.",
 			},
 		},
@@ -109,7 +109,7 @@ const versionTab: Bridge.Tab = {
 			reinstall: true,
 			confirm: BridgeConfirm.Normal,
 			confirmText: {
-				ar: "حسب التغيير، إما أن تبقى مابك في مكانها، أو ننقل ملفاتها إلى المكان الجديد، أو يُفقد كل ما أضافته المودات إليها. والرجوع إلى إصدار أقدم يبدأ ماب جديدة دائمًا.",
+				ar: "حسب التغيير، إما أن يبقى مابك في مكانه، أو ننقل ملفاته إلى المكان الجديد، أو يُفقد كل ما أضافته المودات إليه. والرجوع إلى إصدار أقدم يبدأ مابًا جديدًا دائمًا.",
 				en: "Depending on the change, your world may stay where it is, be moved into place, or lose what mods added to it. Going back to an older version always starts a fresh world.",
 			},
 			preview: {
@@ -170,7 +170,7 @@ const versionTab: Bridge.Tab = {
 				{
 					variable: MODPACK_VARIABLE,
 					warning: {
-						ar: "سيرفرك على مودباك. أي تغيير هنا يزيل المودباك وموداته، ويحفظ الماب التي بنيتها عليه باسم جديد في تبويب المابات، ويعيد سيرفرك إلى النوع والإصدار اللذين تختارهما بماب جديدة.",
+						ar: "سيرفرك على مودباك. أي تغيير هنا يزيل المودباك وموداته، ويحفظ الماب الذي بنيته عليه باسم جديد في تبويب المابات، ويعيد سيرفرك إلى النوع والإصدار اللذين تختارهما بماب جديد.",
 						en: "Your server runs a modpack. Any change here removes the pack and its mods, keeps the world you built on it under a new name in the Worlds tab, and puts your server on the type and version you pick with a fresh world.",
 					},
 				},
@@ -195,7 +195,7 @@ const modpacksTab: Bridge.Tab = {
 			variable: MODPACK_VARIABLE,
 			confirm: BridgeConfirm.Normal,
 			confirmText: {
-				ar: "تثبيت المودباك يعيد بناء سيرفرك: يحذف مجلدات المودات والإعدادات بالكامل، بما فيها المودات التي ثبّتها بنفسك. تبقى مابك في مكانها إلا إذا تطلب المودباك إصدارًا أقدم من إصدارك، وإذا كان سيرفرك على مشغّل مودات وانتقلت منه يُفقد كل ما أضافته المودات إلى مابك. وإزالة المودباك تحذفه مع موداته، وتبقى الماب التي بنيتها عليه محفوظة باسم جديد في تبويب المابات، ويعود سيرفرك دون مودباك وبماب جديدة.",
+				ar: "تثبيت المودباك يعيد بناء سيرفرك: يحذف مجلدات المودات والإعدادات بالكامل، بما فيها المودات التي ثبّتها بنفسك. يبقى مابك في مكانه إلا إذا تطلب المودباك إصدارًا أقدم من إصدارك، وإذا كان سيرفرك على مشغّل مودات وانتقلت منه يُفقد كل ما أضافته المودات إلى مابك. وإزالة المودباك تحذفه مع موداته، ويبقى الماب الذي بنيته عليه محفوظًا باسم جديد في تبويب المابات، ويعود سيرفرك دون مودباك وبماب جديد.",
 				en: "Installing a modpack rebuilds your server: the mods and config folders are deleted, including mods you installed yourself. Your world stays unless the pack needs an older version than yours, and if you leave a mod loader everything the mods added to your world is lost. Removing the modpack takes it and its mods, keeps the world you built on it under a new name in the Worlds tab, and leaves your server without a modpack and with a fresh world.",
 			},
 			empty: {
@@ -423,7 +423,7 @@ const settingsTab: Bridge.Tab = {
 						en: "World seed",
 					},
 					help: {
-						ar: "اتركه فارغًا لماب عشوائية. تغييره لا يؤثر على ماب موجودة.",
+						ar: "اتركه فارغًا لماب عشوائي. تغييره لا يؤثر على ماب موجود.",
 						en: "Leave it empty for a random world. Changing it doesn't affect an existing world.",
 					},
 				},
@@ -788,12 +788,12 @@ const worldsTab: Bridge.Tab = {
 				{
 					id: "create",
 					label: {
-						ar: "ماب جديدة",
+						ar: "ماب جديد",
 						en: "Create world",
 					},
 					confirm: BridgeConfirm.Normal,
 					confirmText: {
-						ar: "نجهّز ماب جديدة ونفعّلها عند التشغيل. تبقى مابك الحالية محفوظة.",
+						ar: "نجهّز مابًا جديدًا ونفعّله عند التشغيل. يبقى مابك الحالي محفوظًا.",
 						en: "Prepare a new world and activate it on start. Your current world stays available.",
 					},
 					fields: [
@@ -842,7 +842,7 @@ const worldsTab: Bridge.Tab = {
 				{
 					key: "active",
 					label: {
-						ar: "المفعّلة",
+						ar: "المفعّل",
 						en: "Active",
 					},
 				},
@@ -883,7 +883,7 @@ const worldsTab: Bridge.Tab = {
 							key: "name",
 							control: BridgeControl.Text,
 							label: {
-								ar: "اسم الماب الجديدة",
+								ar: "اسم الماب الجديد",
 								en: "New world name",
 							},
 							maxLength: 32,
@@ -906,7 +906,7 @@ const worldsTab: Bridge.Tab = {
 					},
 					confirm: BridgeConfirm.Normal,
 					confirmText: {
-						ar: "نبدّل الماب في إعدادات السيرفر. إذا كان السيرفر شغّالًا فلن تُفتح الماب الجديدة إلا بعد الريستارت.",
+						ar: "نبدّل الماب في إعدادات السيرفر. إذا كان السيرفر شغّالًا فلن يُفتح الماب الجديد إلا بعد الريستارت.",
 						en: "We switch the world in the server settings. If the server is running, the new world opens only after you restart it.",
 					},
 				},
@@ -918,7 +918,7 @@ const worldsTab: Bridge.Tab = {
 					},
 					confirm: BridgeConfirm.Strong,
 					confirmText: {
-						ar: "حذف الماب يزيلها مع النذر والإند الخاصين بها نهائيًا. النسخة الاحتياطية هي طريقك الوحيد للرجوع، لذلك خذ نسخة احتياطية قبل المتابعة.",
+						ar: "حذف الماب يزيله مع النذر والإند الخاصين به نهائيًا. النسخة الاحتياطية هي طريقك الوحيد للرجوع، لذلك خذ نسخة احتياطية قبل المتابعة.",
 						en: "Deleting a world removes it with its Nether and End for good. A backup is your only way back, so take one before you continue.",
 					},
 				},
@@ -948,7 +948,7 @@ const worldsTab: Bridge.Tab = {
 				},
 			],
 			empty: {
-				ar: "لا توجد مابات. تتولد ماب جديدة عند أول تشغيل لسيرفرك.",
+				ar: "لا توجد مابات. يتولد ماب جديد عند أول تشغيل لسيرفرك.",
 				en: "No world found. The first time you start your server, one is generated for you.",
 			},
 		},

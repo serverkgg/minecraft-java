@@ -276,7 +276,7 @@ describe("telling the player why an imported world changed its name", () => {
 
 	it("a folder name with no latin letters or digits says so", () => {
 		expect(worldRenameSentence("عالمي", "world")).toEqual({
-			ar: `تمت إضافة الماب «عالمي» باسم «world» لأن اسم مجلدها لا يحتوي على حروف إنجليزية أو أرقام.`,
+			ar: `تمت إضافة الماب «عالمي» باسم «world» لأن اسم مجلده لا يحتوي على حروف إنجليزية أو أرقام.`,
 			en: `The world "عالمي" was added as "world" because its folder name has no Latin letters or digits.`,
 		});
 	});

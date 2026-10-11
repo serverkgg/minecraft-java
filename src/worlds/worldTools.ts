@@ -16,7 +16,7 @@ export const assertNewWorld = async (context: Bridge.Context, name: string) => {
 	for (const path of worldPaths(name)) {
 		if (await context.files.exists(path)) {
 			throw new BridgeUserError({
-				ar: "توجد ماب بالاسم نفسه. اختر اسمًا آخر.",
+				ar: "يوجد ماب بالاسم نفسه. اختر اسمًا آخر.",
 				en: "A world already uses that name. Choose another name.",
 			});
 		}
@@ -26,13 +26,13 @@ export const assertNewWorld = async (context: Bridge.Context, name: string) => {
 export const inspectJavaWorld = async (context: Bridge.Context, directory: string) => {
 	if (await context.files.exists(`${directory}/db`)) {
 		throw new BridgeUserError({
-			ar: "هذه ماب بيدروك، ولا يستطيع سيرفر جافا فتحها. ارفعها على سيرفر بيدروك.",
+			ar: "هذا ماب بيدروك، ولا يستطيع سيرفر جافا فتحه. ارفعه على سيرفر بيدروك.",
 			en: "This is a Bedrock world, and Java can't open it. Upload it to a Bedrock server.",
 		});
 	}
 	if ((await context.files.size(`${directory}/level.dat`)) > 16 * 1024 * 1024) {
 		throw new BridgeUserError({
-			ar: "ملف بيانات الماب أكبر من الحد المسموح. تأكد من أنك رفعت الماب الصحيحة.",
+			ar: "ملف بيانات الماب أكبر من الحد المسموح. تأكد من أنك رفعت الماب الصحيح.",
 			en: "The world data file is over the size limit. Check that you uploaded the right world.",
 		});
 	}
@@ -50,7 +50,7 @@ export const inspectJavaWorld = async (context: Bridge.Context, directory: strin
 	const bytes = header.stdout.trim().split(/\s+/);
 	if (header.code !== 0 || bytes[0] !== "1f" || bytes[1] !== "8b" || bytes[2] !== "08") {
 		throw new BridgeUserError({
-			ar: "ملف الماب لا يبدو ماب جافا سليمة. صدّر الماب من اللعبة وارفعها مرة ثانية.",
+			ar: "ملف الماب لا يبدو ماب جافا سليمًا. صدّر الماب من اللعبة وارفعه مرة ثانية.",
 			en: "The world file doesn't look like a valid Java world. Export the world from the game and upload it again.",
 		});
 	}
@@ -67,7 +67,7 @@ export const inspectJavaWorld = async (context: Bridge.Context, directory: strin
 	);
 	if (valid.code !== 0) {
 		throw new BridgeUserError({
-			ar: "ملف بيانات الماب تالف. صدّرها من اللعبة وارفعها مرة ثانية.",
+			ar: "ملف بيانات الماب تالف. صدّره من اللعبة وارفعه مرة ثانية.",
 			en: "The world data file is corrupt. Export it from the game and upload it again.",
 		});
 	}
@@ -92,7 +92,7 @@ export const cloneWorld = async (context: Bridge.Context, source: string, name: 
 		]);
 		if (links.code !== 0 || links.stdout.trim().length > 0) {
 			throw new BridgeUserError({
-				ar: "تحتوي الماب على رابط ملفات. احذفه قبل نسخ الماب.",
+				ar: "يحتوي الماب على رابط ملفات. احذفه قبل نسخ الماب.",
 				en: "The world contains a symbolic link. Delete it before copying the world.",
 			});
 		}
@@ -167,7 +167,7 @@ export const worldTools: Bridge.Actions = {
 			context.activity.report({
 				name: BridgeEventName.WorldCreated,
 				text: {
-					ar: `تم إنشاء ماب جديدة ${name}، وتتولد عند التشغيل التالي`,
+					ar: `تم إنشاء ماب جديد ${name}، ويتولد عند التشغيل التالي`,
 					en: `Created world ${name}, generated on the next start`,
 				},
 				subject: name,
@@ -207,7 +207,7 @@ export const exportWorld = async (context: Bridge.Context, name: string) => {
 	]);
 	if (links.code !== 0 || links.stdout.trim().length > 0) {
 		throw new BridgeUserError({
-			ar: "تحتوي الماب على رابط ملفات لا يمكن تصديره. احذف الرابط وجرب مرة ثانية.",
+			ar: "يحتوي الماب على رابط ملفات لا يمكن تصديره. احذف الرابط وجرب مرة ثانية.",
 			en: "The world contains a symbolic link that can't be exported. Delete the link and try again.",
 		});
 	}

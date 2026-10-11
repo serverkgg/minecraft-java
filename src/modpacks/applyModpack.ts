@@ -848,13 +848,13 @@ const removedText = (title: string, archived: string | null): Bridge.Text => {
 
 	if (archived === null) {
 		return {
-			ar: `تمت إزالة ${pack} وموداته، وبدأ السيرفر بماب جديدة`,
+			ar: `تمت إزالة ${pack} وموداته، وبدأ السيرفر بماب جديد`,
 			en: `Removed ${packEn} and its mods, and the server started over with a fresh world`,
 		};
 	}
 
 	return {
-		ar: `تمت إزالة ${pack} وموداته، وحُفظت الماب القديمة باسم «${archived}» في تبويب المابات، وبدأ السيرفر بماب جديدة`,
+		ar: `تمت إزالة ${pack} وموداته، وحُفظ الماب القديم باسم «${archived}» في تبويب المابات، وبدأ السيرفر بماب جديد`,
 		en: `Removed ${packEn} and its mods, kept the old world as "${archived}" in the Worlds tab, and the server started over with a fresh world`,
 	};
 };

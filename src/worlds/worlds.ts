@@ -93,12 +93,12 @@ const reportImported = (context: Bridge.Context, imported: WorldImport[]) => {
 };
 
 const ACTIVE_WORLD_DELETE: Bridge.Text = {
-	ar: "لا يمكن حذف الماب المفعّلة، فعّل ماب أخرى أولًا",
+	ar: "لا يمكن حذف الماب المفعّل، فعّل مابًا آخر أولًا",
 	en: "You can't delete the active world. Activate another one first",
 };
 
 const ACTIVE_WORLD_ACTIVATE: Bridge.Text = {
-	ar: "هذه الماب مفعّلة مسبقًا",
+	ar: "هذا الماب مفعّل مسبقًا",
 	en: "This world is already the active one",
 };
 

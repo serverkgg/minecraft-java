@@ -230,7 +230,7 @@ describe("importing an uploaded world", () => {
 			`The world "عالمي" was added as "world" because its folder name has no Latin letters or digits.`,
 		);
 		expect(outcome?.notice.ar).toBe(
-			`تمت إضافة الماب «عالمي» باسم «world» لأن اسم مجلدها لا يحتوي على حروف إنجليزية أو أرقام.`,
+			`تمت إضافة الماب «عالمي» باسم «world» لأن اسم مجلده لا يحتوي على حروف إنجليزية أو أرقام.`,
 		);
 	});
 
