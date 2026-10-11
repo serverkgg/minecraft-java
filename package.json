@@ -15,7 +15,8 @@
 		"test": "bun test --parallel"
 	},
 	"dependencies": {
-		"@serverkgg/bridge": "0.1.8"
+		"@serverkgg/bridge": "0.1.8",
+		"prismarine-nbt": "2.8.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.5.7",

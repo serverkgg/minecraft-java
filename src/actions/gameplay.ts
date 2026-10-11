@@ -1,6 +1,24 @@
-import { type Bridge, BridgeKind } from "@serverkgg/bridge";
+import { type Bridge, BridgeKind, BridgeUserError } from "@serverkgg/bridge";
 import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { choiceArgument, DIFFICULTIES, DIFFICULTY_OPTIONS, optionLabel } from "../shared";
+import { activeWorld, readWorldHardcore } from "../worlds";
+
+const HARDCORE_DIFFICULTY: Bridge.Text = {
+	ar: "الهاردكور مفعّل في هذا الماب، لذلك تبقى الصعوبة على «صعب». لتغييرها وقّف السيرفر، ثم أوقف الهاردكور من تبويب المابات.",
+	en: "Hardcore is on for this world, so the difficulty stays on Hard. To change it, stop the server, then turn hardcore off in the Worlds tab.",
+};
+
+const activeWorldHardcore = async (context: Bridge.Context) => {
+	try {
+		return await readWorldHardcore(context, await activeWorld(context));
+	} catch (error) {
+		context.log.warn("could not read whether the active world is hardcore", {
+			reason: error instanceof Error ? error.message : String(error),
+		});
+
+		return null;
+	}
+};
 
 const reportGameplay = (context: Bridge.Context, what: string, value: string, text: Bridge.Text) => {
 	context.activity.report({
@@ -75,6 +93,10 @@ export const gameplay: Bridge.Actions = {
 		async difficulty(context, args) {
 			const mode = choiceArgument(args, "mode", DIFFICULTIES);
 			const label = optionLabel(DIFFICULTY_OPTIONS, mode);
+
+			if ((await activeWorldHardcore(context)) === true) {
+				throw new BridgeUserError(HARDCORE_DIFFICULTY);
+			}
 
 			await context.command(`difficulty ${mode}`);
 

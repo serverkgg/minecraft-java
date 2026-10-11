@@ -14,7 +14,7 @@ const PROPERTIES_FILE = "server.properties";
 
 const LEVEL_NAME = "level-name";
 
-const LEVEL_FILE = "level.dat";
+export const LEVEL_FILE = "level.dat";
 
 const FIND_TIMEOUT_MS = 30_000;
 

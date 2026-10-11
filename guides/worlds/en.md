@@ -40,6 +40,16 @@ Your server already has a world named `world`, so an Aternos `world` lands besid
 
 Use **Create world** to choose a name and optional seed. The new world becomes active and generates at the next start, and your previous world stays available. Use **Copy world** on a row to copy that world and all its dimensions under a new name without activating it.
 
+## Turn on hardcore for a world
+
+In hardcore, each player has one life, and a player who dies becomes a spectator. The difficulty becomes Hard and stays locked while hardcore is on. On Java, hardcore is saved inside the world itself, so the **Hardcore** field in **Settings** only applies to worlds created after you turn it on. For a world you already have, set it here.
+
+1. Stop your server.
+2. Open **Worlds**, choose **Set hardcore** on the world, then turn the switch on or off.
+3. Start your server.
+
+A ✓ in the **Hardcore** column marks each world that has it on. You can turn it off again from the same place at any time, and the server goes back to the difficulty in **Settings** the next time it starts.
+
 ## Download a world to your computer
 
 Select **Prepare download** on the world's row, then **Download** after it finishes. Stop the server first if you want a clean copy, because a running world writes its files at any moment. The ZIP includes the overworld and all existing Nether and End folders, including the sibling folders used by older Paper and Purpur versions.

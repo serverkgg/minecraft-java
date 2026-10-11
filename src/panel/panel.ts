@@ -356,8 +356,8 @@ const settingsTab: Bridge.Tab = {
 						en: "Hardcore",
 					},
 					help: {
-						ar: "حياة واحدة لكل لاعب، ومن يموت يتحول إلى وضع المشاهدة، والصعوبة دائمًا «صعب». يأخذ به الماب الجديد فقط، فبعد تفعيله أنشئ مابًا جديدًا من تبويب المابات.",
-						en: "One life per player, a player who dies becomes a spectator, and difficulty is always Hard. Only a new world takes it on, so create one in the Worlds tab after you turn it on.",
+						ar: "حياة واحدة لكل لاعب، ومن يموت يتحول إلى وضع المشاهدة، والصعوبة دائمًا «صعب». ينطبق على المابات التي تُنشأ بعد تفعيله، أما الماب الموجود فاستخدم له «اضبط الهاردكور» في تبويب المابات.",
+						en: "One life per player, a player who dies becomes a spectator, and difficulty is always Hard. It applies to worlds created after you turn it on. For an existing world, use Set hardcore in the Worlds tab.",
 					},
 				},
 				{
@@ -858,6 +858,13 @@ const worldsTab: Bridge.Tab = {
 						en: "Active",
 					},
 				},
+				{
+					key: "hardcore",
+					label: {
+						ar: "الهاردكور",
+						en: "Hardcore",
+					},
+				},
 			],
 			upload: {
 				label: {
@@ -921,6 +928,28 @@ const worldsTab: Bridge.Tab = {
 						ar: "نبدّل الماب في إعدادات السيرفر. إذا كان السيرفر شغّالًا فلن يُفتح الماب الجديد إلا بعد الريستارت.",
 						en: "We switch the world in the server settings. If the server is running, the new world opens only after you restart it.",
 					},
+				},
+				{
+					id: "hardcore",
+					label: {
+						ar: "اضبط الهاردكور",
+						en: "Set hardcore",
+					},
+					confirm: BridgeConfirm.Normal,
+					confirmText: {
+						ar: "حياة واحدة لكل لاعب، ومن يموت يتحول إلى وضع المشاهدة، وتصبح الصعوبة «صعب» ولا يمكن تغييرها. يلزم أن يكون سيرفرك متوقفًا، وإيقاف الهاردكور متاح من هنا في أي وقت.",
+						en: "One life per player, a player who dies becomes a spectator, and the difficulty becomes Hard and locked. Your server must be stopped, and you can turn hardcore off again from here at any time.",
+					},
+					fields: [
+						{
+							key: "enabled",
+							control: BridgeControl.Boolean,
+							label: {
+								ar: "تفعيل الهاردكور",
+								en: "Turn on hardcore",
+							},
+						},
+					],
 				},
 				{
 					id: "delete",

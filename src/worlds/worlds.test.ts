@@ -1,7 +1,9 @@
 import { describe, expect, it } from "bun:test";
 import type { Bridge } from "@serverkgg/bridge";
 import { BridgeEventName } from "@serverkgg/bridge/protocol";
+import { byte, comp, type NBT, string, writeUncompressed } from "prismarine-nbt";
 import { WORLD_STAGING } from "../shared";
+import { parseLevel } from "./levelDat";
 import { worlds } from "./worlds";
 
 const UPLOAD = `${WORLD_STAGING}/9f1/save`;
@@ -472,5 +474,250 @@ describe("which world actions apply", () => {
 				id: "creative",
 			}),
 		).toEqual({});
+	});
+});
+
+const LEVEL = "world/level.dat";
+
+const storedLevel = (): NBT => {
+	return comp(
+		{
+			Data: {
+				type: "compound",
+				value: {
+					LevelName: string("world"),
+					difficulty_settings: {
+						type: "compound",
+						value: {
+							difficulty: string("easy"),
+							hardcore: byte(0),
+							locked: byte(0),
+						},
+					},
+				},
+			},
+		},
+		"",
+	) as NBT;
+};
+
+const hardcoreHarness = (running = false) => {
+	const stored = new Map<string, Uint8Array>([
+		[
+			LEVEL,
+			Bun.gzipSync(new Uint8Array(writeUncompressed(storedLevel(), "big"))),
+		],
+	]);
+	const reported: Bridge.Activity[] = [];
+	const under = (path: string) =>
+		[
+			...stored.keys(),
+		].filter((key) => key === path || key.startsWith(`${path}/`));
+
+	const context = {
+		server: {
+			running,
+		},
+		exec: async (argv: string[]) => {
+			if (argv[0] === "find") {
+				return {
+					code: 0,
+					stdout: [
+						...stored.keys(),
+					]
+						.filter((key) => key.endsWith("/level.dat"))
+						.map((key) => `./${key}`)
+						.join("\n"),
+					stderr: "",
+				};
+			}
+
+			if (argv[0] === "base64") {
+				return {
+					code: 0,
+					stdout: Buffer.from(stored.get(argv.at(-1) ?? "") ?? new Uint8Array()).toString("base64"),
+					stderr: "",
+				};
+			}
+
+			const [, , , , encoded = "", staged = ""] = argv;
+
+			stored.set(staged, new Uint8Array(Buffer.from(new TextDecoder().decode(stored.get(encoded)), "base64")));
+
+			return {
+				code: 0,
+				stdout: "",
+				stderr: "",
+			};
+		},
+		codec: {
+			javaProperties: {
+				read: async () => ({
+					"level-name": "world",
+				}),
+			},
+		},
+		files: {
+			exists: async (path: string) => under(path).length > 0,
+			write: async (path: string, contents: string) => {
+				stored.set(path, new TextEncoder().encode(contents));
+			},
+			ensure: async () => {},
+			size: async () => 100,
+			remove: async (path: string) => {
+				for (const key of under(path)) {
+					stored.delete(key);
+				}
+			},
+			move: async (source: string, destination: string) => {
+				if (under(destination).length > 0) {
+					throw new Error(`${destination} already exists`);
+				}
+
+				for (const key of under(source)) {
+					stored.set(`${destination}${key.slice(source.length)}`, stored.get(key) ?? new Uint8Array());
+					stored.delete(key);
+				}
+			},
+		},
+		log: Object.assign(() => {}, {
+			warn: () => {},
+			error: () => {},
+		}),
+		activity: {
+			report: (entry: Bridge.Activity) => {
+				reported.push(entry);
+			},
+		},
+	} as unknown as Bridge.Context;
+
+	const settings = async () => {
+		const level = await parseLevel(stored.get(LEVEL) ?? new Uint8Array());
+		const data = level?.value.Data;
+		const entry = data?.type === "compound" ? data.value.difficulty_settings : undefined;
+
+		return entry?.type === "compound" ? entry.value : null;
+	};
+
+	return {
+		context,
+		reported,
+		stored,
+		settings,
+	};
+};
+
+const WORLD: Bridge.Row = {
+	id: "world",
+};
+
+describe("switching hardcore on a world", () => {
+	it("turns hardcore on with a locked hard difficulty, reports it and leaves no scratch behind", async () => {
+		const run = hardcoreHarness();
+
+		await worlds.actions?.hardcore?.(run.context, WORLD, {
+			enabled: true,
+		});
+
+		expect(await run.settings()).toEqual({
+			difficulty: string("hard"),
+			hardcore: byte(1),
+			locked: byte(1),
+		});
+		expect(run.reported).toEqual([
+			{
+				name: BridgeEventName.GameplayChanged,
+				text: {
+					ar: "تم تفعيل الهاردكور في ماب world",
+					en: "Turned on hardcore for world world",
+				},
+				subject: "world",
+				details: {
+					what: "hardcore",
+					value: "on",
+					world: "world",
+				},
+			},
+		]);
+		expect([
+			...run.stored.keys(),
+		]).toEqual([
+			LEVEL,
+		]);
+	});
+
+	it("lists the world as hardcore once it is on, and turns it off again", async () => {
+		const run = hardcoreHarness();
+
+		expect((await worlds.list(run.context)).at(0)?.hardcore).toBe("");
+		await worlds.actions?.hardcore?.(run.context, WORLD, {
+			enabled: true,
+		});
+		expect((await worlds.list(run.context)).at(0)?.hardcore).toBe("✓");
+		await worlds.actions?.hardcore?.(run.context, WORLD, {
+			enabled: false,
+		});
+
+		expect(await run.settings()).toEqual({
+			difficulty: string("hard"),
+			hardcore: byte(0),
+			locked: byte(0),
+		});
+		expect(run.reported.at(1)?.text.en).toBe("Turned off hardcore for world world");
+	});
+
+	it("refuses to set hardcore to the value the world already has, and writes nothing", async () => {
+		const run = hardcoreHarness();
+		const before = run.stored.get(LEVEL);
+
+		await expect(
+			worlds.actions?.hardcore?.(run.context, WORLD, {
+				enabled: false,
+			}),
+		).rejects.toThrow("Hardcore is already off for this world.");
+		expect(run.stored.get(LEVEL)).toBe(before);
+		expect(run.reported).toEqual([]);
+	});
+
+	it("refuses while the server is running", async () => {
+		const run = hardcoreHarness(true);
+		const before = run.stored.get(LEVEL);
+
+		await expect(
+			worlds.actions?.hardcore?.(run.context, WORLD, {
+				enabled: true,
+			}),
+		).rejects.toThrow("Stop the server");
+		expect(run.stored.get(LEVEL)).toBe(before);
+	});
+
+	it("refuses a world the list does not show", async () => {
+		const run = hardcoreHarness();
+
+		await expect(
+			worlds.actions?.hardcore?.(
+				run.context,
+				{
+					id: "../world",
+				},
+				{
+					enabled: true,
+				},
+			),
+		).rejects.toThrow("We couldn't find that world.");
+		expect(run.reported).toEqual([]);
+	});
+
+	it("refuses a level file it can't read", async () => {
+		const run = hardcoreHarness();
+
+		run.stored.set(LEVEL, new TextEncoder().encode("not a level file"));
+
+		await expect(
+			worlds.actions?.hardcore?.(run.context, WORLD, {
+				enabled: true,
+			}),
+		).rejects.toThrow("We couldn't read the world's level.dat");
+		expect((await worlds.list(run.context)).at(0)?.hardcore).toBe("");
 	});
 });

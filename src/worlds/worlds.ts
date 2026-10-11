@@ -2,6 +2,7 @@ import { type Bridge, BridgeKind, BridgeUserError } from "@serverkgg/bridge";
 import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { installedLayout } from "../install/installLayout";
 import { formatByteSize, isUnder, relativeUploadPath, WORLD_STAGING } from "../shared";
+import { readWorldHardcore, setWorldHardcore } from "./levelDat";
 import {
 	activeWorld,
 	discoverWorlds,
@@ -102,6 +103,27 @@ const ACTIVE_WORLD_ACTIVATE: Bridge.Text = {
 	en: "This world is already the active one",
 };
 
+const HARDCORE_ALREADY_ON: Bridge.Text = {
+	ar: "الهاردكور مفعّل مسبقًا في هذا الماب.",
+	en: "Hardcore is already on for this world.",
+};
+
+const HARDCORE_ALREADY_OFF: Bridge.Text = {
+	ar: "الهاردكور موقوف مسبقًا في هذا الماب.",
+	en: "Hardcore is already off for this world.",
+};
+
+const listedWorld = async (context: Bridge.Context, id: string) => {
+	if (!(await discoverWorlds(context)).includes(id)) {
+		throw new BridgeUserError({
+			ar: "تعذّر العثور على الماب. حدّث القائمة وجرب مرة ثانية.",
+			en: "We couldn't find that world. Refresh the list and try again.",
+		});
+	}
+
+	return id;
+};
+
 const refuseActiveWorld = async (context: Bridge.Context, name: string) => {
 	if ((await activeWorld(context)) !== name) {
 		return;
@@ -128,6 +150,7 @@ export const worlds: Bridge.Collection = {
 				name,
 				size: formatByteSize(await worldSize(context, name)),
 				active: name === active ? ACTIVE_MARK : "",
+				hardcore: (await readWorldHardcore(context, name)) === true ? ACTIVE_MARK : "",
 				path: `.serverk-exports/${name}.zip`,
 			});
 		}
@@ -237,6 +260,34 @@ export const worlds: Bridge.Collection = {
 				details: {
 					world: row.id,
 					previous,
+				},
+			});
+		},
+
+		async hardcore(context, row, args) {
+			const world = await listedWorld(context, row.id);
+			const enabled = args.enabled === true;
+
+			if (!(await setWorldHardcore(context, world, enabled))) {
+				throw new BridgeUserError(enabled ? HARDCORE_ALREADY_ON : HARDCORE_ALREADY_OFF);
+			}
+
+			context.activity.report({
+				name: BridgeEventName.GameplayChanged,
+				text: enabled
+					? {
+							ar: `تم تفعيل الهاردكور في ماب ${world}`,
+							en: `Turned on hardcore for world ${world}`,
+						}
+					: {
+							ar: `تم إيقاف الهاردكور في ماب ${world}`,
+							en: `Turned off hardcore for world ${world}`,
+						},
+				subject: world,
+				details: {
+					what: "hardcore",
+					value: enabled ? "on" : "off",
+					world,
 				},
 			});
 		},
