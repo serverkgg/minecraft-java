@@ -15,7 +15,7 @@
 		"test": "bun test --parallel"
 	},
 	"dependencies": {
-		"@serverkgg/bridge": "0.1.8",
+		"@serverkgg/bridge": "0.1.9",
 		"prismarine-nbt": "2.8.0"
 	},
 	"devDependencies": {
