@@ -376,6 +376,11 @@
 										"type": "integer",
 										"minimum": 1,
 										"maximum": 64
+									},
+									"web": {
+										"default": false,
+										"description": "This port is the server's HTTP surface: bound inside the machine and reached at the server's name over HTTPS.",
+										"type": "boolean"
 									}
 								},
 								"required": [
@@ -1041,7 +1046,7 @@
 						},
 						"ports": {
 							"default": [],
-							"description": "A bot listens on nothing. Declare a port only when a webhook needs a public address.",
+							"description": "A bot listens on nothing until its author turns a port on. Gate every port with activeWhen on a variable, and mark the HTTP one web.",
 							"maxItems": 8,
 							"type": "array",
 							"items": {
@@ -1219,6 +1224,11 @@
 										"type": "integer",
 										"minimum": 1,
 										"maximum": 64
+									},
+									"web": {
+										"default": false,
+										"description": "This port is the server's HTTP surface: bound inside the machine and reached at the server's name over HTTPS.",
+										"type": "boolean"
 									}
 								},
 								"required": [
