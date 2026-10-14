@@ -97,6 +97,27 @@ describe("gameVersion", () => {
 			expect(latest).toBe("26.2");
 		});
 
+		it("leaves out a version Paper lists before it has any build, whether its build list is empty or not found", async () => {
+			const { values, latest } = await optionsOf(
+				{
+					SERVER_TYPE: "paper",
+				},
+				{
+					...PAPER_PROJECT_ANSWER,
+					[buildsUrlOf("26.3")]: [],
+					[buildsUrlOf("26.2")]: buildsOf("STABLE"),
+					[buildsUrlOf("1.21.11")]: buildsOf("STABLE"),
+				},
+			);
+
+			expect(values).toEqual([
+				"26.2",
+				"1.21.11",
+			]);
+
+			expect(latest).toBe("26.2");
+		});
+
 		it("leaves out an alpha-only version in the middle of the list", async () => {
 			const { values } = await optionsOf(
 				{
