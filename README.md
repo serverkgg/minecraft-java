@@ -1,42 +1,59 @@
-# ماينكرافت (Minecraft)
+![Minecraft Java](assets/banner.webp)
 
-حزمة ماينكرافت على منصة سيرفرك (`serverk.gg`). هذا المستودع فيه كل شيء اللعبة تحتاجه عشان تشتغل على المنصة: ملف التعريف `serverk.yml`، الـ driver اللي يدير السيرفر، صورة الدوكر، والشروحات.
+# ماينكرافت جافا (Minecraft Java)
 
-The Minecraft game package for the Serverk platform (`serverk.gg`). This repo holds everything the game needs to run on the platform: the `serverk.yml` manifest, the driver that manages the server, the Docker image, and the guides.
+يضم هذا الريبو كل ما تحتاجه منصة سيرفرك لتشغيل سيرفرات ماينكرافت جافا. سيرفر ماينكرافت جافا الأصلي، يشتغل فور اكتمال طلبك دون أي إعداد. أشهر لعبة في العالم، وسيرفرك جاهز خلال دقيقة. صفحة اللعبة: [serverk.gg/games/minecraft-java](https://serverk.gg/games/minecraft-java)
+
+This repository holds everything Serverk needs to run Minecraft Java servers. Minecraft Java Edition, vanilla and running the moment your order completes. The world's biggest game, with your server ready in a minute. Game page: [serverk.gg/games/minecraft-java](https://serverk.gg/games/minecraft-java)
 
 ## Layout
 
-- `serverk.yml` — the game manifest: metadata, resources, ports, backup rules, secrets, guides.
-- `src/` — the bridge driver: install, lifecycle, query, backup, events, and the panel modules.
-- `image/Dockerfile` — the runtime image; the compiled bridge binary is its entrypoint.
-- `assets/` — logo and banner (webp).
-- `guides/` — player guides in Arabic and English.
+- `serverk.yml`: the game manifest with its metadata, resources, ports, backup and reset rules, and the guide list.
+- `serverk.schema.json`: the JSON Schema of `serverk.yml` for the editor, written by `serverk-bridge schema`.
+- `src/`: the driver, built on `@serverkgg/bridge`; `src/driver.ts` exports it and `src/main.ts` serves it.
+- `image/Dockerfile`: the container image, with the compiled bridge as its entrypoint.
+- `assets/`: the logo and the banner the site and the panel show.
+- `guides/<id>/ar.md` and `en.md`: the guide bodies; each guide's title, summary and tags live in `serverk.yml`.
+
+## Guides
+
+- [البدء بسيرفرك · Getting started](https://serverk.gg/games/minecraft-java/guides/getting-started)
+- [اللاعبون: الأدمن والقائمة البيضاء والحظر · Players: admins, the whitelist and bans](https://serverk.gg/games/minecraft-java/guides/players)
+- [الإعدادات: رسالة السيرفر والصعوبة ووضع اللعب · Settings: MOTD, difficulty and game mode](https://serverk.gg/games/minecraft-java/guides/settings)
+- [الإضافات والمودات: ثبّتها من اللوحة · Plugins and mods: install them from the panel](https://serverk.gg/games/minecraft-java/guides/plugins-mods)
+- [نوع السيرفر والإصدار: ما يحدث لمابك · Server type and version: what happens to your world](https://serverk.gg/games/minecraft-java/guides/server-type)
+- [الكروس بلاي: لاعبو بيدروك في سيرفرك · Crossplay: Bedrock players on your server](https://serverk.gg/games/minecraft-java/guides/crossplay)
+- [المودباك: سيرفر جاهز بضغطة · Modpacks: a ready-made server in one click](https://serverk.gg/games/minecraft-java/guides/modpacks)
+- [توافق الإصدارات: إصدارات جافا الأخرى في سيرفرك · Version compatibility: other Java versions on your server](https://serverk.gg/games/minecraft-java/guides/version-compat)
+- [المابات: التبديل والرفع والريسيت · Worlds: switch, upload and reset](https://serverk.gg/games/minecraft-java/guides/worlds)
 
 ## Develop
 
-Everything runs on [Bun](https://bun.sh):
+Everything runs on [Bun](https://bun.sh).
 
-```sh
-bun install
-bun run check
-bun run tsc
-bun run test
-bun run validate
-bun run compile
-```
+- `bun install`: installs the dependencies, points Git at the hooks in `.githooks/` and writes `.claude/rules/package.md` from the bridge.
+- `bun run check`: checks lint and formatting with Biome; `bun run fix` applies the fixes.
+- `bun run tsc`: type-checks the code.
+- `bun run test`: runs the tests.
+- `bun run validate`: runs the checks the platform runs at publish, and fails while this README is out of date.
+- `bun run compile`: builds `dist/bridge`, the linux/amd64 binary the image starts.
 
-`validate` checks the manifest, assets, and driver wiring with the exact validation the platform runs at publish. `compile` produces `dist/bridge`, an amd64 binary — serverk publishes game images for `linux/amd64` only.
+`.githooks/pre-commit` runs `bun run fix`, `bun run tsc`, `bun run test`, `bun run validate` and `bunx serverk-bridge schema --check` before every commit. There is no CI: a commit that passes the hook is ready.
 
-The `pre-commit` hook is the gate: it runs `fix`, `tsc`, `test`, `validate`, and `serverk-bridge schema --check`, and restages whatever the formatter touched. There is no CI workflow — a commit that passes the hook is a commit that is ready.
-
-The driver is built on [`@serverkgg/bridge`](https://www.npmjs.com/package/@serverkgg/bridge). To develop against a local bridge checkout, `bun link` in the bridge package then `bun link @serverkgg/bridge` here — never commit a `file:` dependency.
+`bun install` runs `serverk-bridge link`, which links `@serverkgg/bridge` to a sibling `serverk` checkout at `../serverk/modules/bridge` when one exists. Never commit a `file:` or `link:` dependency.
 
 ## Contribute
 
-- افتح issue لأي مشكلة أو اقتراح — بالعربي أو بالإنجليزي، كلها مرحّب فيها.
-- Run `bun install` once so the `pre-commit` hook is wired, then let it gate every commit — lint, types, tests, package validation, and the schema check all run locally, with no secrets and nothing to configure.
-- Releases are done by the Serverk team through the platform's central release pipeline; merged changes ride the next release.
+افتح issue لأي مشكلة أو اقتراح، بالعربية أو بالإنجليزية. ينشر فريق سيرفرك هذا الريبو من ريبو `serverk` بالأمر `bunx outdo package --prod --name minecraft-java`، ويصل كل تغيير مدموج مع النشر التالي. العربية هي لغة المصدر: يُكتب كل نص يقرؤه العميل بالعربية أولًا، بلغة رسمية مع لمسة خليجية خفيفة، ثم بالإنجليزية. أبقِ أسماء الملفات والأوامر والمفاتيح بالحروف اللاتينية.
 
-## Arabic copy
+Open an issue for any problem or suggestion, in Arabic or English. Serverk releases this repository from `serverk` with `bunx outdo package --prod --name minecraft-java`; merged changes ride the next release. Arabic is the source language: every string a customer reads is written in Arabic first, formal with a light Gulf touch, then in English. Keep file names, commands and config keys in Latin script.
 
-Arabic is the source language of the platform. Player-facing strings in `serverk.yml` and the guides use Gulf gaming Arabic — the game's Arabic name is always «ماينكرافت», written solid.
+## License
+
+الكود متاح للقراءة، وجميع الحقوق محفوظة لمنصة سيرفرك، ولا يُمنح أي ترخيص.
+
+The code is public to read. All rights are reserved by Serverk, and no license is granted.
+
+يُنشأ هذا الملف بالأمر `serverk-bridge readme` من `serverk.yml`، فعدّل ملف التعريف لا هذا الملف.
+
+Generated by `serverk-bridge readme` from `serverk.yml`; edit the manifest, not this file.
