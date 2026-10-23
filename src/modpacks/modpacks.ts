@@ -8,12 +8,12 @@ import {
 } from "@serverkgg/bridge";
 import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { decodeProviderRef, encodeProviderRef, explainLookup, modpackSourceById, modpackSources } from "../providers";
-import { addonDirectory, requestedGameVersion } from "../shared";
+import { addonDirectory, modpackIdentity, requestedGameVersion } from "../shared";
 import { MODPACK_VARIABLE, readModpackIdentity } from "./applyModpack";
 import { describeProject, identityMismatched, outdated, serverRelease } from "./modpackFreshness";
 import { usesQuilt, variantsForLoaders } from "./modpackIndex";
 import { decodeModpackRef, encodeModpackRef } from "./modpackRef";
-import { modpackIdentity, readModpackSidecar } from "./modpackSidecar";
+import { readModpackSidecar } from "./modpackSidecar";
 import { pickModpackVersion } from "./modpackVersion";
 
 const PAGE_SIZE = 20;
@@ -78,14 +78,15 @@ export const installModpack = async (
 	releaseId?: string,
 ): Promise<Bridge.CatalogEntry> => {
 	const decoded = decodeProviderRef(id);
-	const source = decoded ? modpackSourceById(decoded.provider) : null;
 
-	if (!decoded || !source || source.id !== decoded.provider) {
+	if (!decoded) {
 		throw new BridgeUserError({
 			ar: "تعذّر تثبيت هذا المودباك من المرجع المستلم. حدّث الصفحة وجرب مرة ثانية.",
 			en: `We couldn't install "${id}" because it isn't a modpack reference we can install. Refresh the page and try again.`,
 		});
 	}
+
+	const source = modpackSourceById(decoded.provider);
 
 	const releases = await explainLookup(
 		() => source.releases(context, decoded.project),

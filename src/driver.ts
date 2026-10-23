@@ -3,11 +3,12 @@ import { broadcast, gameplay } from "./actions";
 import { addons } from "./addons";
 import { announce } from "./announce";
 import { backup } from "./backup";
+import { clientPack } from "./clientpack";
 import { bans, players, whitelist } from "./collections";
 import { events } from "./events";
 import { install, transitionPreview } from "./install";
 import { lifecycle } from "./lifecycle";
-import { modpackStatus, modpacks } from "./modpacks";
+import { modpackStatus, modpacks, modpackUploads } from "./modpacks";
 import { gameVersion, loaderBuild, serverType } from "./options";
 import { panel } from "./panel";
 import { pending } from "./pending";
@@ -42,8 +43,10 @@ export const driver: BridgeDriver = {
 		worlds,
 		worldTools,
 		addons,
+		clientPack,
 		modpacks,
 		modpackStatus,
+		modpackUploads,
 		gameplay,
 		broadcast,
 		rconAccess,

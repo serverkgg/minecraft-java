@@ -1,4 +1,4 @@
-import type { Bridge } from "@serverkgg/bridge";
+import { type Bridge, BridgeUserError } from "@serverkgg/bridge";
 import { CURSEFORGE_SECRET } from "@serverkgg/bridge/catalogs";
 import { curseForgeProvider } from "./curseforge";
 import {
@@ -25,6 +25,7 @@ import {
 	type ModpackProject,
 	type ModpackRelease,
 } from "./provider";
+import { uploadModpackSource } from "./uploadModpackSource";
 
 export interface ModpackSource {
 	id: CatalogProviderId;
@@ -98,7 +99,13 @@ const curseforgeSource: ModpackSource = {
 const MODPACK_SOURCES: ModpackSource[] = [
 	modrinthSource,
 	curseforgeSource,
+	uploadModpackSource,
 ];
+
+export const MODPACK_SOURCE_UNKNOWN: Bridge.Text = {
+	ar: "هذا المودباك من مصدر لا نثبّت منه. اختر مودباكًا آخر من تبويب المودباك. لم تتغيّر ملفاتك.",
+	en: "This modpack comes from a source we can't install from. Pick another modpack from the Modpacks tab. Your files weren't changed.",
+};
 
 export const modpackSources = () => {
 	return [
@@ -107,5 +114,15 @@ export const modpackSources = () => {
 };
 
 export const modpackSourceById = (id: string | null) => {
-	return MODPACK_SOURCES.find((source) => source.id === id) ?? modrinthSource;
+	if (id === null) {
+		return modrinthSource;
+	}
+
+	const source = MODPACK_SOURCES.find((candidate) => candidate.id === id);
+
+	if (!source) {
+		throw new BridgeUserError(MODPACK_SOURCE_UNKNOWN);
+	}
+
+	return source;
 };

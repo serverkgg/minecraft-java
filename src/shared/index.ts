@@ -9,6 +9,7 @@ export * from "./javaRuntime";
 export * from "./loaderBuilds";
 export * from "./mapConcurrent";
 export * from "./minecraftMeta";
+export * from "./packIndex";
 export * from "./requestPacer";
 export * from "./stagedFiles";
 export * from "./staging";

@@ -6,6 +6,7 @@ import {
 	BridgeIcon,
 	BridgeLayout,
 	BridgePlace,
+	BridgeUploadMode,
 } from "@serverkgg/bridge";
 import { rconAccessSections } from "@serverkgg/bridge/rcon";
 import { CROSSPLAY, VERSION_COMPAT } from "../companions";
@@ -14,6 +15,7 @@ import {
 	CHAT_MESSAGE_LENGTH,
 	DIFFICULTY_OPTIONS,
 	GAME_MODE_OPTIONS,
+	MODPACK_UPLOAD_STAGING,
 	WORLD_STAGING,
 	XP_MAX_LEVELS,
 	XP_MIN_LEVELS,
@@ -187,6 +189,115 @@ const modpacksTab: Bridge.Tab = {
 	},
 	icon: BridgeIcon.Box,
 	sections: [
+		{
+			layout: BridgeLayout.Table,
+			id: "modpack-uploads",
+			title: {
+				ar: "مودباكاتك المرفوعة",
+				en: "Your uploads",
+			},
+			help: {
+				ar: "ارفع ملف ZIP صدّرته من لانشر CurseForge أو ملف mrpack، ويظهر في قائمة المودباكات أدناه ضمن «مودباكاتك المرفوعة» لتثبّته. ونزّله من هنا ليستورده لاعبوك في اللانشر.",
+				en: "Upload a ZIP exported from the CurseForge app or an .mrpack file, and it appears under Your uploads in the modpack list below, ready to install. Download it here so your players can import it into their launcher.",
+			},
+			module: "modpackUploads",
+			columns: [
+				{
+					key: "name",
+					label: {
+						ar: "المودباك",
+						en: "Modpack",
+					},
+				},
+				{
+					key: "version",
+					label: {
+						ar: "إصدار المودباك",
+						en: "Pack version",
+					},
+				},
+				{
+					key: "mcVersion",
+					label: {
+						ar: "إصدار ماينكرافت",
+						en: "Minecraft",
+					},
+				},
+				{
+					key: "loader",
+					label: {
+						ar: "المشغّل",
+						en: "Loader",
+					},
+				},
+				{
+					key: "files",
+					label: {
+						ar: "عدد الملفات",
+						en: "Files",
+					},
+				},
+				{
+					key: "size",
+					label: {
+						ar: "الحجم",
+						en: "Size",
+					},
+				},
+				{
+					key: "uploadedAt",
+					label: {
+						ar: "تاريخ الرفع",
+						en: "Uploaded",
+					},
+				},
+				{
+					key: "applied",
+					label: {
+						ar: "على سيرفرك",
+						en: "On your server",
+					},
+				},
+			],
+			upload: {
+				label: {
+					ar: "ارفع مودباك",
+					en: "Upload modpack",
+				},
+				extensions: [
+					"zip",
+					"mrpack",
+				],
+				staging: MODPACK_UPLOAD_STAGING,
+				mode: BridgeUploadMode.File,
+			},
+			actions: [
+				{
+					id: "download",
+					label: {
+						ar: "نزّل",
+						en: "Download",
+					},
+					download: true,
+				},
+				{
+					id: "remove",
+					label: {
+						ar: "احذف",
+						en: "Delete",
+					},
+					confirm: BridgeConfirm.Normal,
+					confirmText: {
+						ar: "نحذف ملف المودباك من سيرفرك، ولتثبيته لاحقًا ارفعه مرة ثانية. لا يتغيّر سيرفرك بهذا الحذف.",
+						en: "We delete the modpack file from your server. To install it later, upload it again. Deleting it doesn't change your server.",
+					},
+				},
+			],
+			empty: {
+				ar: "لا توجد مودباكات مرفوعة. ارفع ملف ZIP من لانشر CurseForge أو ملف mrpack لتثبّته على سيرفرك.",
+				en: "No uploaded modpacks. Upload a ZIP from the CurseForge app or an .mrpack file to install it on your server.",
+			},
+		},
 		{
 			layout: BridgeLayout.Catalog,
 			id: "modpack-list",
@@ -1077,6 +1188,90 @@ const modsTab: Bridge.Tab = {
 			empty: {
 				ar: "لا توجد مودات مثبّتة بعد.",
 				en: "No mods installed yet.",
+			},
+			visibleWhen: {
+				variable: "SERVER_TYPE",
+				values: [
+					"fabric",
+					"forge",
+					"neoforge",
+				],
+			},
+		},
+		{
+			layout: BridgeLayout.Table,
+			id: "client-pack",
+			title: {
+				ar: "مودباك للاعبين",
+				en: "Modpack for players",
+			},
+			help: {
+				ar: "نجهّز من مودات سيرفرك مودباكًا يستورده اللاعبون في اللانشر، فيدخلون بالمودات نفسها. يضم كل مود يستطيع اللانشر تنزيله من Modrinth أو CurseForge. اكتب اسمه، ثم نزّله وأرسله لهم.",
+				en: "We build a modpack from your server's mods. Players import it in their launcher and join with the same mods. It holds every mod a launcher can download from Modrinth or CurseForge. Type a name for it, then download it and send it to them.",
+			},
+			module: "clientPack",
+			columns: [
+				{
+					key: "name",
+					label: {
+						ar: "الاسم",
+						en: "Name",
+					},
+				},
+				{
+					key: "app",
+					label: {
+						ar: "يُستورد في",
+						en: "Import in",
+					},
+				},
+				{
+					key: "mods",
+					label: {
+						ar: "المودات",
+						en: "Mods",
+					},
+				},
+				{
+					key: "built",
+					label: {
+						ar: "تاريخ التجهيز",
+						en: "Built on",
+					},
+				},
+			],
+			add: {
+				label: {
+					ar: "جهّز المودباك",
+					en: "Build pack",
+				},
+				placeholder: "Friends SMP",
+			},
+			actions: [
+				{
+					id: "download",
+					label: {
+						ar: "نزّل",
+						en: "Download",
+					},
+					download: true,
+				},
+				{
+					id: "remove",
+					label: {
+						ar: "احذف",
+						en: "Delete",
+					},
+					confirm: BridgeConfirm.Normal,
+					confirmText: {
+						ar: "نحذف ملف المودباك من سيرفرك، ولا يتأثر ما نزّله اللاعبون منه. جهّزه من جديد متى أردت.",
+						en: "We delete the pack file from your server. Copies players already downloaded stay as they are. Build it again whenever you like.",
+					},
+				},
+			],
+			empty: {
+				ar: "لا يوجد مودباك للاعبين بعد. اكتب اسمًا واضغط «جهّز المودباك» لنجهّزه من مودات سيرفرك. وإذا كان سيرفرك على مودباك من تبويب المودباك، فأرسل للاعبين ذلك المودباك نفسه.",
+				en: "No pack for players yet. Type a name and select Build pack to build one from your server's mods. If your server runs a modpack from the Modpacks tab, send players that same modpack instead.",
 			},
 			visibleWhen: {
 				variable: "SERVER_TYPE",

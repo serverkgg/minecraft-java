@@ -2,9 +2,9 @@
 
 A modpack is a ready-made set of mods with their configs, put together by one author and published as a single file. Instead of installing twenty mods and tuning them yourself, you pick a modpack and we build your server around it.
 
-We pull modpacks from **Modrinth** and **CurseForge**, and only show the ones that run on a server. Switch between the two sources above the search box.
+We pull modpacks from **Modrinth** and **CurseForge**, and only show the ones that run on a server. For a pack you put together yourself in your launcher, export it and upload it as described in Upload your own pack below. Switch between the sources above the search box.
 
-> [!warning] Every player needs the same modpack installed in their own launcher to join. Your server can't hand the mods out to players.
+> [!warning] Every player needs the same modpack installed in their own launcher to join, because your server can't hand the mods out to players. For a catalog pack, send them its page on Modrinth or CurseForge, linked on the **Version** tab. For a pack you uploaded, download its file from **Your uploads** and send it to them to import in their launcher.
 
 ## Install one
 
@@ -38,6 +38,25 @@ We leave them out during the install: we ask Modrinth, mod by mod, whether it ru
 Some CurseForge mod authors block downloads outside their own site. When a pack carries one of those, we look for it elsewhere: first on Modrinth, then inside the server packs the pack's own author publishes on CurseForge, because those files ship those mods on purpose. Find it in either place and the install carries on without you.
 
 If neither has it, we don't install the pack half-finished and we don't start your server on a missing mod. The install finishes, your server waits, and a **Files needed** page opens on your server listing every file we still need. Each one carries a link to its page on CurseForge and an upload box right beside it. Download the file in your browser, drop it in, and we check that it's the exact one the pack asks for. Once every file is in place, your server starts.
+
+## Upload your own pack
+
+First, export the pack from the launcher you built it in:
+
+- In the CurseForge app: on the **Minecraft** tab, pick the pack, open the menu (the three dots) and choose **Share Profile**. Tick **mods** and **config**, then press **Export as .zip**.
+- In the Modrinth app: open the pack, and on its **Mods** tab press **Export modpack** to get an `.mrpack` file.
+
+Then upload the file in **Your uploads** at the top of the **Modpacks** tab, with **Upload modpack**.
+
+@[open](panel:modpacks)
+
+We read the file and list it there with its name and release, the Minecraft version and loader it needs, how many files it lists and its size. To install it, pick the **Your uploads** source above the search box below, and press install. It goes through the same steps as a catalog pack: a backup first, then leaving out the mods that can't run on a server, then laying its configs down in their place.
+
+> [!note] A CurseForge ZIP lists its mods without carrying them, so we download them from CurseForge during the install. That's why it installs only while the CurseForge source is available above the search box. If it carries a mod whose author blocks downloads outside CurseForge, the **Files needed** steps in the section above apply.
+
+After the install, the pack shows on the **Version** tab with an **Uploaded by you** badge. We don't check it for updates, so when it gets a new release, export it from your launcher again, upload it, then install it.
+
+**Download** gives you back the file exactly as you uploaded it, and that's the file your players import in their launcher. **Delete** removes the file from your server and changes nothing else. It doesn't delete the pack your server runs right now, so remove that one from the Version tab first.
 
 ## After the install
 
@@ -85,4 +104,4 @@ Crossplay works with modpacks on Fabric and NeoForge. We reinstall Geyser and Fl
 
 Select a modpack release in the catalog and check its Minecraft version and loader in the preview. Available files are downloaded and verified before replacing the previous installation. Restricted CurseForge files still require your upload before the server can start.
 
-The Modpacks tab shows the exact pack release players need on their computers. Ask friends to install the same release before joining.
+The Modpacks tab shows the exact pack release players need on their computers. Ask friends to install the same release before joining. For a pack you uploaded, send them the same file from **Your uploads**.

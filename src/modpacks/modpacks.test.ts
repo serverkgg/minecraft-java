@@ -2,6 +2,8 @@ import { describe, expect, it } from "bun:test";
 import { type Bridge, BridgeNetError, BridgeUserError } from "@serverkgg/bridge";
 import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { CatalogProviderId, encodeProviderRef } from "../providers";
+import { PACK_INDEX, PackFormat, ServerVariant } from "../shared";
+import { memoryContext } from "../testing";
 import { MODPACK_SIDECAR } from "./modpackSidecar";
 import { MODPACK_UPDATE_ACTION, modpackStatus } from "./modpackStatus";
 import { modpacks } from "./modpacks";
@@ -249,5 +251,108 @@ describe("choosing a modpack from the catalog", () => {
 		expect((error as BridgeUserError).text.en).toBe(
 			"The source of the modpack is down right now. Try again in a moment.",
 		);
+	});
+});
+
+const UPLOADED_SHA1 = "62cdb7020ff920e5aa642c3d4066950dd1f01f4d";
+
+const UPLOADED_PATH = ".serverk-packs/cozy-pack-62cdb702.mrpack";
+
+const UPLOADED_PACK = {
+	sha1: UPLOADED_SHA1,
+	format: PackFormat.Modrinth,
+	path: UPLOADED_PATH,
+	name: "Cozy Pack",
+	version: "1.4.0",
+	mcVersion: "1.21.1",
+	variant: ServerVariant.Fabric,
+	loaderVersion: "0.16.5",
+	fileCount: 1,
+	sizeBytes: 2048,
+	uploadedAt: "2026-10-22T09:00:00.000Z",
+};
+
+const uploadedContext = (sidecar: boolean) => {
+	return memoryContext({
+		variables: {
+			SERVER_TYPE: "fabric",
+			MC_VERSION: "1.21.1",
+		},
+		files: {
+			[PACK_INDEX]: JSON.stringify([
+				UPLOADED_PACK,
+			]),
+			[UPLOADED_PATH]: "",
+			...(sidecar
+				? {
+						[MODPACK_SIDECAR]: JSON.stringify({
+							provider: CatalogProviderId.Upload,
+							project: UPLOADED_SHA1,
+							versionId: UPLOADED_SHA1,
+							version: "1.4.0",
+							title: "Cozy Pack",
+							mcVersion: "1.21.1",
+							variant: "fabric",
+							loaderVersion: "0.16.5",
+							pending: [],
+						}),
+					}
+				: {}),
+		},
+	}).context;
+};
+
+describe("installing a modpack the owner uploaded", () => {
+	it("points the server at the upload by its checksum, on the type and version it declared", async () => {
+		const entry = await modpacks.install(
+			uploadedContext(false),
+			encodeProviderRef(CatalogProviderId.Upload, UPLOADED_SHA1),
+		);
+
+		expect(entry.variables).toEqual({
+			MODPACK: `upload:${UPLOADED_SHA1}:${UPLOADED_SHA1}`,
+			SERVER_TYPE: "fabric",
+			MC_VERSION: "1.21.1",
+			LOADER_VERSION: "",
+		});
+		expect(entry.pageUrl).toBeNull();
+	});
+
+	it("lists the uploads as their own source in the catalog", async () => {
+		const page = await modpacks.search(uploadedContext(false), {
+			query: "",
+			page: 0,
+			provider: CatalogProviderId.Upload,
+			category: null,
+			sort: null,
+		});
+
+		expect(page.hits.map((hit) => hit.id)).toEqual([
+			encodeProviderRef(CatalogProviderId.Upload, UPLOADED_SHA1),
+		]);
+		expect(page.providers.map((provider) => provider.id)).toContain(CatalogProviderId.Upload);
+	});
+
+	it("shows the installed upload as the owner's own, with no page, author, downloads or update check", async () => {
+		const detail = await modpackStatus.read(uploadedContext(true));
+
+		expect(detail?.badges.map((badge) => badge.label.en)).toEqual([
+			"Uploaded by you",
+		]);
+		expect(detail?.links).toEqual([]);
+		expect(detail?.stats.map((stat) => stat.key)).not.toContain("downloads");
+		expect(detail?.stats.map((stat) => stat.key)).not.toContain("author");
+		expect(detail?.actions).toEqual([]);
+		expect(detail?.unavailable?.[MODPACK_UPDATE_ACTION]?.en).toContain("Upload its new release");
+	});
+
+	it("refuses to look for an update of an upload", async () => {
+		const error = await modpackStatus.actions?.[MODPACK_UPDATE_ACTION]?.(uploadedContext(true), {}).then(
+			() => null,
+			(thrown: unknown) => thrown,
+		);
+
+		expect(error).toBeInstanceOf(BridgeUserError);
+		expect((error as BridgeUserError).text.en).toContain("we don't check it for updates");
 	});
 });

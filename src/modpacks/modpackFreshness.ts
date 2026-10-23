@@ -1,5 +1,5 @@
 import type { Bridge } from "@serverkgg/bridge";
-import type { ModpackProject, ModpackRelease, ModpackSource } from "../providers";
+import { CatalogProviderId, type ModpackProject, type ModpackRelease, type ModpackSource } from "../providers";
 import { gameVersionOf, variantOf } from "../shared";
 import { variantsForLoaders } from "./modpackIndex";
 import type { ModpackSidecar } from "./modpackSidecar";
@@ -26,6 +26,10 @@ export const freshnessOf = async (
 	project: string,
 	versionId: string,
 ): Promise<ModpackFreshness> => {
+	if (source.id === CatalogProviderId.Upload) {
+		return ModpackFreshness.Current;
+	}
+
 	try {
 		const latest = await latestRelease(context, source, project);
 

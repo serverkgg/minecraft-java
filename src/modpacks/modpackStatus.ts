@@ -1,6 +1,6 @@
 import { type Bridge, BridgeDetailFormat, BridgeDetailTone, BridgeKind, BridgeUserError } from "@serverkgg/bridge";
 import { BridgeEventName } from "@serverkgg/bridge/protocol";
-import { encodeProviderRef, modpackSourceById } from "../providers";
+import { CatalogProviderId, encodeProviderRef, modpackSourceById } from "../providers";
 import { addonDirectory, VARIANT_LABELS } from "../shared";
 import { MODPACK_VARIABLE } from "./applyModpack";
 import { describeProject, freshnessOf, identityMismatched, latestRelease, ModpackFreshness } from "./modpackFreshness";
@@ -67,6 +67,24 @@ const CURRENT_BADGE: Bridge.DetailBadge = {
 		en: "Up to date",
 	},
 };
+
+const UPLOADED_BADGE: Bridge.DetailBadge = {
+	tone: BridgeDetailTone.Neutral,
+	label: {
+		ar: "رفعته بنفسك",
+		en: "Uploaded by you",
+	},
+};
+
+const UPLOADED_UPDATE: Bridge.Text = {
+	ar: "رفعت هذا المودباك بنفسك، ولذلك لا نتحقق من تحديثاته. ارفع إصداره الجديد في قسم «مودباكاتك المرفوعة» في تبويب المودباك، ثم ثبّته.",
+	en: "You uploaded this modpack yourself, so we don't check it for updates. Upload its new release in Your uploads on the Modpacks tab, then install it.",
+};
+
+const UPLOADED_HIDDEN_STATS = new Set([
+	"downloads",
+	"author",
+]);
 
 export const pendingBadges = (pending: PendingFile[]): Bridge.DetailBadge[] => {
 	if (pending.length === 0) {
@@ -239,13 +257,22 @@ const statsOf = (sidecar: ModpackSidecar, sizeBytes: number | null): Bridge.Deta
 	];
 };
 
+const uploadedUpdate: Pick<Bridge.DetailResult, "actions" | "unavailable"> = {
+	actions: [],
+	unavailable: {
+		[MODPACK_UPDATE_ACTION]: UPLOADED_UPDATE,
+	},
+};
+
 const installedDetail = async (context: Bridge.Context, sidecar: ModpackSidecar): Promise<Bridge.DetailResult> => {
 	const source = modpackSourceById(sidecar.provider);
+	const uploaded = source.id === CatalogProviderId.Upload;
 	const mismatched = await identityMismatched(context, sidecar);
 	const freshness = await freshnessOf(context, source, sidecar.project, sidecar.versionId);
 	const behind = freshness === ModpackFreshness.Behind;
+	const stats = statsOf(sidecar, await sizeOnDisk(context));
 
-	const badge = mismatched ? MISMATCHED_BADGE : behind ? OUTDATED_BADGE : CURRENT_BADGE;
+	const badge = mismatched ? MISMATCHED_BADGE : behind ? OUTDATED_BADGE : uploaded ? UPLOADED_BADGE : CURRENT_BADGE;
 
 	return {
 		id: encodeProviderRef(sidecar.provider, sidecar.project),
@@ -257,10 +284,10 @@ const installedDetail = async (context: Bridge.Context, sidecar: ModpackSidecar)
 			...pendingBadges(sidecar.pending),
 			badge,
 		],
-		stats: statsOf(sidecar, await sizeOnDisk(context)),
+		stats: uploaded ? stats.filter((stat) => !UPLOADED_HIDDEN_STATS.has(stat.key)) : stats,
 		links: linksOf(sidecar.pageUrl),
 		stale: mismatched || behind || sidecar.pending.length > 0,
-		...modpackUpdateOf(mismatched, freshness),
+		...(uploaded ? uploadedUpdate : modpackUpdateOf(mismatched, freshness)),
 	};
 };
 
@@ -285,6 +312,10 @@ export const modpackStatus: Bridge.Detail = {
 
 			if (!sidecar) {
 				throw new BridgeUserError(NOTHING_TO_UPDATE);
+			}
+
+			if (sidecar.provider === CatalogProviderId.Upload) {
+				throw new BridgeUserError(UPLOADED_UPDATE);
 			}
 
 			const latest = await latestRelease(context, modpackSourceById(sidecar.provider), sidecar.project);

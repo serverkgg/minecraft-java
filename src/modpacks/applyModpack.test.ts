@@ -11,7 +11,8 @@ import {
 } from "@serverkgg/bridge";
 import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { CatalogProviderId, type ModpackRelease } from "../providers";
-import { ServerVariant, STAGING_ROOT } from "../shared";
+import { PACK_INDEX, type PackEntry, PackFormat, ServerVariant, STAGING_ROOT } from "../shared";
+import { type MemoryArchive, memoryContext } from "../testing";
 import {
 	downloadFailure,
 	modpackInstalledText,
@@ -464,5 +465,191 @@ describe("a modpack source that answers with an error", () => {
 		const error = await stagingFailure(failingContext(new BridgeNetError(429, "answered 429"), "key"), CURSEFORGE_REF);
 
 		expect((error as BridgeFailureError).code).toBe(BridgeFailureCode.CatalogRateLimited);
+	});
+});
+
+const UPLOADED_SHA1 = "62cdb7020ff920e5aa642c3d4066950dd1f01f4d";
+
+const COZY_URL = "https://cdn.modrinth.com/data/cozy/versions/V1/cozy-1.4.0.mrpack";
+
+const COZY_JAR_URL = "https://github.com/cozy/cozy/releases/download/v1/cozy.jar";
+
+const COZY_PACK: MemoryArchive = {
+	"modrinth.index.json": JSON.stringify({
+		formatVersion: 1,
+		game: "minecraft",
+		versionId: "1.4.0",
+		name: "Cozy Pack",
+		dependencies: {
+			minecraft: "1.21.1",
+			"fabric-loader": "0.16.5",
+		},
+		files: [
+			{
+				path: "mods/cozy.jar",
+				downloads: [
+					COZY_JAR_URL,
+				],
+				hashes: {
+					sha512: "a".repeat(128),
+				},
+				fileSize: 10,
+			},
+		],
+	}),
+	"overrides/config/cozy.toml": "",
+};
+
+const STORED_MRPACK = ".serverk-packs/cozy-pack-62cdb702.mrpack";
+
+const STORED_UPLOAD_ZIP = ".serverk-packs/cozy-pack-62cdb702.zip";
+
+const uploadedPack = (format: PackFormat): PackEntry => ({
+	sha1: UPLOADED_SHA1,
+	format,
+	path: format === PackFormat.CurseForge ? STORED_UPLOAD_ZIP : STORED_MRPACK,
+	name: "Cozy Pack",
+	version: "1.4.0",
+	mcVersion: "1.21.1",
+	variant: ServerVariant.Fabric,
+	loaderVersion: "0.16.5",
+	fileCount: 1,
+	sizeBytes: 2048,
+	uploadedAt: "2026-10-22T09:00:00.000Z",
+});
+
+const UPLOADED_REF = {
+	provider: CatalogProviderId.Upload,
+	project: UPLOADED_SHA1,
+	versionId: UPLOADED_SHA1,
+};
+
+const uploadedContext = () => {
+	return memoryContext({
+		files: {
+			[PACK_INDEX]: JSON.stringify([
+				uploadedPack(PackFormat.Modrinth),
+			]),
+		},
+		archives: {
+			[STORED_MRPACK]: COZY_PACK,
+		},
+	});
+};
+
+const catalogContext = () => {
+	return memoryContext({
+		served: {
+			[COZY_URL]: COZY_PACK,
+		},
+		json: (url) => {
+			if (url.endsWith("/version/V1")) {
+				return {
+					id: "V1",
+					version_number: "1.4.0",
+					version_type: "release",
+					loaders: [
+						"fabric",
+					],
+					game_versions: [
+						"1.21.1",
+					],
+					date_published: "2026-10-22T00:00:00Z",
+					files: [
+						{
+							primary: true,
+							filename: "cozy-1.4.0.mrpack",
+							url: COZY_URL,
+							size: 2048,
+							hashes: {},
+						},
+					],
+				};
+			}
+
+			if (url.endsWith("/members")) {
+				return [];
+			}
+
+			return {
+				id: "cozy",
+				title: "Cozy Pack",
+				slug: "cozy-pack",
+				icon_url: null,
+				description: "cozy",
+				downloads: 10,
+			};
+		},
+	});
+};
+
+describe("staging a modpack the owner uploaded", () => {
+	it("reads the stored archive in place and never downloads it", async () => {
+		const { context, archives, downloads } = uploadedContext();
+		const staged = await stageModpack(context, UPLOADED_REF, ServerVariant.Fabric, "1.21.1");
+
+		expect(staged.archive).toBe(STORED_MRPACK);
+		expect(staged.release.local?.path).toBe(STORED_MRPACK);
+		expect(downloads).toEqual([
+			COZY_JAR_URL,
+		]);
+		expect(archives.get(STORED_MRPACK)).toBe(COZY_PACK);
+	});
+
+	it("reaches the same staged files as the same pack from the catalog", async () => {
+		const uploaded = await stageModpack(uploadedContext().context, UPLOADED_REF, ServerVariant.Fabric, "1.21.1");
+		const catalog = await stageModpack(
+			catalogContext().context,
+			{
+				provider: CatalogProviderId.Modrinth,
+				project: "cozy",
+				versionId: "V1",
+			},
+			ServerVariant.Fabric,
+			"1.21.1",
+		);
+
+		expect(catalog.archive).toBe(`${STAGING_ROOT}/pack/modpack.mrpack`);
+		expect(uploaded.index).toEqual(catalog.index);
+		expect(uploaded.prepared).toEqual(catalog.prepared);
+		expect(uploaded.skipped).toBe(catalog.skipped ?? 0);
+		expect(uploaded.overrides).toEqual(catalog.overrides);
+		expect(uploaded.excludes).toEqual(catalog.excludes);
+		expect(uploaded.project.title).toBe(catalog.project.title);
+		expect(uploaded.project.pageUrl).toBeNull();
+	});
+
+	it("asks for the pack again once its archive is gone", async () => {
+		const { context, archives } = uploadedContext();
+
+		archives.delete(STORED_MRPACK);
+
+		const error = await refusalOf(stageModpack(context, UPLOADED_REF, ServerVariant.Fabric, "1.21.1"));
+
+		expect((error as BridgeUserError).text.en).toBe(RELEASE_MISSING);
+	});
+
+	it("refuses an uploaded pack built for another server type before touching anything", async () => {
+		const { context, downloads } = uploadedContext();
+		const error = await refusalOf(stageModpack(context, UPLOADED_REF, ServerVariant.Forge, "1.21.1"));
+
+		expect(error).toBeInstanceOf(BridgeUserError);
+		expect((error as BridgeUserError).text.en).toContain("This modpack runs on 1.21.1 · Fabric");
+		expect(downloads).toEqual([]);
+	});
+
+	it("names curseforge as the missing source for a curseforge export when no key is set", async () => {
+		const { context } = memoryContext({
+			files: {
+				[PACK_INDEX]: JSON.stringify([
+					uploadedPack(PackFormat.CurseForge),
+				]),
+				[STORED_UPLOAD_ZIP]: "",
+			},
+		});
+		const error = await refusalOf(stageModpack(context, UPLOADED_REF, ServerVariant.Fabric, "1.21.1"));
+
+		expect(error).toBeInstanceOf(BridgeUserError);
+		expect((error as BridgeUserError).text.en).toContain("The modpack source CurseForge isn't available right now");
 	});
 });

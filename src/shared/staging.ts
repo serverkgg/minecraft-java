@@ -6,6 +6,10 @@ export const WORLD_STAGING = `${UPLOAD_ROOT}/world`;
 
 export const PENDING_STAGING = `${UPLOAD_ROOT}/pending`;
 
+export const MODPACK_UPLOAD_STAGING = `${UPLOAD_ROOT}/modpack`;
+
+export const PACKS_DIRECTORY = ".serverk-packs";
+
 export const relativeUploadPath = (input: string) => {
 	const trimmed = input.trim();
 

@@ -1,5 +1,5 @@
 import type { Bridge } from "@serverkgg/bridge";
-import { eraOf, releaseOrder, STAGING_ROOT, UPLOAD_ROOT } from "../shared";
+import { eraOf, PACKS_DIRECTORY, releaseOrder, STAGING_ROOT, UPLOAD_ROOT } from "../shared";
 import { discoverWorlds, resetActiveWorld, worldPaths } from "../worlds";
 import type { InstallIdentity, InstallStamp } from "./installStamp";
 import {
@@ -39,6 +39,7 @@ export const ADDON_DIRECTORIES = [
 const KEPT_ROOTS = [
 	STAGING_ROOT,
 	UPLOAD_ROOT,
+	PACKS_DIRECTORY,
 ];
 
 const COMPANION_SIDECAR = ".serverk-companions.json";

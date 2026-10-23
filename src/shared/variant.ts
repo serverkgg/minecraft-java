@@ -34,6 +34,20 @@ export const VARIANT_LABELS: Record<ServerVariant, string> = {
 	[ServerVariant.Vanilla]: "Vanilla",
 };
 
+export const IDENTITY_SEPARATOR = " · ";
+
+export interface ModpackIdentity {
+	mcVersion: string;
+	variant: ServerVariant;
+}
+
+export const modpackIdentity = (identity: ModpackIdentity) => {
+	return [
+		identity.mcVersion,
+		VARIANT_LABELS[identity.variant],
+	].join(IDENTITY_SEPARATOR);
+};
+
 const VARIANTS = new Set<string>(Object.values(ServerVariant));
 
 export const variantFrom = (declared: string | null): ServerVariant => {

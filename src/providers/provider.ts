@@ -33,6 +33,7 @@ export enum CatalogProviderId {
 	CurseForge = "curseforge",
 	Hangar = "hangar",
 	Modrinth = "modrinth",
+	Upload = "upload",
 }
 
 export interface CatalogFile {
@@ -73,10 +74,15 @@ export interface ModpackProject {
 	id: string;
 	title: string;
 	icon: string | null;
-	pageUrl: string;
+	pageUrl: string | null;
 	description: string | null;
 	author: string | null;
 	downloads: number | null;
+}
+
+export interface LocalArchive {
+	path: string;
+	format: CatalogProviderId;
 }
 
 export interface ModpackRelease {
@@ -87,6 +93,7 @@ export interface ModpackRelease {
 	gameVersions: string[];
 	file: CatalogFile;
 	serverPacks: CatalogFile[];
+	local?: LocalArchive;
 }
 
 export interface CatalogResults {

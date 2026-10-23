@@ -1,21 +1,14 @@
 import type { Bridge } from "@serverkgg/bridge";
-import { ServerVariant, VARIANT_LABELS } from "../shared";
+import { IDENTITY_SEPARATOR, type ModpackIdentity, modpackIdentity, ServerVariant } from "../shared";
 import type { BlockedFile } from "./modpackIndex";
 
 export const MODPACK_SIDECAR = ".serverk-modpack.json";
-
-export const IDENTITY_SEPARATOR = " · ";
 
 const MOD_JAR_PREFIX = "mods/";
 
 const MOD_JAR_SUFFIX = ".jar";
 
 export type PendingFile = BlockedFile;
-
-export interface ModpackIdentity {
-	mcVersion: string;
-	variant: ServerVariant;
-}
 
 export interface ModpackSidecar extends ModpackIdentity {
 	provider: string;
@@ -140,13 +133,6 @@ export const modpackModCount = (sidecar: ModpackSidecar) => {
 	}
 
 	return sidecar.files.filter((path) => path.startsWith(MOD_JAR_PREFIX) && path.endsWith(MOD_JAR_SUFFIX)).length;
-};
-
-export const modpackIdentity = (identity: ModpackIdentity) => {
-	return [
-		identity.mcVersion,
-		VARIANT_LABELS[identity.variant],
-	].join(IDENTITY_SEPARATOR);
 };
 
 export const modpackBuildIdentity = (sidecar: ModpackSidecar) => {

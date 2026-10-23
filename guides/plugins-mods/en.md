@@ -47,6 +47,32 @@ If you have a `jar` file that isn't in the catalog, upload it from the **Files**
 
 > [!note] Only download files from their official source, and make sure they're made for your server type and version. A Paper plugin doesn't run on Fabric, and a Forge mod doesn't run on NeoForge.
 
+## Give players the pack
+
+Every player needs the same mods as your server. Instead of each player installing them one by one, we build a pack from them that players import into their launcher in one step.
+
+1. Open the **Mods** tab and type a name for the pack in **Modpack for players**, below the catalog.
+2. Press **Build pack**.
+3. Press **Download** on the pack in the list, and send the file to your friends.
+
+@[open](panel:mods)
+
+The **Import in** column names the launcher that opens the file:
+
+- When every mod came from CurseForge, we build a `zip` that players import in the CurseForge app: **Import**, then **Choose .zip file**.
+- Otherwise we build an `.mrpack` that players import in the Modrinth app or Prism Launcher. In Prism, press **Add Instance**, then **Import**.
+
+The pack holds no mod files, only the list of mods and where each one downloads from, so the player's launcher downloads them from their source. Whenever you change your mods, build the pack again and send it again. The new one replaces the old one.
+
+### What the pack can't hold
+
+- A `jar` you uploaded yourself instead of installing it from the catalog. We name it after the build, so send it to players yourself.
+- In an `.mrpack`, a CurseForge mod whose author allows downloads only from CurseForge. We stop the build and name it. Remove it or replace it with a mod from Modrinth, then build again.
+- A mod whose file we can't match with its copy in the catalog. Install it again from the catalog, then build again.
+- A server running a modpack from the **Modpacks** tab gets no pack. Send players that same modpack. The details are in the [modpacks guide](/games/minecraft-java/guides/modpacks).
+
+**Delete** removes the file from your server. Copies players already downloaded stay as they are.
+
 ## The server crashed after an install?
 
 A mod or plugin that doesn't fit your version is the most common reason for a crash after an install. The **Overview** page shows you the cause, and the mod's name when we know it, such as a missing mod, a mod installed twice, or a mod that needs a newer Java. Turn off the last thing you installed and start the server. The details are in the [crash guide](/guides/crashes).

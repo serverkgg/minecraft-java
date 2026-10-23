@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import type { Bridge } from "@serverkgg/bridge";
-import type { ModpackRelease, ModpackSource } from "../providers";
+import { type ModpackRelease, type ModpackSource, uploadModpackSource } from "../providers";
 import { freshnessOf, ModpackFreshness, serverRelease } from "./modpackFreshness";
 
 const release = (overrides: Partial<ModpackRelease> = {}): ModpackRelease => ({
@@ -145,5 +145,9 @@ describe("telling whether a modpack is behind its latest release", () => {
 		});
 
 		expect(await freshnessOf(context, source, "AABBCC", "2")).toBe(ModpackFreshness.Unknown);
+	});
+
+	it("an uploaded modpack is current without reading anything, because nobody publishes its updates", async () => {
+		expect(await freshnessOf(context, uploadModpackSource, "AABBCC", "AABBCC")).toBe(ModpackFreshness.Current);
 	});
 });

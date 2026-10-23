@@ -158,6 +158,8 @@ files:
     - .serverk-crashscan.json
     - .serverk-companions.json
     - .serverk-modpack.json
+    - .serverk-client-pack.json
+    - .serverk-packs/index.json
     - plugins/.serverk-catalog.json
     - mods/.serverk-catalog.json
   notable:
@@ -209,6 +211,15 @@ files:
       note:
         ar: مجلد المودات. يلزم أن تكون لدى كل اللاعبين المودات نفسها ليتمكنوا من الدخول.
         en: Your mods folder. Every player needs the same mods to be able to join.
+    - match: .serverk-packs
+      label:
+        ar: مودباكاتك المرفوعة
+        en: Your uploads
+      icon: box
+      color: "#c77dff"
+      note:
+        ar: المودباكات التي رفعتها في تبويب المودباك. ثبّتها أو نزّلها أو احذفها من هناك.
+        en: The modpacks you uploaded on the Modpacks tab. Install, download or delete them from there.
     - match: ops.json
       label:
         ar: الأدمن

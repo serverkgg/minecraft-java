@@ -11,3 +11,4 @@ export * from "./provider";
 export * from "./providerRef";
 export * from "./providers";
 export * from "./rateLimit";
+export * from "./uploadModpackSource";

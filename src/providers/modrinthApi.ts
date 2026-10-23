@@ -56,6 +56,7 @@ export interface ModrinthFile {
 	primary: boolean;
 	size: number;
 	hashes: {
+		sha1?: string;
 		sha512?: string;
 	};
 }

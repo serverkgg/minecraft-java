@@ -13,7 +13,9 @@ import {
 import {
 	createRequestPacer,
 	fileNameOf,
+	IDENTITY_SEPARATOR,
 	mapConcurrent,
+	modpackIdentity,
 	type RequestPacer,
 	type ServerVariant,
 	STAGING_ROOT,
@@ -36,9 +38,7 @@ import { decodeModpackRef, type ModpackRef } from "./modpackRef";
 import { rescueFromServerPack } from "./modpackServerPack";
 import {
 	clearModpackSidecar,
-	IDENTITY_SEPARATOR,
 	type ModpackSidecar,
-	modpackIdentity,
 	type PendingFile,
 	readModpackSidecar,
 	writeModpackSidecar,
@@ -582,17 +582,6 @@ export const stageModpack = async (
 ): Promise<StagedModpack> => {
 	const source = modpackSourceById(ref.provider);
 
-	if (source.id !== ref.provider) {
-		context.log.warn("this modpack comes from a source we cannot install", {
-			provider: ref.provider,
-		});
-
-		throw new BridgeUserError({
-			ar: "هذا المودباك من مصدر لا نثبّت منه. اختر مودباكًا آخر من تبويب المودباك. لم تتغيّر ملفاتك.",
-			en: "This modpack comes from a source we can't install from. Pick another modpack from the Modpacks tab. Your files weren't changed.",
-		});
-	}
-
 	if (!source.ready(context)) {
 		context.log.warn("this modpack's source is not configured", {
 			provider: ref.provider,
@@ -628,22 +617,33 @@ export const stageModpack = async (
 		);
 	}
 
-	const project = await lookUp(context, source, ref, () => source.project(context, ref.project));
-	const archive = ref.provider === CatalogProviderId.CurseForge ? CURSEFORGE_ARCHIVE : MODRINTH_ARCHIVE;
+	const reader = release.local ? modpackSourceById(release.local.format) : source;
 
-	context.log("downloading the modpack", {
+	if (reader !== source && !reader.ready(context)) {
+		context.log.warn("the source this uploaded modpack resolves its mods from is not configured", {
+			provider: reader.id,
+		});
+
+		throw sourceUnavailable(reader);
+	}
+
+	const project = await lookUp(context, source, ref, () => source.project(context, ref.project));
+	const curseforge = reader.id === CatalogProviderId.CurseForge;
+	const archive = release.local?.path ?? (curseforge ? CURSEFORGE_ARCHIVE : MODRINTH_ARCHIVE);
+
+	context.log(release.local ? "reading the uploaded modpack" : "downloading the modpack", {
 		title: project.title,
 		version: release.version,
 		sizeBytes: release.file.sizeBytes,
 	});
 
 	await clearStaging(context);
-	await downloadArchive(context, archive, release, project);
 
-	const staged =
-		ref.provider === CatalogProviderId.CurseForge
-			? await stageCurseforge(context, archive)
-			: await stageModrinth(context, archive);
+	if (!release.local) {
+		await downloadArchive(context, archive, release, project);
+	}
+
+	const staged = curseforge ? await stageCurseforge(context, archive) : await stageModrinth(context, archive);
 
 	if (staged.index.variant !== variant || staged.index.mcVersion !== version) {
 		context.log.warn("the modpack does not match this server type or version, leaving it out", {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { BridgeLayout, BridgePlace } from "@serverkgg/bridge";
+import { BridgeConfirm, BridgeLayout, BridgePlace, BridgeUploadMode } from "@serverkgg/bridge";
 import type { BridgeSection } from "@serverkgg/bridge/protocol";
 import { panel } from "./panel";
 
@@ -172,5 +172,30 @@ describe("moderating a player who already left", () => {
 				expect(action.offline).toBeUndefined();
 			}
 		}
+	});
+});
+
+describe("letting the owner bring their own modpack", () => {
+	it("puts the uploads above the catalog on the modpacks tab", () => {
+		expect(tabNamed("modpacks")?.sections.map((section) => section.id)).toEqual([
+			"modpack-uploads",
+			"modpack-list",
+		]);
+	});
+
+	it("takes a curseforge zip or an mrpack as it is, without unpacking it", () => {
+		expect(tableNamed("modpack-uploads")?.upload).toMatchObject({
+			extensions: [
+				"zip",
+				"mrpack",
+			],
+			staging: ".serverk-uploads/modpack",
+			mode: BridgeUploadMode.File,
+		});
+	});
+
+	it("hands the stored pack back for players to import, and asks once before deleting it", () => {
+		expect(rowActionNamed("modpack-uploads", "download")?.download).toBe(true);
+		expect(rowActionNamed("modpack-uploads", "remove")?.confirm).toBe(BridgeConfirm.Normal);
 	});
 });
