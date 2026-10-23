@@ -16,6 +16,14 @@ const HARD_DIFFICULTY = 3;
 
 const HARD_DIFFICULTY_NAME = "hard";
 
+const WORLD_GEN_SETTINGS_FILE = "data/minecraft/world_gen_settings.dat";
+
+const WORLD_GEN_SETTINGS_TAG = "WorldGenSettings";
+
+const SEED_TAG = "seed";
+
+const RANDOM_SEED_TAG = "RandomSeed";
+
 export enum LevelLayout {
 	Classic = "classic",
 	DifficultySettings = "difficultySettings",
@@ -65,6 +73,18 @@ const flagOf = (entries: Entries, key: string) => {
 	return tag?.type === "byte" ? tag.value !== 0 : null;
 };
 
+const longOf = (entries: Entries, key: string) => {
+	const tag = entries[key];
+
+	if (tag?.type !== "long") {
+		return null;
+	}
+
+	const [high, low] = tag.value;
+
+	return BigInt.asIntN(64, (BigInt(high) << 32n) | BigInt(low >>> 0)).toString();
+};
+
 export const levelLayout = (level: NBT): LevelLayout | null => {
 	const data = compoundOf(level.value, DATA_TAG);
 
@@ -92,6 +112,34 @@ export const levelHardcore = (level: NBT): boolean | null => {
 	}
 
 	return flagOf(compoundOf(data, DIFFICULTY_SETTINGS_TAG) ?? {}, "hardcore") ?? false;
+};
+
+export const levelSeed = (level: NBT): string | null => {
+	const data = compoundOf(level.value, DATA_TAG);
+
+	if (data === null) {
+		return null;
+	}
+
+	return longOf(compoundOf(data, WORLD_GEN_SETTINGS_TAG) ?? {}, SEED_TAG) ?? longOf(data, RANDOM_SEED_TAG);
+};
+
+export const worldGenSeed = (settings: NBT): string | null => {
+	const direct = longOf(settings.value, SEED_TAG);
+
+	if (direct !== null) {
+		return direct;
+	}
+
+	for (const key of Object.keys(settings.value)) {
+		const seed = longOf(compoundOf(settings.value, key) ?? {}, SEED_TAG);
+
+		if (seed !== null) {
+			return seed;
+		}
+	}
+
+	return null;
 };
 
 const withData = (level: NBT, data: Entries): NBT => ({
@@ -155,6 +203,8 @@ export const serializeLevel = (level: NBT) => {
 };
 
 const levelPath = (world: string) => `${world}/${LEVEL_FILE}`;
+
+const worldGenSettingsPath = (world: string) => `${world}/${WORLD_GEN_SETTINGS_FILE}`;
 
 const readLevelBytes = async (context: Bridge.Context, path: string) => {
 	if (!(await context.files.exists(path))) {
@@ -244,6 +294,19 @@ export const readWorldHardcore = async (context: Bridge.Context, world: string):
 	const level = await readLevel(context, levelPath(world));
 
 	return level === null ? null : levelHardcore(level);
+};
+
+export const readWorldSeed = async (context: Bridge.Context, world: string): Promise<string | null> => {
+	const settings = await readLevel(context, worldGenSettingsPath(world));
+	const generated = settings === null ? null : worldGenSeed(settings);
+
+	if (generated !== null) {
+		return generated;
+	}
+
+	const level = await readLevel(context, levelPath(world));
+
+	return level === null ? null : levelSeed(level);
 };
 
 export const setWorldHardcore = async (context: Bridge.Context, world: string, enabled: boolean) => {

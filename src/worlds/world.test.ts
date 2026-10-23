@@ -9,7 +9,9 @@ import {
 	levelDirectories,
 	mainLevelDirectories,
 	planWorldArchive,
+	planWorldReset,
 	safeWorldName,
+	stagedWorldName,
 	suffixedWorldName,
 	worldBaseName,
 	worldDimensions,
@@ -334,6 +336,15 @@ describe("archivedWorldName", () => {
 	});
 });
 
+describe("stagedWorldName", () => {
+	it("ends a valid world name of 32 characters at most in -new", () => {
+		expect(stagedWorldName("world")).toBe("world-new");
+		expect(stagedWorldName("a".repeat(32))).toBe(`${"a".repeat(28)}-new`);
+		expect(stagedWorldName("My World!")).toBe("My-World-new");
+		expect(stagedWorldName("عالم")).toBe("world-new");
+	});
+});
+
 const volumeWith = (paths: string[], properties = true) => {
 	const files = new Set(paths);
 	const moves: string[][] = [];
@@ -445,5 +456,65 @@ describe("archiveWorld", () => {
 		const { context } = volumeWith([]);
 
 		expect(await planWorldArchive(context, "RLCraft")).toBeNull();
+	});
+});
+
+describe("planWorldReset", () => {
+	it("moves the active world with its nether and end to -old and keeps its own name active", async () => {
+		const { context, files, moves, merged } = volumeWith([
+			"world/level.dat",
+			"world/playerdata/steve.dat",
+			"world_nether/DIM-1/region",
+			"world_the_end/DIM1/region",
+		]);
+
+		const archive = await planWorldReset(context);
+
+		expect(archive).toEqual({
+			from: "world",
+			to: "world-old",
+			fresh: "world",
+		});
+
+		await archiveWorld(context, archive);
+
+		expect(moves).toEqual([
+			[
+				"world",
+				"world-old",
+			],
+			[
+				"world_nether",
+				"world-old_nether",
+			],
+			[
+				"world_the_end",
+				"world-old_the_end",
+			],
+		]);
+		expect(
+			[
+				...files,
+			].sort(),
+		).toEqual([
+			"world-old/level.dat",
+			"world-old/playerdata/steve.dat",
+			"world-old_nether/DIM-1/region",
+			"world-old_the_end/DIM1/region",
+		]);
+		expect(merged).toEqual([
+			{
+				"level-name": "world",
+			},
+		]);
+	});
+
+	it("takes the next free name when an earlier reset already left world-old", async () => {
+		const { context } = volumeWith([
+			"world/level.dat",
+			"world-old/level.dat",
+		]);
+
+		expect((await planWorldReset(context)).to).toBe("world-old-2");
 	});
 });

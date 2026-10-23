@@ -829,6 +829,45 @@ const worldsTab: Bridge.Tab = {
 						},
 					],
 				},
+				{
+					id: "resetWorld",
+					label: {
+						ar: "ريسيت الماب",
+						en: "Reset world",
+					},
+					confirm: BridgeConfirm.Normal,
+					confirmText: {
+						ar: "يتولد الماب المفعّل من البداية بالسيد نفسه، وتبدأ المباني وأغراض اللاعبين وإحصاءاتهم من الصفر. يبقى الماب الحالي في قائمة المابات باسم ينتهي بـ -old، وحجمه محسوب من مساحة سيرفرك. فعّله إذا أردت الرجوع إليه، أو احذفه متى تأكدت. إذا كان الهاردكور مفعّلًا، ففعّله من جديد بعد أول تشغيل.",
+						en: "The active world generates again from the start with its own seed, and builds, inventories and stats start over. The current world stays in the Worlds list under a name ending in -old and still counts against your disk. Activate it to go back, or delete it once you're sure. If hardcore was on, turn it on again after the first start.",
+					},
+				},
+				{
+					id: "resetFromCopy",
+					label: {
+						ar: "ريسيت من نسخة",
+						en: "Reset from a copy",
+					},
+					confirm: BridgeConfirm.Normal,
+					confirmText: {
+						ar: "يُستبدل الماب المفعّل بنسخة من الماب الذي تكتب اسمه، وتبدأ المباني وأغراض اللاعبين وإحصاءاتهم من جديد كما هي في تلك النسخة. يبقى الماب الحالي في قائمة المابات باسم ينتهي بـ -old، وحجمه محسوب من مساحة سيرفرك، ويبقى الماب الذي كتبت اسمه كما هو. يستغرق نسخ الماب الكبير وقتًا أطول.",
+						en: "The active world is replaced with a copy of the world you name, and builds, inventories and stats start over from that copy. The current world stays in the Worlds list under a name ending in -old and still counts against your disk. The world you name stays untouched. A large world takes a while to copy.",
+					},
+					fields: [
+						{
+							key: "source",
+							control: BridgeControl.Text,
+							label: {
+								ar: "الماب الأصلي",
+								en: "Source world",
+							},
+							help: {
+								ar: "اكتب اسم الماب كما يظهر في قائمة المابات.",
+								en: "Type the world's name exactly as the Worlds list shows it.",
+							},
+							maxLength: 32,
+						},
+					],
+				},
 			],
 		},
 

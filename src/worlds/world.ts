@@ -14,6 +14,8 @@ const PROPERTIES_FILE = "server.properties";
 
 const LEVEL_NAME = "level-name";
 
+const LEVEL_SEED = "level-seed";
+
 export const LEVEL_FILE = "level.dat";
 
 const FIND_TIMEOUT_MS = 30_000;
@@ -165,6 +167,12 @@ export const setActiveWorld = async (context: Bridge.Context, name: string) => {
 	});
 };
 
+export const setLevelSeed = async (context: Bridge.Context, seed: string) => {
+	await context.codec.javaProperties.merge(PROPERTIES_FILE, {
+		[LEVEL_SEED]: seed,
+	});
+};
+
 export const resetActiveWorld = async (context: Bridge.Context) => {
 	if (!(await context.files.exists(PROPERTIES_FILE))) {
 		return;
@@ -232,8 +240,8 @@ export const freeWorldName = async (context: Bridge.Context, base: string): Prom
 	}
 
 	throw new BridgeUserError({
-		ar: `لديك مابات كثيرة بالاسم نفسه «${base}». احذف ما لا تحتاجه منها وارفع الماب مرة ثانية.`,
-		en: `Too many worlds are already named "${base}". Delete the ones you don't need and upload again.`,
+		ar: `لديك مابات كثيرة بالاسم نفسه «${base}». احذف ما لا تحتاجه منها وجرب مرة ثانية.`,
+		en: `Too many worlds are already named "${base}". Delete the ones you don't need and try again.`,
 	});
 };
 
@@ -289,20 +297,30 @@ export const worldSize = async (context: Bridge.Context, name: string) => {
 
 const ARCHIVE_SUFFIX = "-old";
 
+const STAGING_SUFFIX = "-new";
+
 export interface WorldArchive {
 	from: string;
 	to: string;
 	fresh: string;
 }
 
+const endingWorldName = (name: string, suffix: string) => {
+	const stem = safeWorldName(name)
+		.slice(0, NAME_LIMIT - suffix.length)
+		.replace(EDGE_CHARACTERS, "");
+
+	return `${stem.length > 0 ? stem : DEFAULT_WORLD}${suffix}`;
+};
+
 export const archivedWorldName = (world: string, pack: string) => {
 	const slug = safeWorldName(pack.toLowerCase());
 
-	const stem = safeWorldName(slug.length > 0 ? `${world}-${slug}` : world)
-		.slice(0, NAME_LIMIT - ARCHIVE_SUFFIX.length)
-		.replace(EDGE_CHARACTERS, "");
+	return endingWorldName(slug.length > 0 ? `${world}-${slug}` : world, ARCHIVE_SUFFIX);
+};
 
-	return `${stem.length > 0 ? stem : DEFAULT_WORLD}${ARCHIVE_SUFFIX}`;
+export const stagedWorldName = (world: string) => {
+	return endingWorldName(world, STAGING_SUFFIX);
 };
 
 const worldExists = async (context: Bridge.Context, name: string) => {
@@ -326,6 +344,16 @@ export const planWorldArchive = async (context: Bridge.Context, pack: string): P
 		from,
 		to: await freeWorldName(context, archivedWorldName(from, pack)),
 		fresh: from === DEFAULT_WORLD ? DEFAULT_WORLD : await freeWorldName(context, DEFAULT_WORLD),
+	};
+};
+
+export const planWorldReset = async (context: Bridge.Context): Promise<WorldArchive> => {
+	const from = await activeWorld(context);
+
+	return {
+		from,
+		to: await freeWorldName(context, archivedWorldName(from, "")),
+		fresh: from,
 	};
 };
 

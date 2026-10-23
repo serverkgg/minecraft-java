@@ -56,6 +56,29 @@ Select **Prepare download** on the world's row, then **Download** after it finis
 
 The export stays in `.serverk-exports` until you replace it or delete it from Files. Prepare it again when you want a fresh copy. Exports are excluded from backups. Upload accepts Java worlds only. Native Bedrock worlds belong on a native Bedrock server.
 
+## Reset world
+
+**Reset world** starts the active world over with the same seed. We move the world with its Nether and End to a new name ending in `-old`, write its seed to `level-seed` in `server.properties`, and the next start generates the world again under its own name. Builds, inventories, advancements and stats start over.
+
+1. Open **Worlds** and press **Reset world** at the top. It resets the active world, so activate another world first if that's the one you want to reset.
+2. Confirm. We stop the server, move the world, and start the server again if it was running.
+
+The old world stays in the list under its name with `-old` added, such as `world-old`, or `world-old-2` if that name is taken. Activate it to go back, or delete it once you're sure, because it still uses your disk and goes into every backup.
+
+> [!note] Hardcore is saved inside the world, so the new world follows the **Hardcore** field in **Settings**. If the old world had hardcore on, set it again with **Set hardcore** after the first start.
+
+> [!note] The new world generates with the current generation settings in **Settings**, such as the world type and structures, not with the old world's own. An uploaded world of another type, such as flat, comes back different. Data packs inside the world folder move with the old world.
+
+## Reset from a copy
+
+**Reset from a copy** puts the active world back to a copy you keep in the list, builds included. Use it for a map someone built on, such as a lobby or a spawn, where a reset from the seed brings back bare terrain without the builds.
+
+1. Upload the map, use **Copy world** on its row to keep an untouched copy such as `lobby-original`, then activate the map itself, not the copy.
+2. Whenever you want to start over, press **Reset from a copy** at the top of **Worlds** and type the copy's name exactly as the list shows it.
+3. Confirm. We stop the server, copy the world you named in place of the active world, and start the server again if it was running.
+
+The copy must stay in the list as it is, so don't activate it or play on it. It takes the disk space of a second world and goes into every backup. The old active world stays in the list as `-old`, the same as with **Reset world**. If the copy fails, for example when your disk is full, the active world stays as it was.
+
 ## Reset the Nether or the End
 
 **Reset the Nether** and **Reset the End** delete that dimension completely, and it generates again the next time someone enters it. Handy when everything has been looted, or when you want a fresh dragon.
@@ -66,7 +89,7 @@ The export stays in `.serverk-exports` until you replace it or delete it from Fi
 
 **Delete** deletes the world with its Nether and End for good. You can't delete the active world, so activate another one first.
 
-A delete or a dimension reset can't be undone, and we don't take a backup before it. Take a backup first, and restore it to bring the world back:
+Both world resets keep the old world as `-old`, but a delete or a Nether or End reset can't be undone, and we don't take a backup before either. Take a backup first, and restore it to bring the world back:
 
 @[open](backups)
 

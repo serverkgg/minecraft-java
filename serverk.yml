@@ -393,8 +393,8 @@ guides:
       ar: "المابات: التبديل والرفع والريسيت"
       en: "Worlds: switch, upload and reset"
     summary:
-      ar: بدّل الماب المفعّل، وارفع ماب من جهازك، ونفّذ ريسيت للنذر والإند، واحذف ما لا تحتاجه.
-      en: Switch the active world, upload one from your computer, reset the Nether and the End, and delete what you don't need.
+      ar: بدّل الماب المفعّل، وارفع ماب من جهازك، ونفّذ ريسيت للماب بالسيد نفسه أو من نسخة تحتفظ بها أو للنذر والإند فقط، واحذف ما لا تحتاجه.
+      en: Switch the active world, upload one from your computer, reset the world from its seed or from a copy you keep, or just the Nether and the End, and delete what you don't need.
     tags:
       - features
     surfaces:

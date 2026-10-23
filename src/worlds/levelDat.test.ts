@@ -1,6 +1,17 @@
 import { describe, expect, it } from "bun:test";
+import type { Bridge } from "@serverkgg/bridge";
 import { byte, type Compound, comp, int, type NBT, string, writeUncompressed } from "prismarine-nbt";
-import { LevelLayout, levelHardcore, levelLayout, parseLevel, serializeLevel, withHardcore } from "./levelDat";
+import {
+	LevelLayout,
+	levelHardcore,
+	levelLayout,
+	levelSeed,
+	parseLevel,
+	readWorldSeed,
+	serializeLevel,
+	withHardcore,
+	worldGenSeed,
+} from "./levelDat";
 
 const compound = (value: Record<string, unknown>) => ({
 	type: "compound",
@@ -197,5 +208,160 @@ describe("reading and writing level file bytes", () => {
 		expect(await parseLevel(new TextEncoder().encode("not a level file"))).toBeNull();
 		expect(await parseLevel(Bun.gzipSync(new TextEncoder().encode("not nbt")))).toBeNull();
 		expect(await parseLevel(new Uint8Array())).toBeNull();
+	});
+});
+
+const seedTag = (high: number, low: number) => {
+	return {
+		type: "long",
+		value: [
+			high,
+			low,
+		],
+	};
+};
+
+const NEGATIVE_SEED = seedTag(-971_403_206, -1_197_705_962);
+
+const POSITIVE_SEED = seedTag(1_975_950_435, -2_082_467_754);
+
+const worldGenSettings = (root: Record<string, unknown>): NBT => {
+	return comp(root, "") as NBT;
+};
+
+const seedVolume = (files: Record<string, NBT | Uint8Array>) => {
+	const stored = new Map<string, Uint8Array>();
+
+	for (const [path, value] of Object.entries(files)) {
+		stored.set(path, value instanceof Uint8Array ? value : gzipped(value));
+	}
+
+	return {
+		files: {
+			exists: async (path: string) => stored.has(path),
+		},
+		exec: async (argv: string[]) => ({
+			code: 0,
+			stdout: Buffer.from(stored.get(argv.at(-1) ?? "") ?? new Uint8Array()).toString("base64"),
+			stderr: "",
+		}),
+		log: Object.assign(() => {}, {
+			warn: () => {},
+		}),
+	} as unknown as Bridge.Context;
+};
+
+describe("reading a world's seed", () => {
+	it("reads the seed from world_gen_settings.dat from 26.1 on, inside its data wrapper or at its root", async () => {
+		const wrapped = seedVolume({
+			"world/level.dat": settings("normal", 0, 0),
+			"world/data/minecraft/world_gen_settings.dat": worldGenSettings({
+				data: compound({
+					seed: NEGATIVE_SEED,
+					generate_structures: byte(1),
+					bonus_chest: byte(0),
+				}),
+				DataVersion: int(4774),
+			}),
+		});
+		const bare = seedVolume({
+			"world/level.dat": settings("normal", 0, 0),
+			"world/data/minecraft/world_gen_settings.dat": worldGenSettings({
+				seed: POSITIVE_SEED,
+				generate_structures: byte(1),
+			}),
+		});
+
+		expect(await readWorldSeed(wrapped, "world")).toBe("-4172144997902289642");
+		expect(await readWorldSeed(bare, "world")).toBe("8486642499054473302");
+	});
+
+	it("reads WorldGenSettings in level.dat from 1.16 to 25.x", async () => {
+		const context = seedVolume({
+			"world/level.dat": level({
+				...shared,
+				WorldGenSettings: compound({
+					seed: NEGATIVE_SEED,
+					generate_features: byte(1),
+				}),
+			}),
+		});
+
+		expect(await readWorldSeed(context, "world")).toBe("-4172144997902289642");
+	});
+
+	it("reads RandomSeed in the level.dat of a world older than 1.16", async () => {
+		const context = seedVolume({
+			"world/level.dat": level({
+				...shared,
+				RandomSeed: POSITIVE_SEED,
+			}),
+		});
+
+		expect(await readWorldSeed(context, "world")).toBe("8486642499054473302");
+	});
+
+	it("keeps the sign of a seed whose low word alone is negative", () => {
+		expect(
+			levelSeed(
+				level({
+					RandomSeed: seedTag(-1, -123),
+				}),
+			),
+		).toBe("-123");
+		expect(
+			levelSeed(
+				level({
+					RandomSeed: seedTag(0, -1),
+				}),
+			),
+		).toBe("4294967295");
+	});
+
+	it("falls back to level.dat when world_gen_settings.dat holds no seed", async () => {
+		const context = seedVolume({
+			"world/level.dat": level({
+				...shared,
+				WorldGenSettings: compound({
+					seed: POSITIVE_SEED,
+				}),
+			}),
+			"world/data/minecraft/world_gen_settings.dat": worldGenSettings({
+				data: compound({
+					generate_structures: byte(1),
+				}),
+			}),
+		});
+
+		expect(await readWorldSeed(context, "world")).toBe("8486642499054473302");
+	});
+
+	it("finds no seed in files that hold none, hold another type, or can't be read", async () => {
+		expect(levelSeed(classic(0, 1, 0))).toBeNull();
+		expect(
+			levelSeed(
+				level({
+					RandomSeed: int(42),
+				}),
+			),
+		).toBeNull();
+		expect(
+			worldGenSeed(
+				worldGenSettings({
+					data: compound({
+						dimensions: compound({}),
+					}),
+				}),
+			),
+		).toBeNull();
+		expect(await readWorldSeed(seedVolume({}), "world")).toBeNull();
+		expect(
+			await readWorldSeed(
+				seedVolume({
+					"world/level.dat": new TextEncoder().encode("not a level file"),
+				}),
+				"world",
+			),
+		).toBeNull();
 	});
 });
