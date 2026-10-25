@@ -1,12 +1,16 @@
 import { describe, expect, it } from "bun:test";
 import { type Bridge, BridgeUserError } from "@serverkgg/bridge";
 import { CurseforgeHash } from "@serverkgg/bridge/catalogs";
+import { simplify } from "prismarine-nbt";
 import type { SidecarEntry } from "../addons";
 import { MODPACK_VARIABLE } from "../modpacks";
 import { CatalogProviderId } from "../providers";
+import { parseLevel } from "../worlds";
 import {
 	CLIENT_PACK_BUILD,
+	CLIENT_PACK_DECODE_SCRIPT,
 	CLIENT_PACK_DIRECTORY,
+	CLIENT_PACK_SERVERS_DAT,
 	CLIENT_PACK_SIDECAR,
 	CLIENT_PACK_STAGING,
 	CLIENT_PACK_ZIP_SCRIPT,
@@ -22,6 +26,8 @@ const MODS_SIDECAR = "mods/.serverk-catalog.json";
 const CURSEFORGE_FILES = "https://api.curseforge.com/v1/mods/files";
 
 const MODRINTH_HASHES = "https://api.modrinth.com/v2/version_files";
+
+const ADDRESS = "ahmed.srvk.gg";
 
 const SODIUM: SidecarEntry = {
 	provider: CatalogProviderId.Modrinth,
@@ -156,7 +162,9 @@ interface ServerOptions {
 	modrinth?: Record<string, unknown>;
 	curseforge?: unknown[];
 	zipCode?: number;
+	decodeCode?: number;
 	files?: Record<string, string>;
+	address?: string | null;
 }
 
 const serverWith = (options: ServerOptions = {}) => {
@@ -193,6 +201,7 @@ const serverWith = (options: ServerOptions = {}) => {
 		...Object.entries(options.files ?? {}),
 	]);
 	const written = new Map<string, string>();
+	const decoded = new Map<string, Uint8Array>();
 	const ensured: string[] = [];
 	const commands: string[][] = [];
 	const requests: string[] = [];
@@ -241,6 +250,9 @@ const serverWith = (options: ServerOptions = {}) => {
 	};
 
 	const context = {
+		server: {
+			playerAddress: options.address === undefined ? ADDRESS : options.address,
+		},
 		variable: (key: string) => variables[key] ?? null,
 		secret: (key: string) => (key === "CURSEFORGE_API_KEY" ? "key" : null),
 		files: {
@@ -293,6 +305,20 @@ const serverWith = (options: ServerOptions = {}) => {
 		exec: async (argv: string[]) => {
 			commands.push(argv);
 
+			if (argv.at(2) === CLIENT_PACK_DECODE_SCRIPT) {
+				const code = options.decodeCode ?? 0;
+
+				if (code === 0) {
+					decoded.set(argv.at(5) ?? "", new Uint8Array(Buffer.from(files.get(argv.at(4) ?? "") ?? "", "base64")));
+				}
+
+				return {
+					stdout: "",
+					stderr: code === 0 ? "" : "no space left on device",
+					code,
+				};
+			}
+
 			const code = options.zipCode ?? 0;
 
 			if (code === 0) {
@@ -318,6 +344,7 @@ const serverWith = (options: ServerOptions = {}) => {
 		context,
 		files,
 		written,
+		decoded,
 		ensured,
 		commands,
 		requests,
@@ -441,6 +468,14 @@ describe("building a curseforge client pack", () => {
 			[
 				"sh",
 				"-c",
+				CLIENT_PACK_DECODE_SCRIPT,
+				"client-pack",
+				`${CLIENT_PACK_STAGING}/servers.dat.b64`,
+				CLIENT_PACK_SERVERS_DAT,
+			],
+			[
+				"sh",
+				"-c",
 				CLIENT_PACK_ZIP_SCRIPT,
 				"client-pack",
 				CLIENT_PACK_BUILD,
@@ -454,8 +489,8 @@ describe("building a curseforge client pack", () => {
 		expect(files.has(`${CLIENT_PACK_DIRECTORY}/client-pack.zip`)).toBe(true);
 		expect(staged(files)).toEqual([]);
 		expect(notice).toEqual({
-			ar: "تم تجهيز مودباك CurseForge يضم مودين. نزّله وأرسله للاعبين ليستوردوه في لانشر CurseForge.",
-			en: "Built a CurseForge pack with 2 mods. Download it and send it to players to import in the CurseForge app.",
+			ar: "تم تجهيز مودباك CurseForge يضم مودين. نزّله وأرسله للاعبين ليستوردوه في لانشر CurseForge. وسيرفرك مضاف إلى المودباك، فيجده اللاعبون في قائمة السيرفرات.",
+			en: "Built a CurseForge pack with 2 mods. Download it and send it to players to import in the CurseForge app. Your server is already in the pack, so players find it in their server list.",
 		});
 	});
 
@@ -540,8 +575,8 @@ describe("building a curseforge client pack", () => {
 			MODRINTH_HASHES,
 		]);
 		expect(notice).toEqual({
-			ar: "تم تجهيز مودباك CurseForge يضم مودًا واحدًا. نزّله وأرسله للاعبين ليستوردوه في لانشر CurseForge. الملف custom.jar ليس في المودباك لأن اللانشر لا يستطيع تنزيله من Modrinth أو CurseForge، فأرسله للاعبين بنفسك.",
-			en: "Built a CurseForge pack with 1 mod. Download it and send it to players to import in the CurseForge app. custom.jar isn't in the pack because a launcher can't download it from Modrinth or CurseForge, so send it to players yourself.",
+			ar: "تم تجهيز مودباك CurseForge يضم مودًا واحدًا. نزّله وأرسله للاعبين ليستوردوه في لانشر CurseForge. وسيرفرك مضاف إلى المودباك، فيجده اللاعبون في قائمة السيرفرات. الملف custom.jar ليس في المودباك لأن اللانشر لا يستطيع تنزيله من Modrinth أو CurseForge، فأرسله للاعبين بنفسك.",
+			en: "Built a CurseForge pack with 1 mod. Download it and send it to players to import in the CurseForge app. Your server is already in the pack, so players find it in their server list. custom.jar isn't in the pack because a launcher can't download it from Modrinth or CurseForge, so send it to players yourself.",
 		});
 	});
 
@@ -640,15 +675,15 @@ describe("building a modrinth client pack", () => {
 				fileSize: 1000,
 			},
 		]);
-		expect(commands.at(0)?.slice(5)).toEqual([
+		expect(commands.at(-1)?.slice(5)).toEqual([
 			"../client-pack.mrpack",
 			"modrinth.index.json",
 			"overrides",
 		]);
 		expect(files.has(`${CLIENT_PACK_DIRECTORY}/client-pack.mrpack`)).toBe(true);
 		expect(notice).toEqual({
-			ar: "تم تجهيز مودباك Modrinth يضم مودين. نزّله وأرسله للاعبين ليستوردوه في لانشر Modrinth أو Prism.",
-			en: "Built a Modrinth pack with 2 mods. Download it and send it to players to import in the Modrinth app or Prism.",
+			ar: "تم تجهيز مودباك Modrinth يضم مودين. نزّله وأرسله للاعبين ليستوردوه في لانشر Modrinth أو Prism. وسيرفرك مضاف إلى المودباك، فيجده اللاعبون في قائمة السيرفرات.",
+			en: "Built a Modrinth pack with 2 mods. Download it and send it to players to import in the Modrinth app or Prism. Your server is already in the pack, so players find it in their server list.",
 		});
 	});
 
@@ -709,7 +744,7 @@ describe("building a modrinth client pack", () => {
 			],
 		]);
 		expect(notice?.en).toBe(
-			"Built a Modrinth pack with 2 mods. Download it and send it to players to import in the Modrinth app or Prism.",
+			"Built a Modrinth pack with 2 mods. Download it and send it to players to import in the Modrinth app or Prism. Your server is already in the pack, so players find it in their server list.",
 		);
 	});
 
@@ -762,7 +797,7 @@ describe("building a modrinth client pack", () => {
 			CURSEFORGE_FILES,
 		]);
 		expect(notice?.en).toBe(
-			"Built a Modrinth pack with 3 mods. Download it and send it to players to import in the Modrinth app or Prism.",
+			"Built a Modrinth pack with 3 mods. Download it and send it to players to import in the Modrinth app or Prism. Your server is already in the pack, so players find it in their server list.",
 		);
 	});
 
@@ -783,7 +818,7 @@ describe("building a modrinth client pack", () => {
 
 		expect(writtenJson(written, "modrinth.index.json").files).toHaveLength(1);
 		expect(notice?.en).toBe(
-			"Built a Modrinth pack with 1 mod. Download it and send it to players to import in the Modrinth app or Prism. sodium.jar isn't in the pack because a launcher can't download it from Modrinth or CurseForge, so send it to players yourself.",
+			"Built a Modrinth pack with 1 mod. Download it and send it to players to import in the Modrinth app or Prism. Your server is already in the pack, so players find it in their server list. sodium.jar isn't in the pack because a launcher can't download it from Modrinth or CurseForge, so send it to players yourself.",
 		);
 	});
 
@@ -856,6 +891,102 @@ describe("building a modrinth client pack", () => {
 	});
 });
 
+describe("putting the server in the players' server list", () => {
+	it("writes the server into the zipped overrides/servers.dat under the pack name, with arabic intact", async () => {
+		const { context, decoded, commands } = serverWith({
+			mods: {
+				"jei.jar": JEI,
+			},
+		});
+
+		await build(context, "سيرفر الأصحاب");
+
+		const parsed = await parseLevel(decoded.get(CLIENT_PACK_SERVERS_DAT) ?? new Uint8Array());
+
+		expect(parsed === null ? null : simplify(parsed)).toEqual({
+			servers: [
+				{
+					name: "سيرفر الأصحاب",
+					ip: ADDRESS,
+				},
+			],
+		});
+		expect(commands.at(-1)?.slice(6)).toEqual([
+			"manifest.json",
+			"modlist.html",
+			"overrides",
+		]);
+	});
+
+	it("puts the server in a modrinth pack as well", async () => {
+		const { context, decoded, commands } = serverWith({
+			variant: "fabric",
+			build: "0.15.3",
+			mods: {
+				"sodium.jar": SODIUM,
+			},
+			address: "203.0.113.7:25570",
+		});
+
+		await build(context);
+
+		const parsed = await parseLevel(decoded.get(CLIENT_PACK_SERVERS_DAT) ?? new Uint8Array());
+
+		expect(parsed === null ? null : simplify(parsed)).toEqual({
+			servers: [
+				{
+					name: "Friends SMP",
+					ip: "203.0.113.7:25570",
+				},
+			],
+		});
+		expect(commands.at(-1)?.slice(5)).toEqual([
+			"../client-pack.mrpack",
+			"modrinth.index.json",
+			"overrides",
+		]);
+	});
+
+	it("refuses and keeps the previous pack when servers.dat can't be written", async () => {
+		const { context, files, commands } = serverWith({
+			mods: {
+				"jei.jar": JEI,
+			},
+			decodeCode: 1,
+			files: {
+				[`${CLIENT_PACK_DIRECTORY}/client-pack.zip`]: "previous",
+			},
+		});
+
+		const refusal = await refusalOf(() => build(context));
+
+		expect(refusal.en).toBe("We couldn't build the pack file. Check disk space and try again.");
+		expect(commands).toHaveLength(1);
+		expect(files.get(`${CLIENT_PACK_DIRECTORY}/client-pack.zip`)).toBe("previous");
+		expect(staged(files)).toEqual([]);
+	});
+
+	it("writes no servers.dat while the server has no address, and says so", async () => {
+		const { context, decoded, commands } = serverWith({
+			mods: {
+				"jei.jar": JEI,
+			},
+			address: null,
+		});
+
+		const notice = await build(context);
+
+		expect(decoded.size).toBe(0);
+		expect(commands.map((argv) => argv.at(2))).toEqual([
+			CLIENT_PACK_ZIP_SCRIPT,
+		]);
+		expect(notice).toEqual({
+			ar: "تم تجهيز مودباك CurseForge يضم مودًا واحدًا. نزّله وأرسله للاعبين ليستوردوه في لانشر CurseForge. لا يوجد لسيرفرك عنوان بعد، ولذلك لا يضيفه المودباك إلى قائمة السيرفرات عند اللاعبين.",
+			en: "Built a CurseForge pack with 1 mod. Download it and send it to players to import in the CurseForge app. Your server has no address yet, so the pack doesn't add it to the players' server list.",
+		});
+	});
+});
+
 describe("when no client pack can be built", () => {
 	it("refuses while a modpack is applied and lists no pack, because that modpack is the one players need", async () => {
 		const { context } = serverWith({
@@ -918,8 +1049,8 @@ describe("when no client pack can be built", () => {
 		const refusal = await refusalOf(() => build(context));
 
 		expect(refusal).toEqual({
-			ar: "لا توجد في مجلد mods مودات يستطيع اللانشر تنزيلها من Modrinth أو CurseForge، ولذلك لا يوجد ما نضعه في المودباك. ثبّت مودات من الكتالوج في الأعلى، ثم جرب مرة ثانية.",
-			en: "The mods folder has no mods a launcher can download from Modrinth or CurseForge, so there's nothing to put in the pack. Install mods from the catalog above, then try again.",
+			ar: "لا توجد في مجلد mods مودات يستطيع اللانشر تنزيلها من Modrinth أو CurseForge، ولذلك لا يوجد ما نضعه في المودباك. ثبّت مودات من تبويب المودات، ثم جرب مرة ثانية.",
+			en: "The mods folder has no mods a launcher can download from Modrinth or CurseForge, so there's nothing to put in the pack. Install mods from the Mods tab, then try again.",
 		});
 	});
 

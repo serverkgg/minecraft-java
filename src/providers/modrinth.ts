@@ -2,15 +2,18 @@ import type { Bridge } from "@serverkgg/bridge";
 import {
 	MODRINTH,
 	MODRINTH_SEARCH_CACHE_SECONDS,
+	MODRINTH_SHA1,
 	type ModrinthProject,
 	type ModrinthSearch,
 	type ModrinthVersion,
 	modrinthFile,
+	modrinthLatestVersionsByHashes,
 	modrinthRequest,
 } from "./modrinthApi";
 import {
 	AddonKind,
 	type AddonTarget,
+	type AddonUpdates,
 	type CatalogProvider,
 	CatalogProviderId,
 	type CatalogRelease,
@@ -328,5 +331,40 @@ export const modrinthProvider: CatalogProvider = {
 			file,
 			dependencies: dependencies.filter((dependency) => dependency.project.length > 0),
 		};
+	},
+
+	async updates(context, target, tracked): Promise<AddonUpdates> {
+		const hashed = await Promise.all(
+			tracked.map(async (addon) => {
+				return {
+					addon,
+					hash: (await context.files.digest(addon.path, MODRINTH_SHA1)).toLowerCase(),
+				};
+			}),
+		);
+		const latest = await modrinthLatestVersionsByHashes(
+			context,
+			hashed.map((entry) => entry.hash),
+			targetLoaders(target),
+			[
+				target.gameVersion,
+			],
+		);
+		const updates: AddonUpdates = new Map();
+
+		for (const { addon, hash } of hashed) {
+			const version = latest[hash];
+			const current =
+				version?.id === addon.versionId || version?.files.some((file) => file.hashes.sha1?.toLowerCase() === hash);
+
+			if (version && !current) {
+				updates.set(addon.filename, {
+					version: version.version_number,
+					releaseId: version.id,
+				});
+			}
+		}
+
+		return updates;
 	},
 };

@@ -176,9 +176,10 @@ describe("moderating a player who already left", () => {
 });
 
 describe("letting the owner bring their own modpack", () => {
-	it("puts the uploads above the catalog on the modpacks tab", () => {
+	it("puts the uploads and the pack for players above the catalog on the modpacks tab", () => {
 		expect(tabNamed("modpacks")?.sections.map((section) => section.id)).toEqual([
 			"modpack-uploads",
+			"client-pack",
 			"modpack-list",
 		]);
 	});
@@ -197,5 +198,30 @@ describe("letting the owner bring their own modpack", () => {
 	it("hands the stored pack back for players to import, and asks once before deleting it", () => {
 		expect(rowActionNamed("modpack-uploads", "download")?.download).toBe(true);
 		expect(rowActionNamed("modpack-uploads", "remove")?.confirm).toBe(BridgeConfirm.Normal);
+	});
+});
+
+describe("handing players the server's mods as a pack", () => {
+	it("keeps the pack for players off the mods tab, where owners never found it", () => {
+		expect(tabNamed("mods")?.sections.map((section) => section.id)).toEqual([
+			"mod-list",
+		]);
+	});
+
+	it("shows the pack only on a mod loader, and asks for its name with an example", () => {
+		expect(tableNamed("client-pack")?.visibleWhen).toEqual({
+			variable: "SERVER_TYPE",
+			values: [
+				"fabric",
+				"forge",
+				"neoforge",
+			],
+		});
+		expect(tableNamed("client-pack")?.add?.placeholder).toBe("Friends SMP");
+	});
+
+	it("hands the built pack back to download, and asks once before deleting it", () => {
+		expect(rowActionNamed("client-pack", "download")?.download).toBe(true);
+		expect(rowActionNamed("client-pack", "remove")?.confirm).toBe(BridgeConfirm.Normal);
 	});
 });

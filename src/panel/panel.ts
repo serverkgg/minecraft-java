@@ -299,6 +299,90 @@ const modpacksTab: Bridge.Tab = {
 			},
 		},
 		{
+			layout: BridgeLayout.Table,
+			id: "client-pack",
+			title: {
+				ar: "مودباك للاعبين",
+				en: "Modpack for players",
+			},
+			help: {
+				ar: "نجهّز من مودات سيرفرك مودباكًا يستورده اللاعبون في اللانشر، فيدخلون بالمودات نفسها. يضم كل مود يستطيع اللانشر تنزيله من Modrinth أو CurseForge. اكتب اسمه، ثم نزّله وأرسله لهم.",
+				en: "We build a modpack from your server's mods. Players import it in their launcher and join with the same mods. It holds every mod a launcher can download from Modrinth or CurseForge. Type a name for it, then download it and send it to them.",
+			},
+			module: "clientPack",
+			columns: [
+				{
+					key: "name",
+					label: {
+						ar: "الاسم",
+						en: "Name",
+					},
+				},
+				{
+					key: "app",
+					label: {
+						ar: "يُستورد في",
+						en: "Import in",
+					},
+				},
+				{
+					key: "mods",
+					label: {
+						ar: "المودات",
+						en: "Mods",
+					},
+				},
+				{
+					key: "built",
+					label: {
+						ar: "تاريخ التجهيز",
+						en: "Built on",
+					},
+				},
+			],
+			add: {
+				label: {
+					ar: "جهّز المودباك",
+					en: "Build pack",
+				},
+				placeholder: "Friends SMP",
+			},
+			actions: [
+				{
+					id: "download",
+					label: {
+						ar: "نزّل",
+						en: "Download",
+					},
+					download: true,
+				},
+				{
+					id: "remove",
+					label: {
+						ar: "احذف",
+						en: "Delete",
+					},
+					confirm: BridgeConfirm.Normal,
+					confirmText: {
+						ar: "نحذف ملف المودباك من سيرفرك، ولا يتأثر ما نزّله اللاعبون منه. جهّزه من جديد متى أردت.",
+						en: "We delete the pack file from your server. Copies players already downloaded stay as they are. Build it again whenever you like.",
+					},
+				},
+			],
+			empty: {
+				ar: "لا يوجد مودباك للاعبين بعد. اكتب اسمًا واضغط «جهّز المودباك» لنجهّزه من مودات سيرفرك. وإذا كان سيرفرك على مودباك، فأرسل للاعبين ذلك المودباك نفسه.",
+				en: "No pack for players yet. Type a name and select Build pack to build one from your server's mods. If your server runs a modpack, send players that same modpack instead.",
+			},
+			visibleWhen: {
+				variable: "SERVER_TYPE",
+				values: [
+					"fabric",
+					"forge",
+					"neoforge",
+				],
+			},
+		},
+		{
 			layout: BridgeLayout.Catalog,
 			id: "modpack-list",
 			module: "modpacks",
@@ -1188,90 +1272,6 @@ const modsTab: Bridge.Tab = {
 			empty: {
 				ar: "لا توجد مودات مثبّتة بعد.",
 				en: "No mods installed yet.",
-			},
-			visibleWhen: {
-				variable: "SERVER_TYPE",
-				values: [
-					"fabric",
-					"forge",
-					"neoforge",
-				],
-			},
-		},
-		{
-			layout: BridgeLayout.Table,
-			id: "client-pack",
-			title: {
-				ar: "مودباك للاعبين",
-				en: "Modpack for players",
-			},
-			help: {
-				ar: "نجهّز من مودات سيرفرك مودباكًا يستورده اللاعبون في اللانشر، فيدخلون بالمودات نفسها. يضم كل مود يستطيع اللانشر تنزيله من Modrinth أو CurseForge. اكتب اسمه، ثم نزّله وأرسله لهم.",
-				en: "We build a modpack from your server's mods. Players import it in their launcher and join with the same mods. It holds every mod a launcher can download from Modrinth or CurseForge. Type a name for it, then download it and send it to them.",
-			},
-			module: "clientPack",
-			columns: [
-				{
-					key: "name",
-					label: {
-						ar: "الاسم",
-						en: "Name",
-					},
-				},
-				{
-					key: "app",
-					label: {
-						ar: "يُستورد في",
-						en: "Import in",
-					},
-				},
-				{
-					key: "mods",
-					label: {
-						ar: "المودات",
-						en: "Mods",
-					},
-				},
-				{
-					key: "built",
-					label: {
-						ar: "تاريخ التجهيز",
-						en: "Built on",
-					},
-				},
-			],
-			add: {
-				label: {
-					ar: "جهّز المودباك",
-					en: "Build pack",
-				},
-				placeholder: "Friends SMP",
-			},
-			actions: [
-				{
-					id: "download",
-					label: {
-						ar: "نزّل",
-						en: "Download",
-					},
-					download: true,
-				},
-				{
-					id: "remove",
-					label: {
-						ar: "احذف",
-						en: "Delete",
-					},
-					confirm: BridgeConfirm.Normal,
-					confirmText: {
-						ar: "نحذف ملف المودباك من سيرفرك، ولا يتأثر ما نزّله اللاعبون منه. جهّزه من جديد متى أردت.",
-						en: "We delete the pack file from your server. Copies players already downloaded stay as they are. Build it again whenever you like.",
-					},
-				},
-			],
-			empty: {
-				ar: "لا يوجد مودباك للاعبين بعد. اكتب اسمًا واضغط «جهّز المودباك» لنجهّزه من مودات سيرفرك. وإذا كان سيرفرك على مودباك من تبويب المودباك، فأرسل للاعبين ذلك المودباك نفسه.",
-				en: "No pack for players yet. Type a name and select Build pack to build one from your server's mods. If your server runs a modpack from the Modpacks tab, send players that same modpack instead.",
 			},
 			visibleWhen: {
 				variable: "SERVER_TYPE",

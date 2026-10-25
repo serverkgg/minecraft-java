@@ -8,7 +8,7 @@ import {
 } from "@serverkgg/bridge";
 import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { companionForProject, isCompanionFile } from "../companions";
-import type { AddonTarget, CatalogProvider, CatalogRelease } from "../providers";
+import type { AddonTarget, CatalogProvider, CatalogRelease, TrackedAddon } from "../providers";
 import {
 	AddonKind,
 	decodeProviderRef,
@@ -23,6 +23,7 @@ import {
 import { DISABLED_SUFFIX, enabledName, replaceFiles } from "../shared";
 import { readSidecar, type Sidecar, type SidecarEntry, writeSidecar } from "./addonSidecar";
 import { addonTarget } from "./addonTarget";
+import { addonUpdates } from "./addonUpdates";
 import { resolveDependencies } from "./dependencies";
 import { assertInstallSafety } from "./installSafety";
 
@@ -110,6 +111,26 @@ const listFiles = async (context: Bridge.Context, target: AddonTarget) => {
 		...enabled,
 		...disabled,
 	];
+};
+
+const trackedAddons = (entries: Bridge.FileEntry[], sidecar: Sidecar, target: AddonTarget): TrackedAddon[] => {
+	return entries.flatMap((entry) => {
+		const filename = enabledName(entry.name);
+		const tracked = sidecar[filename];
+
+		return tracked
+			? [
+					{
+						filename,
+						path: `${target.directory}/${entry.name}`,
+						provider: tracked.provider,
+						project: tracked.project,
+						versionId: tracked.versionId ?? null,
+						stale: isStale(tracked, target),
+					},
+				]
+			: [];
+	});
 };
 
 const findTracked = (sidecar: Sidecar, id: string) => {
@@ -522,13 +543,17 @@ export const addons: Bridge.Catalog = {
 	async installed(context) {
 		const target = await addonTarget(context);
 		const sidecar = await readSidecar(context, target.directory);
-		const entries = await listFiles(context, target);
+		const entries = (await listFiles(context, target)).filter(
+			(entry) => !isCompanionFile(context, enabledName(entry.name)),
+		);
+		const updates = await addonUpdates(context, target, trackedAddons(entries, sidecar, target));
 
-		return entries
-			.filter((entry) => !isCompanionFile(context, enabledName(entry.name)))
-			.map((entry) => {
-				return entryFor(entry.name, sidecar[enabledName(entry.name)], target, entry.sizeBytes);
-			});
+		return entries.map((entry) => {
+			return {
+				...entryFor(entry.name, sidecar[enabledName(entry.name)], target, entry.sizeBytes),
+				update: updates.get(enabledName(entry.name)) ?? null,
+			};
+		});
 	},
 
 	async releases(context, id) {

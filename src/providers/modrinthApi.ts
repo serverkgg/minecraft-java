@@ -10,6 +10,8 @@ export const MODRINTH_PROJECT_CACHE_SECONDS = 600;
 
 export const MODRINTH_SIDE_CACHE_SECONDS = 86_400;
 
+const MODRINTH_UPDATE_CACHE_SECONDS = 600;
+
 export const MODRINTH_UNSUPPORTED = "unsupported";
 
 const MODRINTH_CDN = "cdn.modrinth.com";
@@ -198,6 +200,36 @@ export const modrinthVersionsByHashes = async (
 	}
 
 	return matches;
+};
+
+export const modrinthLatestVersionsByHashes = async (
+	context: Bridge.Context,
+	hashes: string[],
+	loaders: string[],
+	gameVersions: string[],
+): Promise<Record<string, ModrinthVersion>> => {
+	const wanted = [
+		...new Set(hashes.map((hash) => hash.toLowerCase())),
+	].sort();
+	const latest: Record<string, ModrinthVersion> = {};
+
+	for (let cursor = 0; cursor < wanted.length; cursor += PROJECT_BATCH) {
+		const found = await modrinthRequest<Record<string, ModrinthVersion>>(
+			context,
+			`${MODRINTH}/version_files/update`,
+			MODRINTH_UPDATE_CACHE_SECONDS,
+			{
+				algorithm: MODRINTH_SHA1,
+				game_versions: gameVersions,
+				hashes: wanted.slice(cursor, cursor + PROJECT_BATCH),
+				loaders,
+			},
+		);
+
+		Object.assign(latest, found);
+	}
+
+	return latest;
 };
 
 export const modrinthVersionId = (url: string): string | null => {

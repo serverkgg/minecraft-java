@@ -6,6 +6,8 @@ We pull modpacks from **Modrinth** and **CurseForge**, and only show the ones th
 
 > [!warning] Every player needs the same modpack installed in their own launcher to join, because your server can't hand the mods out to players. For a catalog pack, send them its page on Modrinth or CurseForge, linked on the **Version** tab. For a pack you uploaded, download its file from **Your uploads** and send it to them to import in their launcher.
 
+For a server with mods but no modpack, build a pack from its mods for players to import in their launcher, in **Modpack for players** on the **Modpacks** tab, below **Your uploads**. The steps are in the [plugins and mods guide](/games/minecraft-java/guides/plugins-mods).
+
 ## Install one
 
 In the **Modpacks** tab, search for the one you want and press install.

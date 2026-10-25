@@ -62,6 +62,17 @@ export interface CatalogRelease {
 	dependencies: CatalogDependency[];
 }
 
+export interface TrackedAddon {
+	filename: string;
+	path: string;
+	provider: string;
+	project: string;
+	versionId: string | null;
+	stale: boolean;
+}
+
+export type AddonUpdates = Map<string, Bridge.CatalogUpdate>;
+
 export interface CatalogSearch {
 	query: string;
 	page: number;
@@ -127,4 +138,5 @@ export interface CatalogProvider {
 		project: string,
 		version?: string | null,
 	): Promise<CatalogRelease | null>;
+	updates?(context: Bridge.Context, target: AddonTarget, tracked: TrackedAddon[]): Promise<AddonUpdates>;
 }

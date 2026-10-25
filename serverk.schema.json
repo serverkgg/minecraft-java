@@ -125,7 +125,7 @@
 									"sources": {
 										"default": [],
 										"description": "The catalogs the panel installs this kind from. Leave it empty when the customer adds them by hand through the files.",
-										"maxItems": 4,
+										"maxItems": 5,
 										"type": "array",
 										"items": {
 											"type": "string",
@@ -133,7 +133,8 @@
 												"modrinth",
 												"curseforge",
 												"hangar",
-												"thunderstore"
+												"thunderstore",
+												"workshop"
 											]
 										}
 									}

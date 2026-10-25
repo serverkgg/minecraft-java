@@ -51,18 +51,18 @@ If you have a `jar` file that isn't in the catalog, upload it from the **Files**
 
 Every player needs the same mods as your server. Instead of each player installing them one by one, we build a pack from them that players import into their launcher in one step.
 
-1. Open the **Mods** tab and type a name for the pack in **Modpack for players**, below the catalog.
+1. Open the **Modpacks** tab and type a name for the pack in **Modpack for players**, below **Your uploads**.
 2. Press **Build pack**.
 3. Press **Download** on the pack in the list, and send the file to your friends.
 
-@[open](panel:mods)
+@[open](panel:modpacks)
 
 The **Import in** column names the launcher that opens the file:
 
 - When every mod came from CurseForge, we build a `zip` that players import in the CurseForge app: **Import**, then **Choose .zip file**.
 - Otherwise we build an `.mrpack` that players import in the Modrinth app or Prism Launcher. In Prism, press **Add Instance**, then **Import**.
 
-The pack holds no mod files, only the list of mods and where each one downloads from, so the player's launcher downloads them from their source. Whenever you change your mods, build the pack again and send it again. The new one replaces the old one.
+The pack holds no mod files, only the list of mods and where each one downloads from, so the player's launcher downloads them from their source. The pack also adds your server to each player's server list, so it's waiting under **Multiplayer** after the import. Whenever you change your mods, build the pack again and send it again. The new one replaces the old one.
 
 ### What the pack can't hold
 

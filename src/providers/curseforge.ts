@@ -3,6 +3,9 @@ import {
 	CURSEFORGE_SEARCH_CEILING,
 	CURSEFORGE_SECRET,
 	CurseforgeDependency,
+	type CurseforgeFileIndex,
+	type CurseforgeMod,
+	CurseforgeModLoader,
 	CurseforgeReleaseType,
 	CurseforgeSort,
 } from "@serverkgg/bridge/catalogs";
@@ -17,18 +20,34 @@ import {
 	curseforgeSearchPage,
 	curseforgeSortOf,
 } from "./curseforgeApi";
-import { AddonKind, type AddonTarget, type CatalogProvider, CatalogProviderId, type CatalogRelease } from "./provider";
+import {
+	AddonKind,
+	type AddonTarget,
+	type AddonUpdates,
+	type CatalogProvider,
+	CatalogProviderId,
+	type CatalogRelease,
+	type TrackedAddon,
+} from "./provider";
 
 const CLASS_ID: Record<AddonKind, number> = {
 	[AddonKind.Mod]: CURSEFORGE_CLASS_MODS,
 	[AddonKind.Plugin]: CURSEFORGE_CLASS_PLUGINS,
 };
 
-const LOADER_TYPE: Partial<Record<ServerVariant, number>> = {
-	[ServerVariant.Forge]: 1,
-	[ServerVariant.Fabric]: 4,
-	[ServerVariant.NeoForge]: 6,
+const LOADER_TYPE: Partial<Record<ServerVariant, CurseforgeModLoader>> = {
+	[ServerVariant.Forge]: CurseforgeModLoader.Forge,
+	[ServerVariant.Fabric]: CurseforgeModLoader.Fabric,
+	[ServerVariant.NeoForge]: CurseforgeModLoader.NeoForge,
 };
+
+const RELEASE_PREFERENCE = [
+	CurseforgeReleaseType.Release,
+	CurseforgeReleaseType.Beta,
+	CurseforgeReleaseType.Alpha,
+];
+
+const JAR_EXTENSION = /\.jar$/i;
 
 const compatibleFiles = async (context: Bridge.Context, target: AddonTarget, project: string) => {
 	const files = await curseforgeCatalog(context).modFiles(project, {
@@ -39,6 +58,48 @@ const compatibleFiles = async (context: Bridge.Context, target: AddonTarget, pro
 	const usable = files.data.filter((entry) => entry.isAvailable);
 
 	return usable;
+};
+
+const latestCurseforgeIndex = (
+	indexes: CurseforgeFileIndex[],
+	gameVersion: string,
+	loader: CurseforgeModLoader | undefined,
+): CurseforgeFileIndex | null => {
+	const matching = indexes.filter((index) => {
+		return index.gameVersion === gameVersion && (loader === undefined || index.modLoader === loader);
+	});
+
+	for (const releaseType of RELEASE_PREFERENCE) {
+		const newest = matching
+			.filter((index) => index.releaseType === releaseType)
+			.sort((left, right) => right.fileId - left.fileId)
+			.at(0);
+
+		if (newest) {
+			return newest;
+		}
+	}
+
+	return null;
+};
+
+const curseforgeBehind = (addon: TrackedAddon, latest: CurseforgeFileIndex) => {
+	if (addon.versionId === null) {
+		return latest.filename !== addon.filename;
+	}
+
+	if (String(latest.fileId) === addon.versionId) {
+		return false;
+	}
+
+	return addon.stale || latest.fileId > Number(addon.versionId);
+};
+
+const curseforgeVersionLabel = (mod: CurseforgeMod, latest: CurseforgeFileIndex) => {
+	return (
+		mod.latestFiles?.find((file) => file.id === latest.fileId)?.displayName
+		?? latest.filename.replace(JAR_EXTENSION, "")
+	);
 };
 
 export const curseForgeProvider: CatalogProvider = {
@@ -290,5 +351,27 @@ export const curseForgeProvider: CatalogProvider = {
 					kind: "required",
 				})),
 		};
+	},
+
+	async updates(context, target, tracked): Promise<AddonUpdates> {
+		const ids = tracked.map((addon) => Number(addon.project)).filter((id) => Number.isInteger(id));
+		const mods = await curseforgeCatalog(context).mods(ids);
+		const updates: AddonUpdates = new Map();
+
+		for (const addon of tracked) {
+			const mod = mods.find((candidate) => String(candidate.id) === addon.project);
+			const latest = mod
+				? latestCurseforgeIndex(mod.latestFilesIndexes ?? [], target.gameVersion, LOADER_TYPE[target.variant])
+				: null;
+
+			if (mod && latest && curseforgeBehind(addon, latest)) {
+				updates.set(addon.filename, {
+					version: curseforgeVersionLabel(mod, latest),
+					releaseId: String(latest.fileId),
+				});
+			}
+		}
+
+		return updates;
 	},
 };

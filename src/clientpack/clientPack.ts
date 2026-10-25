@@ -10,6 +10,7 @@ import { STAGING_ROOT } from "../shared";
 import { type ClientPackIdentity, clientPackVariant } from "./clientPackIdentity";
 import { type ClientPackModrinthMod, clientPackIndex } from "./clientPackIndex";
 import { CLIENT_PACK_MODLIST, type ClientPackCurseforgeMod, clientPackManifest } from "./clientPackManifest";
+import { serversDatOf } from "./serversDat";
 
 export enum ClientPackFormat {
 	CurseForge = "curseforge",
@@ -34,9 +35,19 @@ export const CLIENT_PACK_LISTED_FILES = 5;
 
 export const CLIENT_PACK_ZIP_SCRIPT = 'cd "$1" && shift && exec zip -q -r "$@"';
 
+export const CLIENT_PACK_DECODE_SCRIPT = 'base64 -d -- "$1" > "$2"';
+
 const ZIP_TIMEOUT_MS = 60_000;
 
+const DECODE_TIMEOUT_MS = 10_000;
+
 const OVERRIDES = "overrides";
+
+const SERVERS_DAT = "servers.dat";
+
+export const CLIENT_PACK_SERVERS_DAT = `${CLIENT_PACK_BUILD}/${OVERRIDES}/${SERVERS_DAT}`;
+
+const SERVERS_DAT_ENCODED = `${CLIENT_PACK_STAGING}/${SERVERS_DAT}.b64`;
 
 const CURSEFORGE_MANIFEST = "manifest.json";
 
@@ -92,8 +103,8 @@ const NOT_INSTALLED: Bridge.Text = {
 };
 
 const NO_FETCHABLE_MODS: Bridge.Text = {
-	ar: "لا توجد في مجلد mods مودات يستطيع اللانشر تنزيلها من Modrinth أو CurseForge، ولذلك لا يوجد ما نضعه في المودباك. ثبّت مودات من الكتالوج في الأعلى، ثم جرب مرة ثانية.",
-	en: "The mods folder has no mods a launcher can download from Modrinth or CurseForge, so there's nothing to put in the pack. Install mods from the catalog above, then try again.",
+	ar: "لا توجد في مجلد mods مودات يستطيع اللانشر تنزيلها من Modrinth أو CurseForge، ولذلك لا يوجد ما نضعه في المودباك. ثبّت مودات من تبويب المودات، ثم جرب مرة ثانية.",
+	en: "The mods folder has no mods a launcher can download from Modrinth or CurseForge, so there's nothing to put in the pack. Install mods from the Mods tab, then try again.",
 };
 
 const PACK_NAME_INVALID: Bridge.Text = {
@@ -104,6 +115,16 @@ const PACK_NAME_INVALID: Bridge.Text = {
 const ZIP_FAILED: Bridge.Text = {
 	ar: "تعذّر تجهيز ملف المودباك. تأكد من المساحة وجرب مرة ثانية.",
 	en: "We couldn't build the pack file. Check disk space and try again.",
+};
+
+const SERVER_LISTED: Bridge.Text = {
+	ar: "وسيرفرك مضاف إلى المودباك، فيجده اللاعبون في قائمة السيرفرات.",
+	en: "Your server is already in the pack, so players find it in their server list.",
+};
+
+const SERVER_UNLISTED: Bridge.Text = {
+	ar: "لا يوجد لسيرفرك عنوان بعد، ولذلك لا يضيفه المودباك إلى قائمة السيرفرات عند اللاعبين.",
+	en: "Your server has no address yet, so the pack doesn't add it to the players' server list.",
 };
 
 interface ClientPackRecord {
@@ -254,13 +275,19 @@ const leftText = (left: string[]): Bridge.Text => {
 	};
 };
 
-export const clientPackNotice = (format: ClientPackFormat, count: number, left: string[]): Bridge.Text => {
+export const clientPackNotice = (
+	format: ClientPackFormat,
+	count: number,
+	left: string[],
+	listed: boolean,
+): Bridge.Text => {
 	const mods = modCountText(count);
 	const app = CLIENT_PACK_APPS[format];
 	const label = FORMAT_LABELS[format];
+	const server = listed ? SERVER_LISTED : SERVER_UNLISTED;
 	const built = {
-		ar: `تم تجهيز مودباك ${label} يضم ${mods.ar}. نزّله وأرسله للاعبين ليستوردوه في ${app.ar}.`,
-		en: `Built a ${label} pack with ${mods.en}. Download it and send it to players to import in the ${app.en}.`,
+		ar: `تم تجهيز مودباك ${label} يضم ${mods.ar}. نزّله وأرسله للاعبين ليستوردوه في ${app.ar}. ${server.ar}`,
+		en: `Built a ${label} pack with ${mods.en}. Download it and send it to players to import in the ${app.en}. ${server.en}`,
 	};
 
 	if (left.length === 0) {
@@ -521,6 +548,39 @@ const writePackFiles = async (context: Bridge.Context, identity: ClientPackIdent
 	await context.files.write(`${CLIENT_PACK_BUILD}/${MODRINTH_INDEX}`, clientPackIndex(identity, plan.modrinth));
 };
 
+const writeServersDat = async (context: Bridge.Context, name: string, address: string) => {
+	const bytes = serversDatOf([
+		{
+			name,
+			ip: address,
+		},
+	]);
+
+	await context.files.write(SERVERS_DAT_ENCODED, Buffer.from(bytes).toString("base64"));
+
+	const result = await context.exec(
+		[
+			"sh",
+			"-c",
+			CLIENT_PACK_DECODE_SCRIPT,
+			"client-pack",
+			SERVERS_DAT_ENCODED,
+			CLIENT_PACK_SERVERS_DAT,
+		],
+		{
+			timeoutMs: DECODE_TIMEOUT_MS,
+		},
+	);
+
+	if (result.code !== 0) {
+		context.log.warn("could not write the client pack server list", {
+			detail: execDetail(result),
+		});
+
+		throw new BridgeUserError(ZIP_FAILED);
+	}
+};
+
 const packFileName = (format: ClientPackFormat) => {
 	return `${CLIENT_PACK_FILE}.${FORMAT_EXTENSIONS[format]}`;
 };
@@ -560,6 +620,7 @@ export const clientPackPath = (format: ClientPackFormat) => {
 
 const buildClientPack = async (context: Bridge.Context, input: string): Promise<Bridge.AddOutcome> => {
 	const builtAt = new Date().toISOString();
+	const address = context.server.playerAddress;
 	const source = await packSource(context, clientPackName(input), packVersion(builtAt));
 	const plan = await planPack(context, source.jars);
 	const pending = `${CLIENT_PACK_STAGING}/${packFileName(plan.format)}`;
@@ -569,6 +630,11 @@ const buildClientPack = async (context: Bridge.Context, input: string): Promise<
 
 	try {
 		await writePackFiles(context, source.identity, plan);
+
+		if (address !== null) {
+			await writeServersDat(context, source.identity.name, address);
+		}
+
 		await zipPack(context, plan.format);
 		await context.files.remove(CLIENT_PACK_DIRECTORY);
 		await context.files.ensure(CLIENT_PACK_DIRECTORY);
@@ -590,10 +656,11 @@ const buildClientPack = async (context: Bridge.Context, input: string): Promise<
 		format: plan.format,
 		mods: plan.count,
 		left: plan.left.length,
+		listed: address !== null,
 	});
 
 	return {
-		notice: clientPackNotice(plan.format, plan.count, plan.left),
+		notice: clientPackNotice(plan.format, plan.count, plan.left, address !== null),
 	};
 };
 
