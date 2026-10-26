@@ -596,8 +596,8 @@ const settingsTab: Bridge.Tab = {
 						en: "View distance",
 					},
 					help: {
-						ar: "كلما زاد، زاد استهلاك المعالج والرام.",
-						en: "Higher values cost more CPU and RAM.",
+						ar: "كل درجة تزيد الأراضي التي يحمّلها السيرفر ويرسلها حول كل لاعب، فيزيد حمل المعالج والرام. وعلى الباقات الصغيرة تسبب القيمة العالية اللاق.",
+						en: "Each step adds to the land the server loads and sends around every player, which costs more CPU and RAM. On small plans, a high value makes the server lag.",
 					},
 					min: 3,
 					max: 32,
@@ -608,6 +608,10 @@ const settingsTab: Bridge.Tab = {
 					label: {
 						ar: "مدى المحاكاة",
 						en: "Simulation distance",
+					},
+					help: {
+						ar: "كل درجة تزيد الأراضي التي تتحرك فيها المخلوقات وتنمو فيها المزروعات حول كل لاعب، فيزيد حمل المعالج. وعلى الباقات الصغيرة تسبب القيمة العالية اللاق.",
+						en: "Each step adds to the land around every player where mobs move and crops grow, which costs more CPU. On small plans, a high value makes the server lag.",
 					},
 					min: 3,
 					max: 32,

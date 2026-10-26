@@ -883,3 +883,85 @@ describe("how the addon catalog finds updates", () => {
 		expect(warnings).toHaveLength(1);
 	});
 });
+
+const noteServer = (jars: string[]) => {
+	const files = new Map<string, string>([
+		[
+			".serverk-install.json",
+			NEOFORGE_STAMP,
+		],
+		...jars.map(
+			(
+				name,
+			): [
+				string,
+				string,
+			] => [
+				`mods/${name}`,
+				"",
+			],
+		),
+	]);
+
+	return {
+		variable: (name: string) => (name === "SERVER_TYPE" ? "neoforge" : null),
+		secret: () => null,
+		files: {
+			exists: async (path: string) => files.has(path),
+			read: async (path: string) => files.get(path) ?? "",
+			list: async (glob: string) => {
+				const suffix = glob.slice(glob.indexOf("*") + 1);
+
+				return [
+					...files.keys(),
+				]
+					.filter((path) => path.startsWith("mods/") && path.endsWith(suffix))
+					.map((path) => {
+						return {
+							path,
+							name: path.slice("mods/".length),
+							directory: false,
+							sizeBytes: 1024,
+							modifiedAt: "2026-10-20T00:00:00Z",
+						};
+					});
+			},
+		},
+		log: Object.assign(() => {}, {
+			warn: () => {},
+			error: () => {},
+		}),
+	} as unknown as Bridge.Context;
+};
+
+describe("an installed mod that is heavy on the cpu says so", () => {
+	it("distant horizons carries a note that it can take a full vcpu and lag a small plan", async () => {
+		const entries = await addons.installed(
+			noteServer([
+				"DistantHorizons-2.3.6-b-1.21.4-fabric-neoforge.jar",
+				"DistantHorizons-neoforge-fabric-2.4.0-b-1.21.11.jar.disabled",
+			]),
+		);
+
+		expect(entries).toHaveLength(2);
+
+		for (const entry of entries) {
+			expect(entry.note?.en).toContain("Distant Horizons");
+			expect(entry.note?.ar).toContain("Distant Horizons");
+		}
+	});
+
+	it("every other mod carries no note", async () => {
+		const entries = await addons.installed(
+			noteServer([
+				"lithium-0.14.3.jar",
+				"distant-horizons-addon.jar",
+			]),
+		);
+
+		expect(entries.map((entry) => entry.note)).toEqual([
+			undefined,
+			undefined,
+		]);
+	});
+});

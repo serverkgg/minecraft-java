@@ -20,6 +20,7 @@ This repository holds everything Serverk needs to run Minecraft Java servers. Mi
 - [البدء بسيرفرك · Getting started](https://serverk.gg/games/minecraft-java/guides/getting-started)
 - [اللاعبون: الأدمن والقائمة البيضاء والحظر · Players: admins, the whitelist and bans](https://serverk.gg/games/minecraft-java/guides/players)
 - [الإعدادات: رسالة السيرفر والصعوبة ووضع اللعب · Settings: MOTD, difficulty and game mode](https://serverk.gg/games/minecraft-java/guides/settings)
+- [الأداء: أسباب اللاق وعلاجها · Performance: what causes lag and how to fix it](https://serverk.gg/games/minecraft-java/guides/performance)
 - [الإضافات والمودات: ثبّتها من اللوحة · Plugins and mods: install them from the panel](https://serverk.gg/games/minecraft-java/guides/plugins-mods)
 - [نوع السيرفر والإصدار: ما يحدث لمابك · Server type and version: what happens to your world](https://serverk.gg/games/minecraft-java/guides/server-type)
 - [الكروس بلاي: لاعبو بيدروك في سيرفرك · Crossplay: Bedrock players on your server](https://serverk.gg/games/minecraft-java/guides/crossplay)

@@ -323,6 +323,22 @@ guides:
     bodyPath:
       ar: guides/settings/ar.md
       en: guides/settings/en.md
+  - id: performance
+    title:
+      ar: "الأداء: أسباب اللاق وعلاجها"
+      en: "Performance: what causes lag and how to fix it"
+    summary:
+      ar: على الباقات الصغيرة يأتي اللاق من المعالج لا من الرام. اضبط المدى، وولّد الماب مسبقًا بـ Chunky، واقرأ زمن التحديث بأمر واحد.
+      en: On small plans, lag comes from the CPU, not the RAM. Set the distances, pre-generate the world with Chunky, and read the tick time with one command.
+    tags:
+      - start
+    surfaces:
+      - overview
+      - panel
+      - console
+    bodyPath:
+      ar: guides/performance/ar.md
+      en: guides/performance/en.md
   - id: plugins-mods
     title:
       ar: "الإضافات والمودات: ثبّتها من اللوحة"

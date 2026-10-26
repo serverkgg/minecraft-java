@@ -892,6 +892,29 @@
 					"required": [
 						"appId"
 					]
+				},
+				"mojang": {
+					"description": "The Mojang Bedrock dedicated server behind this game. Declare it when the server installs from Mojang's download links, so the platform updates a server that follows the latest build.",
+					"type": "object",
+					"properties": {
+						"channelVariable": {
+							"description": "The server variable that holds the Bedrock channel the customer picked, release or preview. Omit it when the package installs the release channel only.",
+							"type": "string",
+							"minLength": 2,
+							"maxLength": 32,
+							"pattern": "^[A-Z][A-Z0-9_]*$"
+						},
+						"buildVariable": {
+							"type": "string",
+							"minLength": 2,
+							"maxLength": 32,
+							"pattern": "^[A-Z][A-Z0-9_]*$",
+							"description": "The server variable that pins a Bedrock build. While it is empty the server follows Mojang's latest build, and the platform delivers the target build in it for a game update."
+						}
+					},
+					"required": [
+						"buildVariable"
+					]
 				}
 			},
 			"required": [

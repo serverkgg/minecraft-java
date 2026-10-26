@@ -29,6 +29,13 @@ import { assertInstallSafety } from "./installSafety";
 
 const PAGE_SIZE = 20;
 
+const DISTANT_HORIZONS_FILE = /^DistantHorizons[-_][\w.+-]*\.jar$/i;
+
+const DISTANT_HORIZONS_NOTE: Bridge.Text = {
+	ar: "على السيرفر، يولّد Distant Horizons التضاريس البعيدة في الخلفية وقد يستهلك معالجًا كاملًا، فيسبب اللاق على الباقات الصغيرة.",
+	en: "On the server, Distant Horizons generates far terrain in the background and can use a full vCPU, so the server lags on small plans.",
+};
+
 interface PendingFile {
 	release: CatalogRelease;
 	project: string;
@@ -100,6 +107,11 @@ const entryFor = (
 		stale: isStale(tracked, target),
 		pageUrl: tracked?.pageUrl ?? null,
 		icon: tracked?.icon ?? null,
+		...(DISTANT_HORIZONS_FILE.test(name)
+			? {
+					note: DISTANT_HORIZONS_NOTE,
+				}
+			: {}),
 	};
 };
 
