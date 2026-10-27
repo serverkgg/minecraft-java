@@ -1,7 +1,8 @@
 import { type Bridge, BridgeKind, BridgeUserError } from "@serverkgg/bridge";
 import { BridgeEventName } from "@serverkgg/bridge/protocol";
+import { formatByteSize, relativeUploadPath } from "@serverkgg/bridge/utils";
 import { installedLayout } from "../install/installLayout";
-import { formatByteSize, isUnder, relativeUploadPath, WORLD_STAGING } from "../shared";
+import { isUnder, WORLD_STAGING } from "../shared";
 import { readWorldHardcore, setWorldHardcore } from "./levelDat";
 import {
 	activeWorld,

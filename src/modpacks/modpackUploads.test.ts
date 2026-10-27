@@ -292,7 +292,7 @@ describe("listing the modpacks the owner uploaded", () => {
 				mcVersion: "1.20.1",
 				loader: "Forge 47.3.0",
 				files: 2,
-				size: "4.0 KB",
+				size: "4 KB",
 				uploadedAt: "2026-10-20",
 				applied: "",
 				path: STORED_ZIP,

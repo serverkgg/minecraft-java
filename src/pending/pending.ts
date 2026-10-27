@@ -1,5 +1,6 @@
 import { type Bridge, BridgeKind, BridgeUserError } from "@serverkgg/bridge";
 import { BridgeEventName } from "@serverkgg/bridge/protocol";
+import { relativeUploadPath } from "@serverkgg/bridge/utils";
 import {
 	matchPendingFile,
 	modPath,
@@ -9,7 +10,7 @@ import {
 	settlePendingSidecar,
 	writeModpackSidecar,
 } from "../modpacks";
-import { isUnder, PENDING_STAGING, relativeUploadPath } from "../shared";
+import { isUnder, PENDING_STAGING } from "../shared";
 
 const SHA1_ALGORITHM = "sha1";
 

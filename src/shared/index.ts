@@ -2,7 +2,6 @@ export * from "./acceptedBuild";
 export * from "./addonFile";
 export * from "./banList";
 export * from "./buildUnavailable";
-export * from "./byteSize";
 export * from "./chat";
 export * from "./gameplay";
 export * from "./javaRuntime";

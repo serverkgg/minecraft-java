@@ -1,8 +1,8 @@
 import { type Bridge, BridgeKind, BridgeUserError } from "@serverkgg/bridge";
+import { formatByteSize, relativeUploadPath } from "@serverkgg/bridge/utils";
 import { CatalogProviderId, newestPacksFirst } from "../providers";
 import {
 	fileNameOf,
-	formatByteSize,
 	isUnder,
 	MODPACK_UPLOAD_STAGING,
 	modpackIdentity,
@@ -12,7 +12,6 @@ import {
 	packArchivePath,
 	packFormatOf,
 	readPackIndex,
-	relativeUploadPath,
 	STAGING_ROOT,
 	VARIANT_LABELS,
 	writePackIndex,
