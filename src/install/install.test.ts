@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { type Bridge, BridgeUserError } from "@serverkgg/bridge";
+import { syncCompanions, VOICE_CHAT, VOICE_CHAT_PLUGIN_CONFIG, VOICE_CHAT_PROJECT, VOICE_PORT } from "../companions";
 import { MOJANG_MANIFEST as MOJANG_MANIFEST_URL } from "../shared";
 import { install } from "./install";
 
@@ -172,12 +173,14 @@ interface ServerSetup {
 	files: Record<string, string>;
 	variables: Record<string, string>;
 	net: Record<string, unknown>;
+	ports?: Record<string, number>;
 	download?: () => Promise<void>;
 }
 
 const serverWith = (setup: ServerSetup) => {
 	const files = new Map(Object.entries(setup.files));
 	const touched: string[] = [];
+	const warned: string[] = [];
 	const under = (path: string, root: string) => path === root || path.startsWith(`${root}/`);
 
 	const copy = (from: string, to: string) => {
@@ -213,6 +216,15 @@ const serverWith = (setup: ServerSetup) => {
 	const context = {
 		variable: (key: string) => setup.variables[key] ?? null,
 		secret: () => null,
+		port: (key: string) => {
+			const port = setup.ports?.[key];
+
+			if (port === undefined) {
+				throw new Error(`this game declares no port named "${key}"`);
+			}
+
+			return port;
+		},
 		files: {
 			exists: async (path: string) =>
 				[
@@ -277,7 +289,9 @@ const serverWith = (setup: ServerSetup) => {
 			tail: async () => [],
 		},
 		log: Object.assign(() => {}, {
-			warn: () => {},
+			warn: (message: string) => {
+				warned.push(message);
+			},
 			error: () => {},
 		}),
 		emit: () => {},
@@ -290,6 +304,7 @@ const serverWith = (setup: ServerSetup) => {
 		context,
 		files,
 		touched,
+		warned,
 	};
 };
 
@@ -540,6 +555,136 @@ describe("install", () => {
 			expect(error).toBeNull();
 			expect(touched.filter((entry) => entry.startsWith("download") || entry.startsWith("remove"))).toEqual([]);
 		});
+	});
+});
+
+describe("installing the companions inside the install budget", () => {
+	const VOICE_HOST_PORT = 26_342;
+
+	const VOICE_CHAT_BUILDS_URL = (() => {
+		const url = new URL(`https://api.modrinth.com/v2/project/${VOICE_CHAT_PROJECT}/version`);
+
+		url.searchParams.set(
+			"loaders",
+			JSON.stringify([
+				"paper",
+			]),
+		);
+		url.searchParams.set(
+			"game_versions",
+			JSON.stringify([
+				PAPER_STAMP.version,
+			]),
+		);
+
+		return url.toString();
+	})();
+
+	const VOICE_CHAT_RELEASE = [
+		{
+			id: "voicechat-id",
+			project_id: VOICE_CHAT_PROJECT,
+			version_number: "bukkit-2.6.25",
+			version_type: "release",
+			date_published: "2026-10-01T00:00:00Z",
+			game_versions: [
+				PAPER_STAMP.version,
+			],
+			loaders: [
+				"paper",
+			],
+			files: [
+				{
+					url: `https://cdn.modrinth.com/data/${VOICE_CHAT_PROJECT}/voicechat-bukkit-2.6.25.jar`,
+					filename: "voicechat-bukkit-2.6.25.jar",
+					primary: true,
+					size: 939_410,
+					hashes: {},
+				},
+			],
+			dependencies: [],
+		},
+	];
+
+	const voiceChatServerWith = (net: Record<string, unknown>, download?: () => Promise<void>) => {
+		return serverWith({
+			files: {
+				".serverk-install.json": JSON.stringify(PAPER_STAMP),
+				"server.jar": "old",
+				"server.properties": "",
+			},
+			variables: {
+				SERVER_TYPE: "paper",
+				MC_VERSION: PAPER_STAMP.version,
+				LOADER_VERSION: PAPER_STAMP.build,
+				[VOICE_CHAT.variable]: "true",
+			},
+			net,
+			ports: {
+				[VOICE_PORT]: VOICE_HOST_PORT,
+			},
+			...(download
+				? {
+						download,
+					}
+				: {}),
+		});
+	};
+
+	it("downloads the voice chat plugin and writes its voice port while installing a current paper server", async () => {
+		const { context, files, touched } = voiceChatServerWith({
+			[VOICE_CHAT_BUILDS_URL]: VOICE_CHAT_RELEASE,
+		});
+
+		const outcome = await install.run(context);
+
+		expect(outcome).toBeUndefined();
+		expect(files.has("plugins/voicechat-bukkit.jar")).toBe(true);
+		expect(touched.filter((entry) => entry.startsWith("download"))).toEqual([
+			"download .serverk-staging/replacement/new-0",
+		]);
+		expect(touched).toContain(`merge ${VOICE_CHAT_PLUGIN_CONFIG}`);
+	});
+
+	it("leaves the start nothing to download once the install has synced the companions", async () => {
+		const { context, touched } = voiceChatServerWith({
+			[VOICE_CHAT_BUILDS_URL]: VOICE_CHAT_RELEASE,
+		});
+
+		await install.run(context);
+
+		const downloads = touched.filter((entry) => entry.startsWith("download")).length;
+
+		await syncCompanions(context);
+
+		expect(touched.filter((entry) => entry.startsWith("download")).length).toBe(downloads);
+	});
+
+	it("finishes the install with a warning when the companion download fails, and leaves it to the start", async () => {
+		const { context, files, warned } = voiceChatServerWith(
+			{
+				[VOICE_CHAT_BUILDS_URL]: VOICE_CHAT_RELEASE,
+			},
+			async () => {
+				throw new Error("connection reset by cdn.modrinth.com");
+			},
+		);
+
+		const error = await errorOf(install.run(context));
+
+		expect(error).toBeNull();
+		expect(files.has("plugins/voicechat-bukkit.jar")).toBe(false);
+		expect(files.get("server.jar")).toBe("old");
+		expect(warned).toContain("could not update a companion feature, keeping compatible installed files when available");
+	});
+
+	it("finishes the install with a warning when Modrinth cannot be reached", async () => {
+		const { context, warned } = voiceChatServerWith({});
+
+		const error = await errorOf(install.run(context));
+
+		expect(error).toBeNull();
+		expect(warned).toContain("could not update a companion feature, keeping compatible installed files when available");
 	});
 });
 

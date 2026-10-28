@@ -85,6 +85,32 @@ container:
         - variable: CROSSPLAY
           values:
             - "true"
+    - key: voice
+      containerPort: 26300
+      protocol: udp
+      name:
+        ar: الصوت
+        en: Voice
+      hint:
+        ar: منفذ الشات الصوتي. يضبطه سيرفرك بنفسه، ولا يكتبه اللاعبون في أي مكان.
+        en: The voice chat port. Your server sets it up by itself, and players don't type it anywhere.
+      join: separate
+      mirror: true
+      hostRange:
+        default: 26300
+        min: 26300
+        max: 26399
+      activeWhen:
+        - variable: SERVER_TYPE
+          values:
+            - paper
+            - purpur
+            - fabric
+            - forge
+            - neoforge
+        - variable: VOICE_CHAT
+          values:
+            - "true"
     - key: rcon
       containerPort: 25575
       protocol: tcp
@@ -385,6 +411,21 @@ guides:
     bodyPath:
       ar: guides/crossplay/ar.md
       en: guides/crossplay/en.md
+  - id: voice-chat
+    title:
+      ar: "الشات الصوتي: تحدّث مع أصحابك داخل اللعبة"
+      en: "Voice chat: talk to your friends in game"
+    summary:
+      ar: فعّل مفتاحًا واحدًا، ونثبّت Simple Voice Chat ونفتح منفذه ونضبطه لك، ويثبّت كل لاعب المود نفسه على جهازه.
+      en: Turn on one switch and we install Simple Voice Chat, open its port and set it up for you. Each player installs the same mod on their computer.
+    tags:
+      - features
+    surfaces:
+      - overview
+      - panel
+    bodyPath:
+      ar: guides/voice-chat/ar.md
+      en: guides/voice-chat/en.md
   - id: modpacks
     title:
       ar: "المودباك: سيرفر جاهز بضغطة"

@@ -1,5 +1,5 @@
 import type { Bridge } from "@serverkgg/bridge";
-import { type CompanionFeature, CompanionReadiness, CROSSPLAY, VERSION_COMPAT } from "../companions";
+import { type CompanionFeature, CompanionReadiness, CROSSPLAY, VERSION_COMPAT, VOICE_CHAT } from "../companions";
 import { VARIANT_LABELS } from "../shared";
 import type { InstallIdentity } from "./installStamp";
 import {
@@ -195,14 +195,47 @@ const versionCompatLine = (to: InstallIdentity, readiness: CompanionReadiness): 
 	return null;
 };
 
+const voiceChatLine = (to: InstallIdentity, readiness: CompanionReadiness): Bridge.Text | null => {
+	if (readiness === CompanionReadiness.Unresolved) {
+		return {
+			ar: `لن يشتغل الشات الصوتي على ${nameOf(to)} حتى يدعمه Simple Voice Chat. يبقى مفعّلًا ويعود تلقائيًا عندما يتوفر.`,
+			en: `Voice chat won't work on ${nameOf(to)} until Simple Voice Chat supports it. It stays on and comes back on its own once it does.`,
+		};
+	}
+
+	if (readiness === CompanionReadiness.Unsupported) {
+		const variants = variantsOf(VOICE_CHAT);
+
+		return {
+			ar: `لا يشتغل الشات الصوتي على ${VARIANT_LABELS[to.variant]}. يبقى مفعّلًا ويعود تلقائيًا عند العودة إلى ${variants.ar}.`,
+			en: `Voice chat doesn't run on ${VARIANT_LABELS[to.variant]}. It stays on and comes back on its own when you switch back to ${variants.en}.`,
+		};
+	}
+
+	return null;
+};
+
+const COMPANION_LINES = new Map<
+	CompanionFeature,
+	(to: InstallIdentity, readiness: CompanionReadiness) => Bridge.Text | null
+>([
+	[
+		CROSSPLAY,
+		crossplayLine,
+	],
+	[
+		VERSION_COMPAT,
+		versionCompatLine,
+	],
+	[
+		VOICE_CHAT,
+		voiceChatLine,
+	],
+]);
+
 export const companionLines = (to: InstallIdentity, notices: CompanionNotice[]): Bridge.Text[] => {
 	return notices.flatMap(({ feature, readiness }) => {
-		const line =
-			feature === CROSSPLAY
-				? crossplayLine(to, readiness)
-				: feature === VERSION_COMPAT
-					? versionCompatLine(to, readiness)
-					: null;
+		const line = COMPANION_LINES.get(feature)?.(to, readiness) ?? null;
 
 		return line
 			? [

@@ -14,10 +14,14 @@ import {
 	COMPANION_FEATURES,
 	type Companion,
 	type CompanionArtifact,
+	type CompanionConfig,
+	CompanionConfigFormat,
 	type CompanionFeature,
 	type CompanionModrinth,
+	type CompanionPropertiesConfig,
 	type CompanionRequirement,
 	CompanionSource,
+	type CompanionYamlConfig,
 	companionsOf,
 	featureEnabled,
 } from "./companion";
@@ -55,6 +59,12 @@ interface ResolvedFeature {
 
 interface ConfigPass {
 	pending: number;
+}
+
+enum ConfigWrite {
+	Current = "current",
+	Pending = "pending",
+	Written = "written",
 }
 
 export enum CompanionReadiness {
@@ -274,6 +284,54 @@ const sweepDuplicates = async (context: Bridge.Context, companion: Companion, di
 	}
 };
 
+const writeYamlConfig = async (context: Bridge.Context, config: CompanionYamlConfig): Promise<ConfigWrite> => {
+	if (!(await context.files.exists(config.path))) {
+		return ConfigWrite.Pending;
+	}
+
+	const current = await context.files.read(config.path);
+	const merged = mergeYaml(current, config.entries(context));
+
+	if (merged === current) {
+		return ConfigWrite.Current;
+	}
+
+	await context.files.write(config.path, merged);
+
+	return ConfigWrite.Written;
+};
+
+const propertiesCurrent = async (context: Bridge.Context, path: string, values: Bridge.Values) => {
+	if (!(await context.files.exists(path))) {
+		return false;
+	}
+
+	const current = await context.codec.javaProperties.read(path);
+
+	return Object.entries(values).every(([key, value]) => current[key] === String(value ?? ""));
+};
+
+const writePropertiesConfig = async (
+	context: Bridge.Context,
+	config: CompanionPropertiesConfig,
+): Promise<ConfigWrite> => {
+	const values = config.values(context);
+
+	if (await propertiesCurrent(context, config.path, values)) {
+		return ConfigWrite.Current;
+	}
+
+	await context.codec.javaProperties.merge(config.path, values);
+
+	return ConfigWrite.Written;
+};
+
+const writeConfig = async (context: Bridge.Context, config: CompanionConfig) => {
+	return config.format === CompanionConfigFormat.Properties
+		? await writePropertiesConfig(context, config)
+		: await writeYamlConfig(context, config);
+};
+
 const writeConfigs = async (
 	context: Bridge.Context,
 	companion: Companion,
@@ -282,25 +340,18 @@ const writeConfigs = async (
 	let pending = 0;
 
 	for (const config of artifact.configs) {
-		if (!(await context.files.exists(config.path))) {
+		const outcome = await writeConfig(context, config);
+
+		if (outcome === ConfigWrite.Pending) {
 			pending += 1;
-
-			continue;
 		}
 
-		const current = await context.files.read(config.path);
-		const merged = mergeYaml(current, config.entries(context));
-
-		if (merged === current) {
-			continue;
+		if (outcome === ConfigWrite.Written) {
+			context.log("updated a companion config", {
+				companion: companion.id,
+				path: config.path,
+			});
 		}
-
-		await context.files.write(config.path, merged);
-
-		context.log("updated a companion config", {
-			companion: companion.id,
-			path: config.path,
-		});
 	}
 
 	return {

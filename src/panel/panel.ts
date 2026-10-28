@@ -9,7 +9,7 @@ import {
 	BridgeUploadMode,
 } from "@serverkgg/bridge";
 import { rconAccessSections } from "@serverkgg/bridge/rcon";
-import { CROSSPLAY, VERSION_COMPAT } from "../companions";
+import { CROSSPLAY, VERSION_COMPAT, VOICE_CHAT } from "../companions";
 import { MODPACK_UPDATE_ACTION, MODPACK_VARIABLE } from "../modpacks";
 import {
 	CHAT_MESSAGE_LENGTH,
@@ -448,6 +448,47 @@ const settingsTab: Bridge.Tab = {
 			visibleWhen: {
 				variable: "SERVER_TYPE",
 				values: CROSSPLAY.variants,
+			},
+		},
+		{
+			layout: BridgeLayout.Form,
+			id: "voice-chat",
+			title: {
+				ar: "الشات الصوتي",
+				en: "Voice chat",
+			},
+			help: {
+				ar: "تحدّث مع أصحابك بصوتك داخل سيرفرك، ويسمعك اللاعبون القريبون منك.",
+				en: "Talk to your friends by voice on your server. Players near you hear you.",
+			},
+			target: BridgeFormTarget.Variables,
+			reinstall: false,
+			confirm: BridgeConfirm.Normal,
+			confirmText: {
+				ar: "عند حفظ التغيير يتم ريستارت سيرفرك فورًا لتطبيق التعديل.",
+				en: "Saving restarts your server right away so the change takes effect.",
+			},
+			fields: [
+				{
+					key: VOICE_CHAT.variable,
+					control: BridgeControl.Boolean,
+					label: {
+						ar: "شات صوتي داخل اللعبة",
+						en: "In-game voice chat",
+					},
+					help: {
+						ar: "نثبّت مود Simple Voice Chat على سيرفرك ونحدّثه لك، ونفتح له منفذ صوت خاصًا به ونضبطه تلقائيًا. يلزم كل لاعب أن يثبّت المود نفسه على جهازه.",
+						en: "We install and update Simple Voice Chat on your server, and open and set up its own voice port for you. Every player needs to install the same mod on their computer.",
+					},
+					warning: {
+						ar: "لا يستطيع لاعبو بيدروك استخدام الشات الصوتي، لأن المود يشتغل على جافا فقط.",
+						en: "Bedrock players can't use voice chat. The mod runs on Java only.",
+					},
+				},
+			],
+			visibleWhen: {
+				variable: "SERVER_TYPE",
+				values: VOICE_CHAT.variants,
 			},
 		},
 		{

@@ -1,6 +1,14 @@
 import { describe, expect, it } from "bun:test";
-import { BridgeConfirm, BridgeLayout, BridgePlace, BridgeUploadMode } from "@serverkgg/bridge";
+import {
+	BridgeConfirm,
+	BridgeControl,
+	BridgeFormTarget,
+	BridgeLayout,
+	BridgePlace,
+	BridgeUploadMode,
+} from "@serverkgg/bridge";
 import type { BridgeSection } from "@serverkgg/bridge/protocol";
+import { VOICE_CHAT } from "../companions";
 import { panel } from "./panel";
 
 const placeOf = (section: BridgeSection | null | undefined) => {
@@ -42,6 +50,7 @@ const PLAYERS_SECTION_IDS = [
 const HELPED_FORM_IDS = [
 	"version",
 	"crossplay",
+	"voice-chat",
 	"version-compat",
 	"settings",
 ];
@@ -91,7 +100,7 @@ describe("laying out the minecraft panel", () => {
 });
 
 describe("saying what each form is for before the owner reads its fields", () => {
-	it("explains the version, crossplay, version compatibility and settings forms", () => {
+	it("explains the version, crossplay, voice chat, version compatibility and settings forms", () => {
 		for (const id of HELPED_FORM_IDS) {
 			expect(formNamed(id)?.help?.ar.length).toBeGreaterThan(0);
 			expect(formNamed(id)?.help?.en.length).toBeGreaterThan(0);
@@ -223,5 +232,39 @@ describe("handing players the server's mods as a pack", () => {
 	it("hands the built pack back to download, and asks once before deleting it", () => {
 		expect(rowActionNamed("client-pack", "download")?.download).toBe(true);
 		expect(rowActionNamed("client-pack", "remove")?.confirm).toBe(BridgeConfirm.Normal);
+	});
+});
+
+describe("switching voice chat on from the settings tab", () => {
+	it("puts the voice chat switch right after crossplay", () => {
+		const ids = tabNamed("settings")?.sections.map((section) => section.id) ?? [];
+
+		expect(ids.indexOf("voice-chat")).toBe(ids.indexOf("crossplay") + 1);
+	});
+
+	it("shows the switch on exactly the server types voice chat runs on", () => {
+		expect(formNamed("voice-chat")?.visibleWhen).toEqual({
+			variable: "SERVER_TYPE",
+			values: VOICE_CHAT.variants,
+		});
+	});
+
+	it("flips the variable the voice port waits for, restarting without a reinstall", () => {
+		const form = formNamed("voice-chat");
+
+		expect(form?.target).toBe(BridgeFormTarget.Variables);
+		expect(form?.reinstall).toBe(false);
+		expect(form?.confirm).toBe(BridgeConfirm.Normal);
+		expect(
+			form?.fields.map((field) => [
+				field.key,
+				field.control,
+			]),
+		).toEqual([
+			[
+				VOICE_CHAT.variable,
+				BridgeControl.Boolean,
+			],
+		]);
 	});
 });

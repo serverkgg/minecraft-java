@@ -259,8 +259,8 @@ const installProject = async (
 
 	if (companion) {
 		throw new BridgeUserError({
-			ar: `يتم تثبيت ${companion.title} وتحديثه من مفتاح ${companion.feature.switchLabel} في تبويب الإعدادات.`,
-			en: `${companion.title} is installed and updated by the ${companion.feature.switchLabel} switch in the Settings tab.`,
+			ar: `يتم تثبيت ${companion.title} وتحديثه من مفتاح ${companion.feature.switchLabel.ar} في تبويب الإعدادات.`,
+			en: `${companion.title} is installed and updated by the ${companion.feature.switchLabel.en} switch in the Settings tab.`,
 		});
 	}
 

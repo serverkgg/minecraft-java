@@ -10,10 +10,38 @@ export interface MemoryContextOptions {
 	sizes?: Record<string, number>;
 	variables?: Record<string, string>;
 	secrets?: Record<string, string>;
+	ports?: Record<string, number>;
 	json?: (url: string) => unknown;
 }
 
+export interface MemoryMerge {
+	path: string;
+	values: Bridge.Values;
+}
+
 const DEFAULT_DIGEST = "0000000000000000000000000000000000000000";
+
+const PROPERTY_SEPARATOR = "=";
+
+const propertiesOf = (text: string) => {
+	const values: Record<string, string> = {};
+
+	for (const line of text.split("\n")) {
+		const separator = line.indexOf(PROPERTY_SEPARATOR);
+
+		if (separator > 0 && !line.startsWith("#")) {
+			values[line.slice(0, separator)] = line.slice(separator + 1);
+		}
+	}
+
+	return values;
+};
+
+const propertiesText = (values: Record<string, string>) => {
+	return Object.entries(values)
+		.map(([key, value]) => `${key}${PROPERTY_SEPARATOR}${value}\n`)
+		.join("");
+};
 
 const underOrAt = (path: string, root: string) => {
 	return path === root || path.startsWith(`${root}/`);
@@ -41,6 +69,7 @@ export const memoryContext = (options: MemoryContextOptions = {}) => {
 	const files = new Map(Object.entries(options.files ?? {}));
 	const archives = new Map(Object.entries(options.archives ?? {}));
 	const downloads: string[] = [];
+	const merges: MemoryMerge[] = [];
 
 	const moveWithin = <Value>(map: Map<string, Value>, from: string, to: string) => {
 		for (const [key, value] of [
@@ -56,6 +85,34 @@ export const memoryContext = (options: MemoryContextOptions = {}) => {
 	const context = {
 		variable: (key: string) => options.variables?.[key] ?? null,
 		secret: (key: string) => options.secrets?.[key] ?? null,
+		port: (key: string) => {
+			const port = options.ports?.[key];
+
+			if (port === undefined) {
+				throw new Error(`this game declares no port named "${key}"`);
+			}
+
+			return port;
+		},
+		codec: {
+			javaProperties: {
+				read: async (path: string) => propertiesOf(files.get(path) ?? ""),
+				merge: async (path: string, values: Bridge.Values) => {
+					merges.push({
+						path,
+						values,
+					});
+
+					const merged = propertiesOf(files.get(path) ?? "");
+
+					for (const [key, value] of Object.entries(values)) {
+						merged[key] = String(value ?? "");
+					}
+
+					files.set(path, propertiesText(merged));
+				},
+			},
+		},
 		net: {
 			json: async (url: string) => {
 				if (!options.json) {
@@ -106,6 +163,23 @@ export const memoryContext = (options: MemoryContextOptions = {}) => {
 				}
 			},
 			ensure: async () => {},
+			list: async (glob: string) => {
+				const directory = glob.slice(0, glob.lastIndexOf("/"));
+
+				return [
+					...files.keys(),
+				]
+					.filter((key) => key.startsWith(`${directory}/`) && !key.slice(directory.length + 1).includes("/"))
+					.map((key) => {
+						return {
+							path: key,
+							name: key.slice(directory.length + 1),
+							directory: false,
+							sizeBytes: options.sizes?.[key] ?? 0,
+							modifiedAt: "",
+						};
+					});
+			},
 			move: async (from: string, to: string) => {
 				moveWithin(files, from, to);
 				moveWithin(archives, from, to);
@@ -157,5 +231,6 @@ export const memoryContext = (options: MemoryContextOptions = {}) => {
 		context,
 		downloads,
 		files,
+		merges,
 	};
 };

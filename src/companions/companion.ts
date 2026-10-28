@@ -7,6 +7,7 @@ export enum CompanionId {
 	Geyser = "geyser",
 	ViaBackwards = "viabackwards",
 	ViaVersion = "viaversion",
+	VoiceChat = "voicechat",
 }
 
 export enum CompanionSource {
@@ -17,7 +18,7 @@ export enum CompanionSource {
 export interface CompanionFeature {
 	id: string;
 	variable: string;
-	switchLabel: string;
+	switchLabel: Bridge.Text;
 	variants: ServerVariant[];
 }
 
@@ -41,10 +42,24 @@ export interface CompanionModrinth {
 	matchGameVersion: boolean;
 }
 
-export interface CompanionConfig {
+export enum CompanionConfigFormat {
+	Properties = "properties",
+	Yaml = "yaml",
+}
+
+export interface CompanionYamlConfig {
+	format: CompanionConfigFormat.Yaml;
 	path: string;
 	entries(context: Bridge.Context): YamlEntry[];
 }
+
+export interface CompanionPropertiesConfig {
+	format: CompanionConfigFormat.Properties;
+	path: string;
+	values(context: Bridge.Context): Bridge.Values;
+}
+
+export type CompanionConfig = CompanionYamlConfig | CompanionPropertiesConfig;
 
 export interface CompanionArtifact {
 	filename: string;
@@ -66,7 +81,10 @@ export interface Companion {
 export const CROSSPLAY: CompanionFeature = {
 	id: "crossplay",
 	variable: "CROSSPLAY",
-	switchLabel: "crossplay",
+	switchLabel: {
+		ar: "كروس بلاي",
+		en: "crossplay",
+	},
 	variants: [
 		ServerVariant.Paper,
 		ServerVariant.Purpur,
@@ -78,12 +96,39 @@ export const CROSSPLAY: CompanionFeature = {
 export const VERSION_COMPAT: CompanionFeature = {
 	id: "version-compat",
 	variable: "VERSION_COMPAT",
-	switchLabel: "version compatibility",
+	switchLabel: {
+		ar: "توافق الإصدارات",
+		en: "version compatibility",
+	},
 	variants: [
 		ServerVariant.Paper,
 		ServerVariant.Purpur,
 	],
 };
+
+export const VOICE_CHAT: CompanionFeature = {
+	id: "voice-chat",
+	variable: "VOICE_CHAT",
+	switchLabel: {
+		ar: "الشات الصوتي",
+		en: "voice chat",
+	},
+	variants: [
+		ServerVariant.Paper,
+		ServerVariant.Purpur,
+		ServerVariant.Fabric,
+		ServerVariant.Forge,
+		ServerVariant.NeoForge,
+	],
+};
+
+export const VOICE_PORT = "voice";
+
+export const VOICE_CHAT_PROJECT = "9eGKb6K1";
+
+export const VOICE_CHAT_PLUGIN_CONFIG = "plugins/voicechat/voicechat-server.properties";
+
+export const VOICE_CHAT_MOD_CONFIG = "config/voicechat/voicechat-server.properties";
 
 export const FABRIC_API: CompanionRequirement = {
 	id: "fabric-api",
@@ -151,14 +196,23 @@ const floodgateEntries = (): YamlEntry[] => {
 	];
 };
 
+const voiceChatValues = (context: Bridge.Context): Bridge.Values => {
+	return {
+		port: context.port(VOICE_PORT),
+		voice_host: "",
+	};
+};
+
 const geyserPluginArtifact: CompanionArtifact = {
 	filename: "Geyser-Spigot.jar",
 	configs: [
 		{
+			format: CompanionConfigFormat.Yaml,
 			path: "plugins/Geyser-Spigot/config.yml",
 			entries: geyserEntries,
 		},
 		{
+			format: CompanionConfigFormat.Yaml,
 			path: "config/paper-global.yml",
 			entries: paperEntries,
 		},
@@ -179,6 +233,7 @@ const floodgatePluginArtifact: CompanionArtifact = {
 	filename: "floodgate-spigot.jar",
 	configs: [
 		{
+			format: CompanionConfigFormat.Yaml,
 			path: "plugins/floodgate/config.yml",
 			entries: floodgateEntries,
 		},
@@ -207,6 +262,7 @@ const geyser: Companion = {
 			filename: "Geyser-Fabric.jar",
 			configs: [
 				{
+					format: CompanionConfigFormat.Yaml,
 					path: "config/Geyser-Fabric/config.yml",
 					entries: geyserEntries,
 				},
@@ -225,6 +281,7 @@ const geyser: Companion = {
 			filename: "Geyser-NeoForge.jar",
 			configs: [
 				{
+					format: CompanionConfigFormat.Yaml,
 					path: "config/Geyser-NeoForge/config.yml",
 					entries: geyserEntries,
 				},
@@ -256,6 +313,7 @@ const floodgate: Companion = {
 			filename: "floodgate-fabric.jar",
 			configs: [
 				{
+					format: CompanionConfigFormat.Yaml,
 					path: "config/floodgate/config.yml",
 					entries: floodgateEntries,
 				},
@@ -274,6 +332,7 @@ const floodgate: Companion = {
 			filename: "floodgate-neoforge.jar",
 			configs: [
 				{
+					format: CompanionConfigFormat.Yaml,
 					path: "config/floodgate/config.yml",
 					entries: floodgateEntries,
 				},
@@ -343,16 +402,75 @@ const viaBackwards: Companion = {
 	},
 };
 
+const voiceChatPluginArtifact: CompanionArtifact = {
+	filename: "voicechat-bukkit.jar",
+	configs: [
+		{
+			format: CompanionConfigFormat.Properties,
+			path: VOICE_CHAT_PLUGIN_CONFIG,
+			values: voiceChatValues,
+		},
+	],
+	download: null,
+	modrinth: {
+		project: VOICE_CHAT_PROJECT,
+		loader: "paper",
+		matchGameVersion: true,
+	},
+	requires: [],
+};
+
+const voiceChatModArtifact = (loader: string): CompanionArtifact => {
+	return {
+		filename: `voicechat-${loader}.jar`,
+		configs: [
+			{
+				format: CompanionConfigFormat.Properties,
+				path: VOICE_CHAT_MOD_CONFIG,
+				values: voiceChatValues,
+			},
+		],
+		download: null,
+		modrinth: {
+			project: VOICE_CHAT_PROJECT,
+			loader,
+			matchGameVersion: true,
+		},
+		requires: [],
+	};
+};
+
+const voiceChat: Companion = {
+	id: CompanionId.VoiceChat,
+	title: "Simple Voice Chat",
+	feature: VOICE_CHAT,
+	projects: [
+		"simple-voice-chat",
+		VOICE_CHAT_PROJECT.toLowerCase(),
+		"henkelmax/simplevoicechat",
+	],
+	files: /^voicechat-(bukkit|fabric|quilt|forge|neoforge|velocity|bungeecord)([-_][\w.+-]+)?\.jar$/i,
+	artifacts: {
+		[ServerVariant.Paper]: voiceChatPluginArtifact,
+		[ServerVariant.Purpur]: voiceChatPluginArtifact,
+		[ServerVariant.Fabric]: voiceChatModArtifact("fabric"),
+		[ServerVariant.Forge]: voiceChatModArtifact("forge"),
+		[ServerVariant.NeoForge]: voiceChatModArtifact("neoforge"),
+	},
+};
+
 export const COMPANIONS: Companion[] = [
 	geyser,
 	floodgate,
 	viaVersion,
 	viaBackwards,
+	voiceChat,
 ];
 
 export const COMPANION_FEATURES: CompanionFeature[] = [
 	CROSSPLAY,
 	VERSION_COMPAT,
+	VOICE_CHAT,
 ];
 
 export const companionsOf = (feature: CompanionFeature) => {

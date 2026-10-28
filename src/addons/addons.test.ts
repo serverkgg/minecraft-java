@@ -728,6 +728,41 @@ const NO_UPDATES = {
 	"custom.jar": null,
 };
 
+describe("installing a companion from the catalog", () => {
+	const CASES = [
+		{
+			project: "geyser",
+			text: {
+				ar: "يتم تثبيت Geyser وتحديثه من مفتاح كروس بلاي في تبويب الإعدادات.",
+				en: "Geyser is installed and updated by the crossplay switch in the Settings tab.",
+			},
+		},
+		{
+			project: "9eGKb6K1",
+			text: {
+				ar: "يتم تثبيت Simple Voice Chat وتحديثه من مفتاح الشات الصوتي في تبويب الإعدادات.",
+				en: "Simple Voice Chat is installed and updated by the voice chat switch in the Settings tab.",
+			},
+		},
+	];
+
+	for (const { project, text } of CASES) {
+		it(`points ${project} at its switch, naming the switch in each language`, async () => {
+			const { context, files } = serverWith();
+			const before = new Map(files);
+
+			const error = await addons.install(context, encodeProviderRef(CatalogProviderId.Modrinth, project)).then(
+				() => null,
+				(thrown: unknown) => thrown,
+			);
+
+			expect(error).toBeInstanceOf(BridgeUserError);
+			expect((error as BridgeUserError).text).toEqual(text);
+			expect(files).toEqual(before);
+		});
+	}
+});
+
 describe("how the addon catalog finds updates", () => {
 	it("offers the newer compatible release of each tracked mod and nothing for the rest", async () => {
 		const { context } = updatingServer();

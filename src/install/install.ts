@@ -1,5 +1,6 @@
 import { type Bridge, BridgeKind } from "@serverkgg/bridge";
 import { BridgeEventName } from "@serverkgg/bridge/protocol";
+import { syncCompanions } from "../companions";
 import { reportModCrash } from "../events";
 import {
 	applyModpack,
@@ -112,6 +113,12 @@ const finalize = async (context: Bridge.Context, stamp?: InstallStamp) => {
 	await pinRconProperties(context, stamp);
 };
 
+const settle = async (context: Bridge.Context, pending: PendingFile[]) => {
+	await syncCompanions(context);
+
+	return pendingHold(pending);
+};
+
 const reportInstalled = (
 	context: Bridge.Context,
 	stamp: InstallStamp | null,
@@ -195,7 +202,7 @@ export const install: Bridge.Install = {
 						: undefined,
 				);
 
-				return pendingHold(await settlePendingFiles(context));
+				return await settle(context, await settlePendingFiles(context));
 			}
 
 			context.log("the recorded install does not match its files, installing it again", {
@@ -301,7 +308,7 @@ export const install: Bridge.Install = {
 			context.activity.report(modpackActivity);
 		}
 
-		return pendingHold(pending);
+		return await settle(context, pending);
 	},
 	async describe(context) {
 		const stamp = await readInstallStamp(context);

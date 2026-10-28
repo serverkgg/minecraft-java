@@ -346,6 +346,44 @@ describe("transitionPreview", () => {
 		});
 	});
 
+	describe("previewing a change that pauses voice chat", () => {
+		it("says voice chat waits for Simple Voice Chat on a version the mod has no build for yet", async () => {
+			const preview = await previewOf(
+				{
+					...FABRIC_TO_1_21_9,
+					VOICE_CHAT: "true",
+				},
+				{
+					...MANIFEST,
+					[versionsUrlOf("9eGKb6K1", "fabric", "1.21.9")]: [],
+				},
+				FABRIC_STAMP,
+			);
+
+			expect(preview.lines.at(-1)).toEqual({
+				ar: "لن يشتغل الشات الصوتي على Fabric 1.21.9 حتى يدعمه Simple Voice Chat. يبقى مفعّلًا ويعود تلقائيًا عندما يتوفر.",
+				en: "Voice chat won't work on Fabric 1.21.9 until Simple Voice Chat supports it. It stays on and comes back on its own once it does.",
+			});
+		});
+
+		it("says voice chat stays on and returns on a server type that runs it", async () => {
+			const preview = await previewOf(
+				{
+					SERVER_TYPE: "vanilla",
+					MC_VERSION: "1.21.8",
+					VOICE_CHAT: "true",
+				},
+				MANIFEST,
+				PAPER_STAMP,
+			);
+
+			expect(preview.lines.at(-1)).toEqual({
+				ar: "لا يشتغل الشات الصوتي على Vanilla. يبقى مفعّلًا ويعود تلقائيًا عند العودة إلى Paper أو Purpur أو Fabric أو Forge أو NeoForge.",
+				en: "Voice chat doesn't run on Vanilla. It stays on and comes back on its own when you switch back to Paper, Purpur, Fabric, Forge or NeoForge.",
+			});
+		});
+	});
+
 	describe("when the catalogue fails or the build belongs to another loader", () => {
 		it("does not call an outage a missing stable build", async () => {
 			const preview = await previewOf(

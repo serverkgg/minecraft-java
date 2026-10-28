@@ -24,6 +24,7 @@ This repository holds everything Serverk needs to run Minecraft Java servers. Mi
 - [الإضافات والمودات: ثبّتها من اللوحة · Plugins and mods: install them from the panel](https://serverk.gg/games/minecraft-java/guides/plugins-mods)
 - [نوع السيرفر والإصدار: ما يحدث لمابك · Server type and version: what happens to your world](https://serverk.gg/games/minecraft-java/guides/server-type)
 - [الكروس بلاي: لاعبو بيدروك في سيرفرك · Crossplay: Bedrock players on your server](https://serverk.gg/games/minecraft-java/guides/crossplay)
+- [الشات الصوتي: تحدّث مع أصحابك داخل اللعبة · Voice chat: talk to your friends in game](https://serverk.gg/games/minecraft-java/guides/voice-chat)
 - [المودباك: سيرفر جاهز بضغطة · Modpacks: a ready-made server in one click](https://serverk.gg/games/minecraft-java/guides/modpacks)
 - [توافق الإصدارات: إصدارات جافا الأخرى في سيرفرك · Version compatibility: other Java versions on your server](https://serverk.gg/games/minecraft-java/guides/version-compat)
 - [المابات: التبديل والرفع والريسيت · Worlds: switch, upload and reset](https://serverk.gg/games/minecraft-java/guides/worlds)
