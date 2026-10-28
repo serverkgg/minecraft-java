@@ -1,4 +1,5 @@
 import { type Bridge, BridgeUserError } from "@serverkgg/bridge";
+import { vanillaCommand } from "./vanillaCommand";
 
 const PREFIX = "[ServerK]";
 
@@ -24,7 +25,8 @@ export const messageArgument = (args: Bridge.Values) => {
 };
 
 export const tellrawAll = async (context: Bridge.Context, message: string) => {
-	await context.command(
+	await vanillaCommand(
+		context,
 		`tellraw @a ${JSON.stringify({
 			text: `${PREFIX} ${message}`,
 			color: COLOR,
@@ -33,7 +35,8 @@ export const tellrawAll = async (context: Bridge.Context, message: string) => {
 };
 
 export const titleAll = async (context: Bridge.Context, message: string) => {
-	await context.command(
+	await vanillaCommand(
+		context,
 		`title @a title ${JSON.stringify({
 			text: message,
 			color: COLOR,

@@ -12,5 +12,6 @@ export * from "./packIndex";
 export * from "./requestPacer";
 export * from "./stagedFiles";
 export * from "./staging";
+export * from "./vanillaCommand";
 export * from "./variant";
 export * from "./worldLayout";

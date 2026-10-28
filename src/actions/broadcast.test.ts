@@ -6,6 +6,7 @@ import { broadcast } from "./broadcast";
 const recorder = () => {
 	const reported: Bridge.Activity[] = [];
 	const context = {
+		variable: () => null,
 		command: async (input: string) => {
 			return {
 				sent: input,

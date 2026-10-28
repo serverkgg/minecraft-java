@@ -226,7 +226,7 @@ describe("applying pvp and command blocks to a server", () => {
 		]);
 	});
 
-	it("a paper or purpur server sets each rule in every world it keeps", async () => {
+	it("a paper or purpur server sets each rule in every world it keeps, through the vanilla commands", async () => {
 		for (const variant of [
 			ServerVariant.Paper,
 			ServerVariant.Purpur,
@@ -243,9 +243,9 @@ describe("applying pvp and command blocks to a server", () => {
 			await applyStoredGameRules(context);
 
 			expect(sent).toEqual([
-				"gamerule command_blocks_work false",
-				"execute in minecraft:the_nether run gamerule command_blocks_work false",
-				"execute in minecraft:the_end run gamerule command_blocks_work false",
+				"minecraft:gamerule command_blocks_work false",
+				"minecraft:execute in minecraft:the_nether run gamerule command_blocks_work false",
+				"minecraft:execute in minecraft:the_end run gamerule command_blocks_work false",
 			]);
 		}
 	});

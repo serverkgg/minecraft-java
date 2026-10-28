@@ -8,6 +8,7 @@ const recorder = () => {
 	const emitted: string[] = [];
 	const reported: Bridge.Activity[] = [];
 	const context = {
+		variable: () => null,
 		command: async (input: string) => {
 			sent.push(input);
 

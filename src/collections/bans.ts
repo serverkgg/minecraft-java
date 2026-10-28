@@ -1,6 +1,6 @@
 import { type Bridge, BridgeKind } from "@serverkgg/bridge";
 import { BridgeEventName } from "@serverkgg/bridge/protocol";
-import { parseBanList } from "../shared";
+import { parseBanList, vanillaCommand } from "../shared";
 
 const BANLIST_COMMAND = "banlist players";
 
@@ -31,7 +31,7 @@ export const bans: Bridge.Collection = {
 	kind: BridgeKind.Collection,
 	requiresRunning: true,
 	async list(context) {
-		const reply = await context.command(BANLIST_COMMAND, {
+		const reply = await vanillaCommand(context, BANLIST_COMMAND, {
 			expect: BANLIST_REPLY,
 		});
 
@@ -52,7 +52,7 @@ export const bans: Bridge.Collection = {
 	},
 	actions: {
 		async remove(context, row) {
-			await context.command(`pardon ${row.id}`);
+			await vanillaCommand(context, `pardon ${row.id}`);
 
 			context.activity.report({
 				name: BridgeEventName.PlayerUnbanned,

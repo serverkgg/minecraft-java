@@ -1,6 +1,6 @@
 import { type Bridge, BridgeKind } from "@serverkgg/bridge";
 import { BridgeEventName } from "@serverkgg/bridge/protocol";
-import { choiceArgument, GAME_MODE_OPTIONS, GAME_MODES, levelsArgument, optionLabel } from "../shared";
+import { choiceArgument, GAME_MODE_OPTIONS, GAME_MODES, levelsArgument, optionLabel, vanillaCommand } from "../shared";
 
 const LIST_REPLY = /There are \d+ of a max of \d+ players online:(?<names>.*)$/;
 
@@ -33,7 +33,7 @@ export const players: Bridge.Collection = {
 	requiresRunning: true,
 	refreshSeconds: 15,
 	async list(context) {
-		const reply = await context.command("list", {
+		const reply = await vanillaCommand(context, "list", {
 			expect: LIST_REPLY,
 		});
 
@@ -50,7 +50,7 @@ export const players: Bridge.Collection = {
 	},
 	actions: {
 		async kick(context, row) {
-			await context.command(`kick ${row.id}`);
+			await vanillaCommand(context, `kick ${row.id}`);
 
 			context.emit(BridgeEventName.PlayerKicked, playerPresence(row.id));
 			context.activity.report({
@@ -64,7 +64,7 @@ export const players: Bridge.Collection = {
 			});
 		},
 		async ban(context, row) {
-			await context.command(`ban ${row.id}`);
+			await vanillaCommand(context, `ban ${row.id}`);
 
 			context.emit(BridgeEventName.PlayerBanned, playerPresence(row.id));
 			context.activity.report({
@@ -78,7 +78,7 @@ export const players: Bridge.Collection = {
 			});
 		},
 		async op(context, row) {
-			await context.command(`op ${row.id}`);
+			await vanillaCommand(context, `op ${row.id}`);
 
 			context.activity.report({
 				name: BridgeEventName.AccessGranted,
@@ -94,7 +94,7 @@ export const players: Bridge.Collection = {
 			});
 		},
 		async kill(context, row) {
-			await context.command(`kill ${row.id}`);
+			await vanillaCommand(context, `kill ${row.id}`);
 
 			context.activity.report({
 				name: BridgeEventName.PlayerChanged,
@@ -112,7 +112,7 @@ export const players: Bridge.Collection = {
 		async xp(context, row, args) {
 			const amount = levelsArgument(args);
 
-			await context.command(`xp add ${row.id} ${amount} levels`);
+			await vanillaCommand(context, `xp add ${row.id} ${amount} levels`);
 
 			context.activity.report({
 				name: BridgeEventName.PlayerChanged,
@@ -132,7 +132,7 @@ export const players: Bridge.Collection = {
 			const mode = choiceArgument(args, "mode", GAME_MODES);
 			const label = optionLabel(GAME_MODE_OPTIONS, mode);
 
-			await context.command(`gamemode ${mode} ${row.id}`);
+			await vanillaCommand(context, `gamemode ${mode} ${row.id}`);
 
 			context.activity.report({
 				name: BridgeEventName.PlayerChanged,

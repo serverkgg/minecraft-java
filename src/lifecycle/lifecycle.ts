@@ -2,7 +2,7 @@ import { type Bridge, BridgeKind } from "@serverkgg/bridge";
 import { geyserLaunchProperties, pinCompanionConfigs, syncCompanions } from "../companions";
 import { launchArguments, readInstallStamp } from "../install";
 import { applyStoredGameRules } from "../settings";
-import { javaBinary } from "../shared";
+import { javaBinary, vanillaCommand } from "../shared";
 import { heapFor } from "./heap";
 import { jvmFlags } from "./jvmFlags";
 
@@ -41,7 +41,7 @@ export const lifecycle: Bridge.Lifecycle = {
 		}
 	},
 	async stop(context) {
-		await context.command("stop", {
+		await vanillaCommand(context, "stop", {
 			expect: STOPPING,
 			timeoutMs: 30_000,
 		});

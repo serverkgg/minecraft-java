@@ -1,6 +1,6 @@
 import type { Bridge } from "@serverkgg/bridge";
 import { readInstallStamp } from "../install";
-import { PLUGIN_VARIANTS } from "../shared";
+import { PLUGIN_VARIANTS, vanillaCommandOf } from "../shared";
 
 export const PROPERTIES_FILE = "server.properties";
 
@@ -142,7 +142,7 @@ export const applyGameRules = async (context: Bridge.Context, values: Bridge.Val
 	}
 
 	for (const command of gameRuleCommands(rules, values, PLUGIN_VARIANTS.includes(stamp.variant))) {
-		await context.command(command);
+		await context.command(vanillaCommandOf(stamp.variant, command));
 		context.log("applied a server property as a game rule", {
 			command,
 			version: stamp.version,

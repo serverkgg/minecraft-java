@@ -34,6 +34,7 @@ const recorder = (
 	const reported: Bridge.Activity[] = [];
 	const sent: string[] = [];
 	const context = {
+		variable: () => null,
 		command: async (input: string) => {
 			sent.push(input);
 

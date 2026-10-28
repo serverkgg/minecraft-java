@@ -1,6 +1,6 @@
 import { type Bridge, BridgeKind, BridgeUserError } from "@serverkgg/bridge";
 import { BridgeEventName } from "@serverkgg/bridge/protocol";
-import { choiceArgument, DIFFICULTIES, DIFFICULTY_OPTIONS, optionLabel } from "../shared";
+import { choiceArgument, DIFFICULTIES, DIFFICULTY_OPTIONS, optionLabel, vanillaCommand } from "../shared";
 import { activeWorld, readWorldHardcore } from "../worlds";
 
 const HARDCORE_DIFFICULTY: Bridge.Text = {
@@ -37,7 +37,7 @@ export const gameplay: Bridge.Actions = {
 	requiresRunning: true,
 	actions: {
 		async timeDay(context) {
-			await context.command("time set day");
+			await vanillaCommand(context, "time set day");
 
 			reportGameplay(context, "time", "day", {
 				ar: "تم تحويل الوقت إلى النهار",
@@ -46,7 +46,7 @@ export const gameplay: Bridge.Actions = {
 		},
 
 		async timeNight(context) {
-			await context.command("time set night");
+			await vanillaCommand(context, "time set night");
 
 			reportGameplay(context, "time", "night", {
 				ar: "تم تحويل الوقت إلى الليل",
@@ -55,7 +55,7 @@ export const gameplay: Bridge.Actions = {
 		},
 
 		async weatherClear(context) {
-			await context.command("weather clear");
+			await vanillaCommand(context, "weather clear");
 
 			reportGameplay(context, "weather", "clear", {
 				ar: "تم تغيير الطقس إلى صافٍ",
@@ -64,7 +64,7 @@ export const gameplay: Bridge.Actions = {
 		},
 
 		async weatherRain(context) {
-			await context.command("weather rain");
+			await vanillaCommand(context, "weather rain");
 
 			reportGameplay(context, "weather", "rain", {
 				ar: "تم تغيير الطقس إلى مطر",
@@ -73,7 +73,7 @@ export const gameplay: Bridge.Actions = {
 		},
 
 		async weatherThunder(context) {
-			await context.command("weather thunder");
+			await vanillaCommand(context, "weather thunder");
 
 			reportGameplay(context, "weather", "thunder", {
 				ar: "تم تغيير الطقس إلى رعد وبرق",
@@ -82,7 +82,7 @@ export const gameplay: Bridge.Actions = {
 		},
 
 		async saveAll(context) {
-			await context.command("save-all");
+			await vanillaCommand(context, "save-all");
 
 			reportGameplay(context, "save", "all", {
 				ar: "تم حفظ الماب",
@@ -98,7 +98,7 @@ export const gameplay: Bridge.Actions = {
 				throw new BridgeUserError(HARDCORE_DIFFICULTY);
 			}
 
-			await context.command(`difficulty ${mode}`);
+			await vanillaCommand(context, `difficulty ${mode}`);
 
 			reportGameplay(context, "difficulty", mode, {
 				ar: `تم تغيير الصعوبة إلى ${label.ar}`,

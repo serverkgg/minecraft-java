@@ -1,6 +1,7 @@
 import { type Bridge, BridgeKind } from "@serverkgg/bridge";
 import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { crossplayEnabled, FLOODGATE_PREFIX } from "../companions";
+import { vanillaCommand } from "../shared";
 
 const WHITELIST_FILE = "whitelist.json";
 
@@ -84,7 +85,7 @@ export const whitelist: Bridge.Collection = {
 			return;
 		}
 
-		await context.command(`whitelist add ${name}`);
+		await vanillaCommand(context, `whitelist add ${name}`);
 
 		reportAdded(context, name, false);
 	},
@@ -98,7 +99,7 @@ export const whitelist: Bridge.Collection = {
 				return;
 			}
 
-			await context.command(`whitelist remove ${row.id}`);
+			await vanillaCommand(context, `whitelist remove ${row.id}`);
 
 			reportRemoved(context, row.id, false);
 		},

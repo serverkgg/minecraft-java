@@ -18,12 +18,14 @@ const contextWith = (options: {
 	printed?: string[][];
 	sent?: string[];
 	reported?: Bridge.Activity[];
+	serverType?: string;
 }) => {
 	const printed = options.printed ?? [];
 
 	let read = 0;
 
 	return {
+		variable: (key: string) => (key === "SERVER_TYPE" ? (options.serverType ?? null) : null),
 		command: async (input: string) => {
 			options.sent?.push(input);
 
@@ -68,6 +70,21 @@ describe("reading who is banned from the server", () => {
 		).toEqual([]);
 		expect(sent).toEqual([
 			"banlist players",
+		]);
+	});
+
+	it("a paper server asks the vanilla ban list, past a plugin that took the plain name", async () => {
+		const sent: string[] = [];
+
+		await bans.list(
+			contextWith({
+				sent,
+				serverType: "paper",
+			}),
+		);
+
+		expect(sent).toEqual([
+			"minecraft:banlist players",
 		]);
 	});
 
