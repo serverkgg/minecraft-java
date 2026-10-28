@@ -43,12 +43,14 @@ export const detectLoaderLaunch = async (context: Bridge.Context): Promise<Launc
 	return null;
 };
 
-export const launchArguments = (plan: LaunchPlan) => {
+export const launchArguments = (plan: LaunchPlan, properties: string[]) => {
 	return plan.kind === LaunchKind.Args
 		? [
+				...properties,
 				`@${plan.target}`,
 			]
 		: [
+				...properties,
 				"-jar",
 				plan.target,
 			];

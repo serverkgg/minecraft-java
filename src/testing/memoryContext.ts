@@ -11,6 +11,7 @@ export interface MemoryContextOptions {
 	variables?: Record<string, string>;
 	secrets?: Record<string, string>;
 	ports?: Record<string, number>;
+	publicAddress?: string | null;
 	json?: (url: string) => unknown;
 }
 
@@ -83,6 +84,9 @@ export const memoryContext = (options: MemoryContextOptions = {}) => {
 	};
 
 	const context = {
+		server: {
+			publicAddress: options.publicAddress ?? null,
+		},
 		variable: (key: string) => options.variables?.[key] ?? null,
 		secret: (key: string) => options.secrets?.[key] ?? null,
 		port: (key: string) => {

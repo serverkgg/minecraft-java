@@ -141,6 +141,60 @@ export const FABRIC_API: CompanionRequirement = {
 
 export const FLOODGATE_PREFIX = ".";
 
+export const WEBRTC_PORT = "webrtc";
+
+export const GEYSER_TRANSPORT = "both";
+
+export const GEYSER_PROPERTIES = {
+	transport: "geyserTransport",
+	webrtcPort: "geyserWebrtcPort",
+	advertiseAddresses: "geyserAdvertiseAddresses",
+};
+
+export const GEYSER_PLUGIN_CONFIG = "plugins/Geyser-Spigot/config.yml";
+
+const IPV4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+
+const OCTET_MAX = 255;
+
+const LOOPBACK_OCTET = 127;
+
+const UNSPECIFIED_ADDRESS = "0.0.0.0";
+
+export const advertisedAddressesOf = (publicAddress: string | null): string[] => {
+	const octets = (IPV4.exec(publicAddress?.trim() ?? "") ?? []).slice(1).map(Number);
+
+	if (octets.length === 0 || octets.some((octet) => octet > OCTET_MAX) || octets.at(0) === LOOPBACK_OCTET) {
+		return [];
+	}
+
+	const address = octets.join(".");
+
+	return address === UNSPECIFIED_ADDRESS
+		? []
+		: [
+				address,
+			];
+};
+
+export const geyserPropertiesOf = (webrtcPort: number | null, publicAddress: string | null): string[] => {
+	if (webrtcPort === null) {
+		return [];
+	}
+
+	const advertised = advertisedAddressesOf(publicAddress);
+
+	return [
+		`-D${GEYSER_PROPERTIES.transport}=${GEYSER_TRANSPORT}`,
+		`-D${GEYSER_PROPERTIES.webrtcPort}=${webrtcPort}`,
+		...(advertised.length > 0
+			? [
+					`-D${GEYSER_PROPERTIES.advertiseAddresses}=${advertised.join(",")}`,
+				]
+			: []),
+	];
+};
+
 const geyserEntries = (context: Bridge.Context): YamlEntry[] => {
 	return [
 		{
@@ -148,7 +202,7 @@ const geyserEntries = (context: Bridge.Context): YamlEntry[] => {
 				"bedrock",
 				"address",
 			],
-			value: "0.0.0.0",
+			value: UNSPECIFIED_ADDRESS,
 		},
 		{
 			path: [
@@ -156,6 +210,28 @@ const geyserEntries = (context: Bridge.Context): YamlEntry[] => {
 				"port",
 			],
 			value: context.port("bedrock"),
+		},
+		{
+			path: [
+				"bedrock",
+				"webrtc-port",
+			],
+			value: context.port(WEBRTC_PORT),
+		},
+		{
+			path: [
+				"bedrock",
+				"transport",
+			],
+			value: GEYSER_TRANSPORT,
+		},
+		{
+			path: [
+				"bedrock",
+				"signaling",
+				"advertise-addresses",
+			],
+			value: advertisedAddressesOf(context.server.publicAddress),
 		},
 		{
 			path: [
@@ -208,7 +284,7 @@ const geyserPluginArtifact: CompanionArtifact = {
 	configs: [
 		{
 			format: CompanionConfigFormat.Yaml,
-			path: "plugins/Geyser-Spigot/config.yml",
+			path: GEYSER_PLUGIN_CONFIG,
 			entries: geyserEntries,
 		},
 		{
@@ -500,4 +576,8 @@ export const featureEnabled = (context: Bridge.Context, feature: CompanionFeatur
 
 export const crossplayEnabled = (context: Bridge.Context) => {
 	return featureEnabled(context, CROSSPLAY);
+};
+
+export const geyserLaunchProperties = (context: Bridge.Context) => {
+	return geyserPropertiesOf(crossplayEnabled(context) ? context.port(WEBRTC_PORT) : null, context.server.publicAddress);
 };

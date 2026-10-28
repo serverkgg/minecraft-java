@@ -1,28 +1,72 @@
 import { describe, expect, it } from "bun:test";
 import { manifestSchema } from "@serverkgg/bridge/manifest";
 import { ServerVariant } from "../shared";
-import { COMPANIONS, CompanionId, CROSSPLAY, FABRIC_API, VOICE_CHAT, VOICE_PORT } from "./companion";
+import {
+	advertisedAddressesOf,
+	COMPANIONS,
+	CompanionId,
+	CROSSPLAY,
+	FABRIC_API,
+	geyserPropertiesOf,
+	VOICE_CHAT,
+	VOICE_PORT,
+	WEBRTC_PORT,
+} from "./companion";
 
 const MANIFEST_PATH = `${import.meta.dir}/../../serverk.yml`;
 
 const manifest = manifestSchema.parse(Bun.YAML.parse(await Bun.file(MANIFEST_PATH).text()));
 
+const CROSSPLAY_ACTIVE_WHEN = [
+	{
+		variable: "SERVER_TYPE",
+		values: CROSSPLAY.variants,
+	},
+	{
+		variable: CROSSPLAY.variable,
+		values: [
+			"true",
+		],
+	},
+];
+
 describe("the bedrock address only exists when crossplay can run", () => {
 	it("the bedrock port is live on the server types Geyser supports, with crossplay on", () => {
 		const bedrock = manifest.container.ports.find((port) => port.key === "bedrock");
 
-		expect(bedrock?.activeWhen).toMatchObject([
-			{
-				variable: "SERVER_TYPE",
-				values: CROSSPLAY.variants,
+		expect(bedrock?.activeWhen).toMatchObject(CROSSPLAY_ACTIVE_WHEN);
+	});
+
+	it("the bedrock port takes tcp for NetherNet signaling beside udp for RakNet, on a number the server does not announce", () => {
+		const bedrock = manifest.container.ports.find((port) => port.key === "bedrock");
+
+		expect(bedrock).toMatchObject({
+			containerPort: 19_132,
+			protocol: "tcp+udp",
+			mirror: false,
+			hostRange: {
+				default: 19_132,
+				min: 19_132,
+				max: 19_231,
 			},
-			{
-				variable: CROSSPLAY.variable,
-				values: [
-					"true",
-				],
+		});
+	});
+
+	it("the NetherNet port is a mirrored udp port inside the open media window, live exactly when the bedrock port is", () => {
+		const webrtc = manifest.container.ports.find((port) => port.key === WEBRTC_PORT);
+
+		expect(webrtc).toMatchObject({
+			containerPort: 26_200,
+			protocol: "udp",
+			mirror: true,
+			join: "separate",
+			hostRange: {
+				default: 26_200,
+				min: 26_200,
+				max: 26_299,
 			},
-		]);
+			activeWhen: CROSSPLAY_ACTIVE_WHEN,
+		});
 	});
 
 	it("the voice port is a mirrored udp port, live on the server types voice chat supports, with voice chat on", () => {
@@ -158,5 +202,50 @@ describe("only the voice chat mod's own jars count as the companion", () => {
 		for (const variant of VOICE_CHAT.variants) {
 			expect(voiceChat?.artifacts[variant]?.modrinth?.matchGameVersion).toBe(true);
 		}
+	});
+});
+
+describe("advertisedAddressesOf", () => {
+	it("advertises the machine's public ipv4 address to NetherNet players", () => {
+		expect(advertisedAddressesOf("203.0.113.5")).toEqual([
+			"203.0.113.5",
+		]);
+	});
+
+	const UNUSABLE = [
+		null,
+		"",
+		"127.0.0.1",
+		"0.0.0.0",
+		"256.1.1.1",
+		"2001:db8::1",
+		"play.example.com",
+	];
+
+	for (const address of UNUSABLE) {
+		it(`leaves the address to Geyser for ${JSON.stringify(address)}`, () => {
+			expect(advertisedAddressesOf(address)).toEqual([]);
+		});
+	}
+});
+
+describe("geyserPropertiesOf", () => {
+	it("turns NetherNet on beside RakNet on the allocated port and advertises the machine's address", () => {
+		expect(geyserPropertiesOf(26_217, "203.0.113.5")).toEqual([
+			"-DgeyserTransport=both",
+			"-DgeyserWebrtcPort=26217",
+			"-DgeyserAdvertiseAddresses=203.0.113.5",
+		]);
+	});
+
+	it("leaves the advertised address to Geyser when the machine has only a loopback address", () => {
+		expect(geyserPropertiesOf(26_217, "127.0.0.1")).toEqual([
+			"-DgeyserTransport=both",
+			"-DgeyserWebrtcPort=26217",
+		]);
+	});
+
+	it("adds nothing when crossplay is off or the server type has no Geyser", () => {
+		expect(geyserPropertiesOf(null, "203.0.113.5")).toEqual([]);
 	});
 });

@@ -1,6 +1,8 @@
+export type YamlValue = boolean | number | string | string[];
+
 export interface YamlEntry {
 	path: string[];
-	value: boolean | number | string;
+	value: YamlValue;
 }
 
 interface YamlKeyLine {
@@ -17,7 +19,11 @@ const COMMENT_PATTERN = /^\s*(#|$)/;
 
 const INDENT_STEP = "  ";
 
-const scalarOf = (value: boolean | number | string) => {
+const scalarOf = (value: YamlValue) => {
+	if (Array.isArray(value)) {
+		return `[${value.map((item) => JSON.stringify(item)).join(", ")}]`;
+	}
+
 	if (typeof value === "boolean") {
 		return value ? "true" : "false";
 	}
@@ -116,7 +122,29 @@ const childIndentOf = (keyLines: YamlKeyLine[], node: YamlKeyLine) => {
 	return child ? " ".repeat(child.indent) : `${" ".repeat(node.indent)}${INDENT_STEP}`;
 };
 
-const rewrite = (line: string, value: boolean | number | string) => {
+const blockValueLength = (lines: string[], node: YamlKeyLine) => {
+	let length = 0;
+
+	for (let index = node.index + 1; index < lines.length; index += 1) {
+		const line = lines[index] ?? "";
+
+		if (COMMENT_PATTERN.test(line)) {
+			break;
+		}
+
+		const indent = indentOf(line);
+
+		if (indent < node.indent || (indent === node.indent && !LIST_PATTERN.test(line))) {
+			break;
+		}
+
+		length += 1;
+	}
+
+	return length;
+};
+
+const rewrite = (line: string, value: YamlValue) => {
 	const match = line.match(KEY_PATTERN);
 
 	if (!match?.[2]) {
@@ -134,7 +162,11 @@ const applyEntry = (lines: string[], entry: YamlEntry) => {
 	const existing = keyLines.find((candidate) => samePath(candidate.path, entry.path));
 
 	if (existing) {
-		lines[existing.index] = rewrite(lines[existing.index] ?? "", entry.value);
+		lines.splice(
+			existing.index,
+			blockValueLength(lines, existing) + 1,
+			rewrite(lines[existing.index] ?? "", entry.value),
+		);
 
 		return;
 	}

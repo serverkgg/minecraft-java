@@ -4,14 +4,16 @@ import { ServerVariant } from "../shared";
 import { memoryContext } from "../testing";
 import {
 	CROSSPLAY,
+	GEYSER_PLUGIN_CONFIG,
 	VERSION_COMPAT,
 	VOICE_CHAT,
 	VOICE_CHAT_MOD_CONFIG,
 	VOICE_CHAT_PLUGIN_CONFIG,
 	VOICE_CHAT_PROJECT,
 	VOICE_PORT,
+	WEBRTC_PORT,
 } from "./companion";
-import { CompanionReadiness, companionReadiness, syncCompanions } from "./companions";
+import { CompanionReadiness, companionReadiness, pinCompanionConfigs, syncCompanions } from "./companions";
 
 const versionsUrlOf = (project: string, loader: string, gameVersion: string) => {
 	const url = new URL(`https://api.modrinth.com/v2/project/${project}/version`);
@@ -308,5 +310,121 @@ describe("syncCompanions", () => {
 
 		expect(server.files.has("plugins/voicechat-bukkit.jar.disabled")).toBe(true);
 		expect(server.merges).toEqual([]);
+	});
+});
+
+const WEBRTC_HOST_PORT = 26_217;
+
+const PUBLIC_ADDRESS = "203.0.113.5";
+
+const GEYSER_CONFIG = [
+	"bedrock:",
+	"  # The IP address that Geyser will bind on to listen for incoming Bedrock connections.",
+	'  address: "127.0.0.1"',
+	"",
+	"  port: 19132",
+	"",
+	'  # The UDP port used for NetherNet connections. When set to 0, Geyser uses the "port" value set above.',
+	"  webrtc-port: 0",
+	"",
+	"  # How Bedrock players can connect. Changes require a restart.",
+	"  transport: raknet",
+	"",
+	"  clone-remote-port: false",
+	"",
+	"  signaling:",
+	"    mode: builtin",
+	"",
+	"    # Leave empty to use this machine's own addresses, plus the public address found with stun-discovery.",
+	"    advertise-addresses: []",
+	"",
+	"    stun-discovery: true",
+	"",
+	"java:",
+	'  auth-type: "floodgate"',
+	"",
+	"motd:",
+	"  primary-motd: Geyser",
+	"",
+].join("\n");
+
+const NETHERNET_GEYSER_CONFIG = (advertised: string) => {
+	return GEYSER_CONFIG.replace('address: "127.0.0.1"', 'address: "0.0.0.0"')
+		.replace("webrtc-port: 0", `webrtc-port: ${WEBRTC_HOST_PORT}`)
+		.replace("transport: raknet", 'transport: "both"')
+		.replace("advertise-addresses: []", `advertise-addresses: ${advertised}`);
+};
+
+const crossplayServerOf = (variant: ServerVariant, configPath: string, publicAddress: string | null) => {
+	return memoryContext({
+		files: {
+			[configPath]: GEYSER_CONFIG,
+			"config/paper-global.yml": "unsupported-settings:\n  perform-username-validation: false\n",
+			"plugins/floodgate/config.yml": 'username-prefix: "."\nreplace-spaces: true\n',
+			"config/floodgate/config.yml": 'username-prefix: "."\nreplace-spaces: true\n',
+		},
+		variables: {
+			SERVER_TYPE: variant,
+			[CROSSPLAY.variable]: "true",
+		},
+		ports: {
+			bedrock: 19_132,
+			[WEBRTC_PORT]: WEBRTC_HOST_PORT,
+		},
+		publicAddress,
+	});
+};
+
+const GEYSER_CONFIGS = [
+	{
+		variant: ServerVariant.Paper,
+		path: GEYSER_PLUGIN_CONFIG,
+	},
+	{
+		variant: ServerVariant.Purpur,
+		path: GEYSER_PLUGIN_CONFIG,
+	},
+	{
+		variant: ServerVariant.Fabric,
+		path: "config/Geyser-Fabric/config.yml",
+	},
+	{
+		variant: ServerVariant.NeoForge,
+		path: "config/Geyser-NeoForge/config.yml",
+	},
+];
+
+describe("pinCompanionConfigs", () => {
+	for (const item of GEYSER_CONFIGS) {
+		it(`turns NetherNet on beside RakNet on ${item.variant}, on the allocated port and the machine's address`, async () => {
+			const server = crossplayServerOf(item.variant, item.path, PUBLIC_ADDRESS);
+
+			await pinCompanionConfigs(server.context);
+
+			expect(server.files.get(item.path)).toBe(NETHERNET_GEYSER_CONFIG(`["${PUBLIC_ADDRESS}"]`));
+		});
+	}
+
+	it("leaves the advertised addresses to Geyser when the machine has no public ipv4 address", async () => {
+		const server = crossplayServerOf(ServerVariant.Paper, GEYSER_PLUGIN_CONFIG, "127.0.0.1");
+
+		await pinCompanionConfigs(server.context);
+
+		expect(server.files.get(GEYSER_PLUGIN_CONFIG)).toBe(NETHERNET_GEYSER_CONFIG("[]"));
+	});
+
+	it("reads no NetherNet port and writes nothing once crossplay is off", async () => {
+		const server = memoryContext({
+			files: {
+				[GEYSER_PLUGIN_CONFIG]: GEYSER_CONFIG,
+			},
+			variables: {
+				SERVER_TYPE: ServerVariant.Paper,
+			},
+		});
+
+		await pinCompanionConfigs(server.context);
+
+		expect(server.files.get(GEYSER_PLUGIN_CONFIG)).toBe(GEYSER_CONFIG);
 	});
 });

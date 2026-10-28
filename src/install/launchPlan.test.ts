@@ -25,19 +25,50 @@ describe("finding the argument file a loader's run script points at", () => {
 describe("turning a launch plan into java arguments", () => {
 	it("an argument file is passed with an at sign and nothing else", () => {
 		expect(
-			launchArguments({
-				kind: LaunchKind.Args,
-				target: "libraries/unix_args.txt",
-			}),
+			launchArguments(
+				{
+					kind: LaunchKind.Args,
+					target: "libraries/unix_args.txt",
+				},
+				[],
+			),
 		).toEqual([
 			"@libraries/unix_args.txt",
 		]);
 	});
 
 	it("a jar is passed with -jar", () => {
-		expect(launchArguments(jarLaunch)).toEqual([
+		expect(launchArguments(jarLaunch, [])).toEqual([
 			"-jar",
 			"server.jar",
+		]);
+	});
+
+	const PROPERTIES = [
+		"-DgeyserTransport=both",
+		"-DgeyserWebrtcPort=26217",
+	];
+
+	it("system properties go before the jar, where java reads them as its own options", () => {
+		expect(launchArguments(jarLaunch, PROPERTIES)).toEqual([
+			...PROPERTIES,
+			"-jar",
+			"server.jar",
+		]);
+	});
+
+	it("system properties go before the argument file, where java reads them as its own options", () => {
+		expect(
+			launchArguments(
+				{
+					kind: LaunchKind.Args,
+					target: "libraries/unix_args.txt",
+				},
+				PROPERTIES,
+			),
+		).toEqual([
+			...PROPERTIES,
+			"@libraries/unix_args.txt",
 		]);
 	});
 });

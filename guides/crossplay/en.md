@@ -30,6 +30,8 @@ Bedrock players use the same IP but the **Bedrock port**. The Bedrock address ap
 4. Put the Bedrock port in **Port**
 5. Join and play
 
+Your server page also shows a **Bedrock (NetherNet)** port while crossplay is on. Players don't type it anywhere: your server sends it to their game, and it connects on its own.
+
 ## Bedrock player names
 
 A Bedrock player's name on your server starts with a **dot**, and spaces become `_`. So a player called `Gamer Tag` joins as `.Gamer_Tag`.

@@ -63,7 +63,7 @@ container:
         service: _minecraft
     - key: bedrock
       containerPort: 19132
-      protocol: udp
+      protocol: tcp+udp
       name:
         ar: بيدروك
         en: Bedrock
@@ -75,6 +75,31 @@ container:
         default: 19132
         min: 19132
         max: 19231
+      activeWhen:
+        - variable: SERVER_TYPE
+          values:
+            - paper
+            - purpur
+            - fabric
+            - neoforge
+        - variable: CROSSPLAY
+          values:
+            - "true"
+    - key: webrtc
+      containerPort: 26200
+      protocol: udp
+      name:
+        ar: بيدروك (NetherNet)
+        en: Bedrock (NetherNet)
+      hint:
+        ar: منفذ بيدروك عبر NetherNet. يرسله سيرفرك بنفسه إلى لعبة اللاعب، ولا يكتبه اللاعبون في أي مكان.
+        en: The Bedrock port for NetherNet. Your server sends it to the player's game by itself, and players don't type it anywhere.
+      join: separate
+      mirror: true
+      hostRange:
+        default: 26200
+        min: 26200
+        max: 26299
       activeWhen:
         - variable: SERVER_TYPE
           values:

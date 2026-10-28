@@ -1,5 +1,5 @@
 import { type Bridge, BridgeKind } from "@serverkgg/bridge";
-import { pinCompanionConfigs, syncCompanions } from "../companions";
+import { geyserLaunchProperties, pinCompanionConfigs, syncCompanions } from "../companions";
 import { launchArguments, readInstallStamp } from "../install";
 import { applyStoredGameRules } from "../settings";
 import { javaBinary } from "../shared";
@@ -29,7 +29,7 @@ export const lifecycle: Bridge.Lifecycle = {
 		return [
 			javaBinary(stamp.java),
 			...jvmFlags(heapFor(context.server.memoryMb)),
-			...launchArguments(stamp.launch),
+			...launchArguments(stamp.launch, geyserLaunchProperties(context)),
 			"nogui",
 		];
 	},
