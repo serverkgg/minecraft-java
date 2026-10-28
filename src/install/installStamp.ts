@@ -14,7 +14,10 @@ export interface InstallStamp extends InstallIdentity {
 	launch: LaunchPlan;
 	rconPassword: string | null;
 	rconPasswordNext: string | null;
+	launchDigest: string | null;
 }
+
+const LAUNCH_DIGEST_ALGORITHM = "sha256";
 
 const LAUNCH_KINDS = new Set<string>(Object.values(LaunchKind));
 
@@ -73,6 +76,7 @@ const installStampOf = (parsed: Partial<InstallStamp> | null): InstallStamp | nu
 		launch,
 		rconPassword: parseText(parsed.rconPassword),
 		rconPasswordNext: parseText(parsed.rconPasswordNext),
+		launchDigest: parseText(parsed.launchDigest),
 	};
 };
 
@@ -92,6 +96,22 @@ export const matchesStamp = (stamp: InstallStamp | null, next: InstallIdentity) 
 	return (
 		stamp !== null && stamp.variant === next.variant && stamp.version === next.version && stamp.build === next.build
 	);
+};
+
+export const launchDigestOf = async (context: Bridge.Context, launch: LaunchPlan) => {
+	return await context.files.digest(launch.target, LAUNCH_DIGEST_ALGORITHM);
+};
+
+export const launchIntact = async (context: Bridge.Context, stamp: InstallStamp) => {
+	if (!(await context.files.exists(stamp.launch.target))) {
+		return false;
+	}
+
+	if (stamp.launchDigest === null) {
+		return true;
+	}
+
+	return (await launchDigestOf(context, stamp.launch)) === stamp.launchDigest;
 };
 
 export const installedGameVersion = async (context: Bridge.Context) => {

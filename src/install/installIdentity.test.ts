@@ -16,6 +16,7 @@ const stamp: InstallStamp = {
 	},
 	rconPassword: null,
 	rconPasswordNext: null,
+	launchDigest: null,
 };
 const contextWith = (variables: Record<string, string>) =>
 	({

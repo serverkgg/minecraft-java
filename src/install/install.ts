@@ -32,6 +32,8 @@ import { pinRconProperties } from "./installRcon";
 import {
 	type InstallIdentity,
 	type InstallStamp,
+	launchDigestOf,
+	launchIntact,
 	matchesStamp,
 	readInstallStamp,
 	writeInstallStamp,
@@ -164,19 +166,39 @@ export const install: Bridge.Install = {
 		const current = plan.kind !== ModpackPlanKind.Apply && !detaching && matchesStamp(stamp, next);
 
 		if (current && stamp) {
-			if ((await context.files.exists(stamp.launch.target)) || (await recoverRuntime(context, stamp))) {
+			const matching = await launchIntact(context, stamp);
+
+			if (!matching) {
+				context.log("the server files do not match the recorded install, putting the saved files back", {
+					variant,
+					version,
+					target: stamp.launch.target,
+				});
+			}
+
+			const intact = matching || ((await recoverRuntime(context, stamp)) && (await launchIntact(context, stamp)));
+
+			if (intact) {
 				context.log("install is current", {
 					variant,
 					version,
 					build: next.build,
 				});
 
-				await finalize(context);
+				await finalize(
+					context,
+					stamp.launchDigest === null
+						? {
+								...stamp,
+								launchDigest: await launchDigestOf(context, stamp.launch),
+							}
+						: undefined,
+				);
 
 				return pendingHold(await settlePendingFiles(context));
 			}
 
-			context.log("the recorded install is missing its files, installing it again", {
+			context.log("the recorded install does not match its files, installing it again", {
 				variant,
 				version,
 				target: stamp.launch.target,
@@ -263,6 +285,7 @@ export const install: Bridge.Install = {
 			launch,
 			rconPassword: stamp?.rconPassword ?? null,
 			rconPasswordNext: stamp?.rconPasswordNext ?? null,
+			launchDigest: await launchDigestOf(context, launch),
 		});
 
 		context.log("minecraft is installed", {

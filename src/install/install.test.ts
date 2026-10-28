@@ -53,6 +53,7 @@ const bootWith = () => {
 			},
 			list: async () => [],
 			size: async () => 0,
+			digest: async (path: string) => `digest-of-${files.get(path) ?? ""}`,
 		},
 		codec: {
 			javaProperties: {
@@ -239,6 +240,7 @@ const serverWith = (setup: ServerSetup) => {
 			},
 			list: async () => [],
 			size: async () => 0,
+			digest: async (path: string) => `digest-of-${files.get(path) ?? ""}`,
 		},
 		exec: async (args: string[]) => {
 			touched.push(`exec ${args[0]}`);
@@ -406,7 +408,10 @@ describe("install", () => {
 			await errorOf(install.run(context));
 
 			expect(files.get("server.jar")).toBe("old");
-			expect(JSON.parse(files.get(".serverk-install.json") ?? "{}")).toEqual(PAPER_STAMP);
+			expect(JSON.parse(files.get(".serverk-install.json") ?? "{}")).toEqual({
+				...PAPER_STAMP,
+				launchDigest: null,
+			});
 			expect(files.has("plugins/essentials.jar")).toBe(true);
 			expect(files.has("world/level.dat")).toBe(true);
 		});
@@ -534,6 +539,77 @@ describe("install", () => {
 
 			expect(error).toBeNull();
 			expect(touched.filter((entry) => entry.startsWith("download") || entry.startsWith("remove"))).toEqual([]);
+		});
+	});
+});
+
+describe("a restore that put back an older install record than the server jar on disk", () => {
+	const RESTORED_STAMP = {
+		...PAPER_STAMP,
+		launchDigest: "digest-of-1.21.4 jar",
+	};
+
+	const restored = (saved: Record<string, string>) => {
+		return serverWith({
+			files: {
+				".serverk-install.json": JSON.stringify(RESTORED_STAMP),
+				"server.jar": "1.21.1 jar",
+				"server.properties": "",
+				"world/level.dat": "",
+				...saved,
+			},
+			variables: {
+				SERVER_TYPE: "paper",
+			},
+			net: {
+				"https://fill.papermc.io/v3/projects/paper/versions/1.21.4/builds": [
+					paperBuildOf(123, "STABLE"),
+				],
+				[MOJANG_MANIFEST_URL]: MANIFEST,
+			},
+		});
+	};
+
+	it("puts the saved runtime of the recorded install back instead of booting the other jar", async () => {
+		const { context, files, touched } = restored({
+			".serverk-staging/runtime-previous/identity.json": JSON.stringify(RESTORED_STAMP),
+			".serverk-staging/runtime-previous/server.jar": "1.21.4 jar",
+		});
+
+		const error = await errorOf(install.run(context));
+
+		expect(error).toBeNull();
+		expect(files.get("server.jar")).toBe("1.21.4 jar");
+		expect(touched.some((entry) => entry.startsWith("download"))).toBe(false);
+		expect(files.has("world/level.dat")).toBe(true);
+	});
+
+	it("installs the recorded version again when no runtime was saved", async () => {
+		const { context, files, touched } = restored({});
+
+		const error = await errorOf(install.run(context));
+
+		expect(error).toBeNull();
+		expect(touched).toContain("download server.jar");
+		expect(files.get("server.jar")).toBe("new");
+		expect(JSON.parse(files.get(".serverk-install.json") ?? "{}")).toMatchObject({
+			variant: "paper",
+			version: "1.21.4",
+			launchDigest: "digest-of-new",
+		});
+		expect(files.has("world/level.dat")).toBe(true);
+	});
+});
+
+describe("starting a server whose stamp predates the launch digest", () => {
+	it("records the digest of the jar it boots, so a later restore can tell the jar apart", async () => {
+		const { context } = bootWith();
+
+		await install.run(context);
+
+		expect(JSON.parse(await context.files.read(".serverk-install.json"))).toMatchObject({
+			...STAMP,
+			launchDigest: "digest-of-",
 		});
 	});
 });

@@ -143,6 +143,7 @@ it("a fresh install commits its password only after writing RCON properties", as
 		},
 		rconPassword: null,
 		rconPasswordNext: null,
+		launchDigest: null,
 	};
 	let stored: InstallStamp | null = null;
 	const context = {

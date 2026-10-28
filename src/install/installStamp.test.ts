@@ -15,6 +15,7 @@ const stamp = (overrides: Partial<InstallStamp> = {}): InstallStamp => ({
 	},
 	rconPassword: "live-password",
 	rconPasswordNext: null,
+	launchDigest: "digest-of-the-launch-target",
 	...overrides,
 });
 
@@ -55,6 +56,16 @@ describe("reading the record of what is already installed", () => {
 		});
 		expect(rconPassword).toBe("live-password");
 		expect(rconPasswordNext).toBeNull();
+	});
+
+	it("a stamp written before the launch digest existed is kept, with no digest yet", () => {
+		const { launchDigest, ...legacy } = stamp();
+
+		expect(parseInstallStamp(JSON.stringify(legacy))).toEqual({
+			...legacy,
+			launchDigest: null,
+		});
+		expect(launchDigest).toBe("digest-of-the-launch-target");
 	});
 
 	it("a pending rcon password rides the stamp beside the live one", () => {

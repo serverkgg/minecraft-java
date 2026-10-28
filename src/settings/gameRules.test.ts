@@ -27,6 +27,7 @@ const stampText = (version: string, variant: ServerVariant) => {
 		},
 		rconPassword: null,
 		rconPasswordNext: null,
+		launchDigest: null,
 	};
 
 	return JSON.stringify(stamp);

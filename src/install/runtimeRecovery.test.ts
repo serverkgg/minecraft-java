@@ -16,6 +16,7 @@ const stamp: InstallStamp = {
 	},
 	rconPassword: null,
 	rconPasswordNext: null,
+	launchDigest: null,
 };
 const fixture = (recorded: InstallStamp) => {
 	const copies: string[][] = [];
