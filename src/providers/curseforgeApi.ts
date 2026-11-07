@@ -9,7 +9,8 @@ import {
 	curseforgeDownloadUrl,
 	curseforgeSha1,
 } from "@serverkgg/bridge/catalogs";
-import type { CatalogFile } from "./provider";
+import { type CatalogFile, CatalogProviderId } from "./provider";
+import { providerOfLink } from "./providerLink";
 
 const CURSEFORGE_GAME_ID = 432;
 
@@ -25,7 +26,35 @@ export const CURSEFORGE_CLASS_MODPACKS = 4471;
 
 export const CURSEFORGE_FILE_PAGE_SIZE = 50;
 
+const LISTED_PROBE_PAGE_SIZE = 1;
+
+const CLASS_SEGMENTS: Record<number, string> = {
+	[CURSEFORGE_CLASS_MODS]: "mc-mods",
+	[CURSEFORGE_CLASS_PLUGINS]: "bukkit-plugins",
+	[CURSEFORGE_CLASS_MODPACKS]: "modpacks",
+};
+
 const SORTS = Object.values(CurseforgeSort);
+
+export enum CurseforgeLinkOutcome {
+	Incompatible = "incompatible",
+	Unlisted = "unlisted",
+}
+
+export type CurseforgeSearchOutcome =
+	| {
+			kind: CurseforgeLinkOutcome.Incompatible;
+			name: string;
+	  }
+	| {
+			kind: CurseforgeLinkOutcome.Unlisted;
+			name: null;
+	  };
+
+export interface CurseforgeSearchResult {
+	page: CurseforgeSearchPage;
+	outcome: CurseforgeSearchOutcome | null;
+}
 
 export const curseforgeCatalog = (context: Bridge.Context): CurseforgeCatalog => {
 	return createCurseforgeCatalog(context, {
@@ -97,6 +126,18 @@ export const curseforgeSearchText = (query: string) => {
 	return slug === null ? text : slug.split(SLUG_SEPARATOR).join(WORD_SEPARATOR);
 };
 
+export const curseforgeLinkSlug = (text: string, classId: number | undefined): string | null => {
+	const link = text.trim();
+
+	if (classId === undefined || providerOfLink(link) !== CatalogProviderId.CurseForge) {
+		return null;
+	}
+
+	const [, segment, slug] = new URL(link).pathname.split("/").filter((part) => part.length > 0);
+
+	return segment !== undefined && segment === CLASS_SEGMENTS[classId] && slug !== undefined ? slug : null;
+};
+
 export const curseforgeRelaxedQuery = (text: string) => {
 	return text
 		.split(WORD_BREAK)
@@ -106,10 +147,76 @@ export const curseforgeRelaxedQuery = (text: string) => {
 		.join(WORD_SEPARATOR);
 };
 
+const emptySearchPage = (query: CurseforgeSearchQuery): CurseforgeSearchPage => {
+	return {
+		data: [],
+		pagination: {
+			index: query.index ?? 0,
+			pageSize: query.pageSize ?? 0,
+			resultCount: 0,
+			totalCount: 0,
+		},
+	};
+};
+
+const curseforgeLinkPage = async (
+	catalog: Pick<CurseforgeCatalog, "search">,
+	query: CurseforgeSearchQuery,
+	slug: string,
+): Promise<CurseforgeSearchResult> => {
+	if ((query.index ?? 0) > 0) {
+		return {
+			page: emptySearchPage(query),
+			outcome: null,
+		};
+	}
+
+	const page = await catalog.search({
+		slug,
+		classId: query.classId,
+		gameVersion: query.gameVersion,
+		modLoaderType: query.modLoaderType,
+		pageSize: query.pageSize,
+	});
+
+	if (page.data.length > 0) {
+		return {
+			page,
+			outcome: null,
+		};
+	}
+
+	const listed = await catalog.search({
+		slug,
+		classId: query.classId,
+		pageSize: LISTED_PROBE_PAGE_SIZE,
+	});
+	const project = listed.data.at(0);
+
+	return {
+		page,
+		outcome: project
+			? {
+					kind: CurseforgeLinkOutcome.Incompatible,
+					name: project.name,
+				}
+			: {
+					kind: CurseforgeLinkOutcome.Unlisted,
+					name: null,
+				},
+	};
+};
+
 export const curseforgeSearchPage = async (
 	catalog: Pick<CurseforgeCatalog, "search">,
 	query: CurseforgeSearchQuery,
-): Promise<CurseforgeSearchPage> => {
+): Promise<CurseforgeSearchResult> => {
+	const slug = curseforgeLinkSlug(query.query ?? "", query.classId);
+
+	if (slug !== null) {
+		return await curseforgeLinkPage(catalog, query, slug);
+	}
+
 	const text = curseforgeSearchText(query.query ?? "");
 	const page = await catalog.search({
 		...query,
@@ -118,13 +225,19 @@ export const curseforgeSearchPage = async (
 	const relaxed = curseforgeRelaxedQuery(text);
 
 	if (page.data.length > 0 || (query.index ?? 0) > 0 || relaxed.length === 0 || relaxed === text) {
-		return page;
+		return {
+			page,
+			outcome: null,
+		};
 	}
 
-	return await catalog.search({
-		...query,
-		query: relaxed,
-	});
+	return {
+		page: await catalog.search({
+			...query,
+			query: relaxed,
+		}),
+		outcome: null,
+	};
 };
 
 export const curseforgeCatalogFile = (file: CurseforgeFile): CatalogFile | null => {

@@ -1286,6 +1286,10 @@ const pluginsTab: Bridge.Tab = {
 		{
 			layout: BridgeLayout.Catalog,
 			id: "plugin-list",
+			help: {
+				ar: "ابحث عن الإضافة باسمها، أو الصق رابطها من CurseForge أو Modrinth.",
+				en: "Search for a plugin by name, or paste its link from CurseForge or Modrinth.",
+			},
 			module: "addons",
 			empty: {
 				ar: "لا توجد إضافات مثبّتة بعد.",
@@ -1313,6 +1317,10 @@ const modsTab: Bridge.Tab = {
 		{
 			layout: BridgeLayout.Catalog,
 			id: "mod-list",
+			help: {
+				ar: "ابحث عن المود باسمه، أو الصق رابطه من CurseForge أو Modrinth.",
+				en: "Search for a mod by name, or paste its link from CurseForge or Modrinth.",
+			},
 			module: "addons",
 			empty: {
 				ar: "لا توجد مودات مثبّتة بعد.",

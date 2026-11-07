@@ -20,6 +20,25 @@ import {
 	type CatalogResults,
 	targetLoaders,
 } from "./provider";
+import { providerOfLink } from "./providerLink";
+
+const MODRINTH_LINK_TYPES = [
+	"mod",
+	"plugin",
+	"project",
+];
+
+export const modrinthSearchText = (query: string) => {
+	const link = query.trim();
+
+	if (providerOfLink(link) !== CatalogProviderId.Modrinth) {
+		return query;
+	}
+
+	const [type, slug] = new URL(link).pathname.split("/").filter((part) => part.length > 0);
+
+	return type !== undefined && MODRINTH_LINK_TYPES.includes(type) && slug !== undefined ? slug : query;
+};
 
 const versionsFor = async (context: Bridge.Context, target: AddonTarget, project: string) => {
 	const url = new URL(`${MODRINTH}/project/${encodeURIComponent(project)}/version`);
@@ -238,7 +257,7 @@ export const modrinthProvider: CatalogProvider = {
 
 		const url = new URL(`${MODRINTH}/search`);
 
-		url.searchParams.set("query", search.query);
+		url.searchParams.set("query", modrinthSearchText(search.query));
 		url.searchParams.set("offset", String(search.page * search.pageSize));
 		url.searchParams.set("limit", String(search.pageSize));
 		url.searchParams.set("index", search.sort ?? (search.query.length > 0 ? "relevance" : "downloads"));

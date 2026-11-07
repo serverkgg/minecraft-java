@@ -17,6 +17,7 @@ import {
 	explainLookup,
 	MODRINTH_UNSUPPORTED,
 	providerById,
+	providerOfLink,
 	resolveProvider,
 	targetLoaders,
 } from "../providers";
@@ -502,7 +503,8 @@ export const addons: Bridge.Catalog = {
 
 	async search(context, query) {
 		const target = await addonTarget(context);
-		const provider = resolveProvider(context, target, query.provider);
+		const linked = providerOfLink(query.query);
+		const provider = resolveProvider(context, target, linked ?? query.provider);
 		const providers = describeProviders(context, target);
 
 		if (!provider) {
@@ -519,6 +521,7 @@ export const addons: Bridge.Catalog = {
 			providers,
 			categories: provider.categories(target),
 			sorts: provider.sorts,
+			provider: provider.id,
 		};
 
 		if (!provider.ready(context)) {
@@ -533,8 +536,8 @@ export const addons: Bridge.Catalog = {
 			query: query.query,
 			page: query.page,
 			pageSize: PAGE_SIZE,
-			category: query.category,
-			sort: query.sort,
+			category: linked === null ? query.category : null,
+			sort: linked === null ? query.sort : null,
 		});
 
 		return {
@@ -548,6 +551,7 @@ export const addons: Bridge.Catalog = {
 					};
 				}),
 			total: results.total,
+			note: results.note,
 			...facets,
 		};
 	},

@@ -18,7 +18,7 @@ If your server is on Vanilla, or you want to move between plugins and mods, chan
 
 The **Plugins** and **Mods** tabs each have a catalog you search right there, from Modrinth and CurseForge, plus Hangar for plugins:
 
-1. Pick the source at the top, search by name, or browse the categories and sort the results.
+1. Pick the source at the top, search by name, or browse the categories and sort the results. If you have the link to a plugin or mod on CurseForge or Modrinth, paste it into the search box, and we switch to its source and look it up there.
 2. Press **Install** on what you want.
 3. Pick the **Version to install**. We only list versions that match your server type and version.
 4. Press **Install** to confirm, then restart your server so what you installed loads.
@@ -60,6 +60,8 @@ If you have a `jar` file that isn't in the catalog:
 ![The plugins folder in the Files tab, with the upload button.](guides/plugins-mods/upload-jar.webp)
 
 It then shows up in your installed list like the rest.
+
+A CurseForge mod or plugin whose files are all **Alpha**, or that CurseForge hasn't approved yet, doesn't show up in the catalog search, and we tell you so when you paste its link. Install it by uploading its file as in the steps above.
 
 > [!note] Only download files from their official source, and make sure they're made for your server type and version. A Paper plugin doesn't run on Fabric, and a Forge mod doesn't run on NeoForge.
 

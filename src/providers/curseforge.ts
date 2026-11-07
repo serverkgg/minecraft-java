@@ -9,11 +9,13 @@ import {
 	CurseforgeReleaseType,
 	CurseforgeSort,
 } from "@serverkgg/bridge/catalogs";
-import { ServerVariant } from "../shared";
+import { ServerVariant, VARIANT_LABELS } from "../shared";
 import {
 	CURSEFORGE_CLASS_MODS,
 	CURSEFORGE_CLASS_PLUGINS,
 	CURSEFORGE_FILE_PAGE_SIZE,
+	CurseforgeLinkOutcome,
+	type CurseforgeSearchOutcome,
 	curseforgeCatalog,
 	curseforgeCatalogFile,
 	curseforgeCategoryOf,
@@ -100,6 +102,42 @@ const curseforgeVersionLabel = (mod: CurseforgeMod, latest: CurseforgeFileIndex)
 		mod.latestFiles?.find((file) => file.id === latest.fileId)?.displayName
 		?? latest.filename.replace(JAR_EXTENSION, "")
 	);
+};
+
+const incompatibleNote = (name: string, target: AddonTarget): Bridge.Text => {
+	const server = `${VARIANT_LABELS[target.variant]} ${target.gameVersion}`;
+
+	if (target.kind === AddonKind.Plugin) {
+		return {
+			ar: `لا يوجد لإضافة ${name} على CurseForge ملف متوافق مع ${server}. اختر من تبويب الإصدار إصدارًا تدعمه، أو اطلب من صاحبها ملفًا يناسب سيرفرك.`,
+			en: `${name} has no file on CurseForge for ${server}. Pick a version it supports from the Version tab, or ask its author for a file that fits your server.`,
+		};
+	}
+
+	return {
+		ar: `لا يوجد لمود ${name} على CurseForge ملف متوافق مع ${server}. اختر من تبويب الإصدار إصدارًا يدعمه، أو اطلب من صاحبه ملفًا يناسب سيرفرك.`,
+		en: `${name} has no file on CurseForge for ${server}. Pick a version it supports from the Version tab, or ask its author for a file that fits your server.`,
+	};
+};
+
+const unlistedNote = (target: AddonTarget): Bridge.Text => {
+	if (target.kind === AddonKind.Plugin) {
+		return {
+			ar: `لا تظهر هذه الإضافة في بحث CurseForge. يحدث ذلك حين تكون كل ملفاتها من نوع Alpha، أو حين لم يوافق عليها CurseForge بعد، أو حين يكون الرابط غير صحيح. إذا فُتحت صفحتها في المتصفح، فنزّل الملف منها وارفعه من تبويب الملفات إلى مجلد ${target.directory}، ثم نفّذ ريستارت لسيرفرك.`,
+			en: `CurseForge's search doesn't return this plugin. That happens when all its files are Alpha, when CurseForge hasn't approved it yet, or when the link is wrong. If its page opens in your browser, download the file from the page, upload it to the ${target.directory} folder from the Files tab, then restart your server.`,
+		};
+	}
+
+	return {
+		ar: `لا يظهر هذا المود في بحث CurseForge. يحدث ذلك حين تكون كل ملفاته من نوع Alpha، أو حين لم يوافق عليه CurseForge بعد، أو حين يكون الرابط غير صحيح. إذا فُتحت صفحته في المتصفح، فنزّل الملف منها وارفعه من تبويب الملفات إلى مجلد ${target.directory}، ثم نفّذ ريستارت لسيرفرك.`,
+		en: `CurseForge's search doesn't return this mod. That happens when all its files are Alpha, when CurseForge hasn't approved it yet, or when the link is wrong. If its page opens in your browser, download the file from the page, upload it to the ${target.directory} folder from the Files tab, then restart your server.`,
+	};
+};
+
+const noteOf = (outcome: CurseforgeSearchOutcome, target: AddonTarget): Bridge.Text => {
+	return outcome.kind === CurseforgeLinkOutcome.Incompatible
+		? incompatibleNote(outcome.name, target)
+		: unlistedNote(target);
 };
 
 export const curseForgeProvider: CatalogProvider = {
@@ -272,7 +310,7 @@ export const curseForgeProvider: CatalogProvider = {
 			};
 		}
 
-		const result = await curseforgeSearchPage(curseforgeCatalog(context), {
+		const { page, outcome } = await curseforgeSearchPage(curseforgeCatalog(context), {
 			query: search.query,
 			classId: CLASS_ID[target.kind],
 			gameVersion: target.gameVersion,
@@ -284,7 +322,7 @@ export const curseForgeProvider: CatalogProvider = {
 		});
 
 		return {
-			hits: result.data.map((mod) => {
+			hits: page.data.map((mod) => {
 				return {
 					id: String(mod.id),
 					title: mod.name,
@@ -297,7 +335,12 @@ export const curseForgeProvider: CatalogProvider = {
 					pageUrl: mod.links?.websiteUrl ?? null,
 				};
 			}),
-			total: Math.min(result.pagination.totalCount, CURSEFORGE_SEARCH_CEILING),
+			total: Math.min(page.pagination.totalCount, CURSEFORGE_SEARCH_CEILING),
+			...(outcome
+				? {
+						note: noteOf(outcome, target),
+					}
+				: {}),
 		};
 	},
 

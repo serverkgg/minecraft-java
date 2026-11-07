@@ -210,7 +210,7 @@ export const searchCurseforgeModpacks = async (
 		};
 	}
 
-	const result = await curseforgeSearchPage(curseforgeCatalog(context), {
+	const { page } = await curseforgeSearchPage(curseforgeCatalog(context), {
 		query: search.query,
 		classId: CURSEFORGE_CLASS_MODPACKS,
 		sort: curseforgeSortOf(search.sort),
@@ -220,7 +220,7 @@ export const searchCurseforgeModpacks = async (
 	});
 
 	return {
-		hits: result.data.map((mod) => {
+		hits: page.data.map((mod) => {
 			return {
 				id: String(mod.id),
 				title: mod.name,
@@ -233,7 +233,7 @@ export const searchCurseforgeModpacks = async (
 				pageUrl: mod.links?.websiteUrl ?? null,
 			};
 		}),
-		total: Math.min(result.pagination.totalCount, CURSEFORGE_SEARCH_CEILING),
+		total: Math.min(page.pagination.totalCount, CURSEFORGE_SEARCH_CEILING),
 	};
 };
 

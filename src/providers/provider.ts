@@ -110,6 +110,7 @@ export interface ModpackRelease {
 export interface CatalogResults {
 	hits: Omit<Bridge.CatalogHit, "provider">[];
 	total: number;
+	note?: Bridge.Text;
 }
 
 export interface CatalogProvider {

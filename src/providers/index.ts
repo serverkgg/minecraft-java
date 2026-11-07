@@ -8,6 +8,7 @@ export * from "./modrinth";
 export * from "./modrinthApi";
 export * from "./modrinthModpack";
 export * from "./provider";
+export * from "./providerLink";
 export * from "./providerRef";
 export * from "./providers";
 export * from "./rateLimit";

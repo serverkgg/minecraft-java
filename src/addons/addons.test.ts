@@ -8,6 +8,7 @@ import {
 	BridgeSecretError,
 	BridgeUserError,
 } from "@serverkgg/bridge";
+import { CURSEFORGE_SECRET, CurseforgeSort } from "@serverkgg/bridge/catalogs";
 import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import { CatalogProviderId, encodeProviderRef } from "../providers";
 import { addons } from "./addons";
@@ -378,6 +379,169 @@ describe("what the addon catalog reports", () => {
 
 		expect(error).toBeInstanceOf(BridgeFailureError);
 		expect((error as BridgeFailureError).code).toBe(BridgeFailureCode.CatalogRateLimited);
+	});
+});
+
+const AMW_LINK = "https://www.curseforge.com/minecraft/mc-mods/amw";
+
+const curseforgeMod = (name: string) => {
+	return {
+		id: 1_234_567,
+		classId: 6,
+		name,
+		slug: "amw",
+		summary: "",
+		downloadCount: 0,
+		authors: [],
+		categories: [],
+		dateModified: null,
+		allowModDistribution: null,
+		logo: null,
+		links: null,
+	};
+};
+
+const linkedServer = (curseforge: (url: URL) => string[]) => {
+	const { context } = serverWith();
+	const urls: URL[] = [];
+	const linked = {
+		...context,
+		secret: (key: string) => (key === CURSEFORGE_SECRET ? "key" : null),
+		net: {
+			json: async (address: string) => {
+				const url = new URL(address);
+
+				urls.push(url);
+
+				if (url.hostname === "api.modrinth.com") {
+					return {
+						hits: [],
+						total_hits: 0,
+					};
+				}
+
+				const names = curseforge(url);
+
+				return {
+					data: names.map(curseforgeMod),
+					pagination: {
+						index: 0,
+						pageSize: 20,
+						resultCount: names.length,
+						totalCount: names.length,
+					},
+				};
+			},
+		},
+	} as unknown as Bridge.Context;
+
+	return {
+		context: linked,
+		urls,
+	};
+};
+
+describe("searching the addon catalog with a pasted link", () => {
+	it("answers a curseforge link from curseforge on the modrinth tab and names curseforge as the source", async () => {
+		const { context, urls } = linkedServer(() => [
+			"AcceleratedMcWarfare",
+		]);
+
+		const page = await addons.search(context, {
+			query: AMW_LINK,
+			page: 0,
+			provider: CatalogProviderId.Modrinth,
+			category: null,
+			sort: null,
+		});
+
+		expect(page.provider).toBe(CatalogProviderId.CurseForge);
+		expect(
+			page.hits.map((hit) => [
+				hit.provider,
+				hit.title,
+			]),
+		).toEqual([
+			[
+				CatalogProviderId.CurseForge,
+				"AcceleratedMcWarfare",
+			],
+		]);
+		expect(page.note).toBeUndefined();
+		expect(urls.at(0)?.searchParams.get("slug")).toBe("amw");
+	});
+
+	it("says a linked mod has no file for this loader and version, by name", async () => {
+		const { context } = linkedServer((url) => {
+			return url.searchParams.has("gameVersion")
+				? []
+				: [
+						"AcceleratedMcWarfare",
+					];
+		});
+
+		const page = await addons.search(context, {
+			query: AMW_LINK,
+			page: 0,
+			provider: CatalogProviderId.CurseForge,
+			category: null,
+			sort: null,
+		});
+
+		expect(page.hits).toEqual([]);
+		expect(page.note?.en).toBe(
+			"AcceleratedMcWarfare has no file on CurseForge for Fabric 1.21.1. Pick a version it supports from the Version tab, or ask its author for a file that fits your server.",
+		);
+		expect(page.note?.ar).toContain("AcceleratedMcWarfare");
+	});
+
+	it("says curseforge's search does not return a linked mod and points at an upload into the mods folder", async () => {
+		const { context } = linkedServer(() => []);
+
+		const page = await addons.search(context, {
+			query: AMW_LINK,
+			page: 0,
+			provider: CatalogProviderId.CurseForge,
+			category: null,
+			sort: null,
+		});
+
+		expect(page.hits).toEqual([]);
+		expect(page.note?.en).toStartWith("CurseForge's search doesn't return this mod.");
+		expect(page.note?.en).toContain("upload it to the mods folder from the Files tab");
+		expect(page.note?.ar).toContain("مجلد mods");
+	});
+
+	it("searches a modrinth link on the curseforge tab without the curseforge category and sort", async () => {
+		const { context, urls } = linkedServer(() => []);
+
+		const page = await addons.search(context, {
+			query: "https://modrinth.com/mod/c2me-fabric",
+			page: 0,
+			provider: CatalogProviderId.CurseForge,
+			category: "435",
+			sort: CurseforgeSort.TotalDownloads,
+		});
+		const searched = urls.at(0);
+
+		expect(page.provider).toBe(CatalogProviderId.Modrinth);
+		expect(searched?.searchParams.get("query")).toBe("c2me-fabric");
+		expect(searched?.searchParams.get("index")).toBe("relevance");
+		expect(searched?.searchParams.get("facets")).not.toContain("435");
+	});
+
+	it("keeps the requested source for typed text", async () => {
+		const { context } = linkedServer(() => []);
+
+		const page = await addons.search(context, {
+			query: "sodium",
+			page: 0,
+			provider: CatalogProviderId.Modrinth,
+			category: null,
+			sort: null,
+		});
+
+		expect(page.provider).toBe(CatalogProviderId.Modrinth);
 	});
 });
 
