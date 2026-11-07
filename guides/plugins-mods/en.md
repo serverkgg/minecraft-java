@@ -69,18 +69,18 @@ A CurseForge mod or plugin whose files are all **Alpha**, or that CurseForge has
 
 Every player needs the same mods as your server. Instead of each player installing them one by one, we build a pack from them that players import into their launcher in one step.
 
-1. Open the **Modpacks** tab and type a name for the pack in **Modpack for players**, below **Your uploads**.
-2. Press **Build pack**.
-3. Press **Download** on the pack in the list, and send the file to your friends.
+1. Open the **Join** tab.
+2. Press **Build pack** in **Modpack for players**.
+3. Press **Download pack**, and send the file to your friends.
 
-@[open](panel:modpacks)
+@[open](join)
 
-The **Import in** column names the launcher that opens the file:
+The pack takes your server's name from its address, so there's no name to type. Under that name, we show the launcher that opens the file:
 
 - When every mod came from CurseForge, we build a `zip` that players import in the CurseForge app: **Import**, then **Choose .zip file**.
 - Otherwise we build an `.mrpack` that players import in the Modrinth app or Prism Launcher. In Prism, press **Add Instance**, then **Import**.
 
-The pack holds no mod files, only the list of mods and where each one downloads from, so the player's launcher downloads them from their source. The pack also adds your server to each player's server list, so it's waiting under **Multiplayer** after the import. Whenever you change your mods, build the pack again and send it again. The new one replaces the old one.
+The pack holds no mod files, only the list of mods and where each one downloads from, so the player's launcher downloads them from their source. The pack also adds your server to each player's server list, so it's waiting under **Multiplayer** after the import. Whenever you change your mods, the pack shows **Mods changed since the build**. Build it again and send it again. The new one replaces the old one.
 
 ### What the pack can't hold
 
@@ -88,8 +88,6 @@ The pack holds no mod files, only the list of mods and where each one downloads 
 - In an `.mrpack`, a CurseForge mod whose author allows downloads only from CurseForge. We stop the build and name it. Remove it or replace it with a mod from Modrinth, then build again.
 - A mod whose file we can't match with its copy in the catalog. Install it again from the catalog, then build again.
 - A server running a modpack from the **Modpacks** tab gets no pack. Send players that same modpack. The details are in the [modpacks guide](/games/minecraft-java/guides/modpacks).
-
-**Delete** removes the file from your server. Copies players already downloaded stay as they are.
 
 ## The install was refused {#install-conflict}
 

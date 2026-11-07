@@ -8,6 +8,7 @@ import {
 	BridgeUploadMode,
 } from "@serverkgg/bridge";
 import type { BridgeSection } from "@serverkgg/bridge/protocol";
+import { CLIENT_PACK_GENERATE } from "../clientpack";
 import { VOICE_CHAT } from "../companions";
 import { panel } from "./panel";
 
@@ -37,6 +38,12 @@ const formNamed = (id: string) => {
 	return section?.layout === BridgeLayout.Form ? section : null;
 };
 
+const detailNamed = (id: string) => {
+	const section = sectionNamed(id);
+
+	return section?.layout === BridgeLayout.Detail ? section : null;
+};
+
 const rowActionNamed = (tableId: string, actionId: string) => {
 	return tableNamed(tableId)?.actions?.find((action) => action.id === actionId) ?? null;
 };
@@ -56,6 +63,9 @@ const HELPED_FORM_IDS = [
 ];
 
 const PLACE_LAYOUTS: Record<BridgePlace, BridgeLayout[]> = {
+	[BridgePlace.Join]: [
+		BridgeLayout.Detail,
+	],
 	[BridgePlace.Overview]: [
 		BridgeLayout.Actions,
 		BridgeLayout.Detail,
@@ -185,10 +195,9 @@ describe("moderating a player who already left", () => {
 });
 
 describe("letting the owner bring their own modpack", () => {
-	it("puts the uploads and the pack for players above the catalog on the modpacks tab", () => {
+	it("puts the uploads above the catalog on the modpacks tab", () => {
 		expect(tabNamed("modpacks")?.sections.map((section) => section.id)).toEqual([
 			"modpack-uploads",
-			"client-pack",
 			"modpack-list",
 		]);
 	});
@@ -211,14 +220,23 @@ describe("letting the owner bring their own modpack", () => {
 });
 
 describe("handing players the server's mods as a pack", () => {
-	it("keeps the pack for players off the mods tab, where owners never found it", () => {
+	it("declares the pack on the mods tab, after the catalog it is built from", () => {
 		expect(tabNamed("mods")?.sections.map((section) => section.id)).toEqual([
 			"mod-list",
+			"client-pack",
 		]);
 	});
 
-	it("shows the pack only on a mod loader, and asks for its name with an example", () => {
-		expect(tableNamed("client-pack")?.visibleWhen).toEqual({
+	it("shows the pack as one card on the join page, read from the client pack module", () => {
+		const detail = detailNamed("client-pack");
+
+		expect(detail?.layout).toBe(BridgeLayout.Detail);
+		expect(detail?.place).toBe(BridgePlace.Join);
+		expect(detail?.module).toBe("clientPack");
+	});
+
+	it("shows the pack only on a mod loader", () => {
+		expect(detailNamed("client-pack")?.visibleWhen).toEqual({
 			variable: "SERVER_TYPE",
 			values: [
 				"fabric",
@@ -226,12 +244,18 @@ describe("handing players the server's mods as a pack", () => {
 				"neoforge",
 			],
 		});
-		expect(tableNamed("client-pack")?.add?.placeholder).toBe("Friends SMP");
 	});
 
-	it("hands the built pack back to download, and asks once before deleting it", () => {
-		expect(rowActionNamed("client-pack", "download")?.download).toBe(true);
-		expect(rowActionNamed("client-pack", "remove")?.confirm).toBe(BridgeConfirm.Normal);
+	it("builds the pack and hands the built file back to download, with no name to type", () => {
+		const detail = detailNamed("client-pack");
+
+		expect(detail?.actions?.map((action) => action.id)).toEqual([
+			CLIENT_PACK_GENERATE,
+			"download",
+		]);
+		expect(detail?.actions?.find((action) => action.id === "download")?.download).toBe(true);
+		expect(detail?.actions?.find((action) => action.id === CLIENT_PACK_GENERATE)?.download).toBeUndefined();
+		expect(detail?.actions?.every((action) => action.fields === undefined)).toBe(true);
 	});
 });
 

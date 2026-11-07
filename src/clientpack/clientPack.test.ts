@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { type Bridge, BridgeUserError } from "@serverkgg/bridge";
+import { createHash } from "node:crypto";
+import { type Bridge, BridgeDetailFormat, BridgeDetailTone, BridgeUserError } from "@serverkgg/bridge";
 import { CurseforgeHash } from "@serverkgg/bridge/catalogs";
 import { simplify } from "prismarine-nbt";
 import type { SidecarEntry } from "../addons";
@@ -7,9 +8,11 @@ import { MODPACK_VARIABLE } from "../modpacks";
 import { CatalogProviderId } from "../providers";
 import { parseLevel } from "../worlds";
 import {
+	addressLabelOf,
 	CLIENT_PACK_BUILD,
 	CLIENT_PACK_DECODE_SCRIPT,
 	CLIENT_PACK_DIRECTORY,
+	CLIENT_PACK_GENERATE,
 	CLIENT_PACK_SERVERS_DAT,
 	CLIENT_PACK_SIDECAR,
 	CLIENT_PACK_STAGING,
@@ -28,6 +31,33 @@ const CURSEFORGE_FILES = "https://api.curseforge.com/v1/mods/files";
 const MODRINTH_HASHES = "https://api.modrinth.com/v2/version_files";
 
 const ADDRESS = "ahmed.srvk.gg";
+
+const LABEL = "ahmed";
+
+const CODE = "k7m2q9xd";
+
+const NO_PACK_TITLE = {
+	ar: "لا يوجد مودباك بعد",
+	en: "No pack yet",
+};
+
+const STALE_BADGE = {
+	tone: BridgeDetailTone.Warning,
+	label: {
+		ar: "تغيّرت المودات بعد التجهيز",
+		en: "Mods changed since the build",
+	},
+};
+
+const MODPACK_APPLIED = {
+	ar: "سيرفرك على مودباك، واللاعبون يحتاجون المودباك نفسه. تجد اسمه في تبويب الإصدار، فأرسله لهم ليثبّتوه في اللانشر.",
+	en: "Your server runs a modpack, and players need that same modpack. Its name is in the Version tab, so send it to them to install in their launcher.",
+};
+
+const NO_FETCHABLE_MODS = {
+	ar: "لا توجد في مجلد mods مودات يستطيع اللانشر تنزيلها من Modrinth أو CurseForge، ولذلك لا يوجد ما نضعه في المودباك. ثبّت مودات من تبويب المودات، ثم جرب مرة ثانية.",
+	en: "The mods folder has no mods a launcher can download from Modrinth or CurseForge, so there's nothing to put in the pack. Install mods from the Mods tab, then try again.",
+};
 
 const SODIUM: SidecarEntry = {
 	provider: CatalogProviderId.Modrinth,
@@ -165,6 +195,7 @@ interface ServerOptions {
 	decodeCode?: number;
 	files?: Record<string, string>;
 	address?: string | null;
+	code?: string;
 }
 
 const serverWith = (options: ServerOptions = {}) => {
@@ -251,6 +282,7 @@ const serverWith = (options: ServerOptions = {}) => {
 
 	const context = {
 		server: {
+			code: options.code ?? CODE,
 			playerAddress: options.address === undefined ? ADDRESS : options.address,
 		},
 		variable: (key: string) => variables[key] ?? null,
@@ -351,10 +383,47 @@ const serverWith = (options: ServerOptions = {}) => {
 	};
 };
 
-const build = async (context: Bridge.Context, name = "Friends SMP") => {
-	const outcome = await clientPack.add?.(context, name);
+const generate = async (context: Bridge.Context) => {
+	const action = clientPack.actions?.[CLIENT_PACK_GENERATE];
+
+	if (!action) {
+		throw new Error("expected the generate action");
+	}
+
+	return await action(context, {});
+};
+
+const build = async (context: Bridge.Context) => {
+	const outcome = await generate(context);
 
 	return outcome?.notice ?? null;
+};
+
+const read = async (context: Bridge.Context) => {
+	const detail = await clientPack.read(context);
+
+	if (!detail) {
+		throw new Error("expected a detail");
+	}
+
+	return detail;
+};
+
+const nameFor = (address: string | null, code = CODE) => {
+	return clientPackName({
+		server: {
+			code,
+			playerAddress: address,
+		},
+	} as unknown as Bridge.Context);
+};
+
+const recordOf = (files: Map<string, string>) => {
+	return JSON.parse(files.get(CLIENT_PACK_SIDECAR) ?? "null");
+};
+
+const fingerprintOf = (lines: string[]) => {
+	return createHash("sha256").update(lines.toSorted().join("\n")).digest("hex");
 };
 
 const refusalOf = async (run: () => Promise<unknown>) => {
@@ -461,7 +530,7 @@ describe("building a curseforge client pack", () => {
 				required: true,
 			},
 		]);
-		expect(writtenJson(written, "manifest.json").name).toBe("Friends SMP");
+		expect(writtenJson(written, "manifest.json").name).toBe(LABEL);
 		expect(written.get(`${CLIENT_PACK_BUILD}/modlist.html`)).toContain(">Just Enough Items</a>");
 		expect(ensured).toContain(`${CLIENT_PACK_BUILD}/overrides`);
 		expect(commands).toEqual([
@@ -494,41 +563,44 @@ describe("building a curseforge client pack", () => {
 		});
 	});
 
-	it("lists the built pack with its download path, and removing it deletes the file", async () => {
-		const { context, files } = serverWith({
+	it("returns no variables and the build's notice from generate", async () => {
+		const { context } = serverWith({
 			mods: {
 				"jei.jar": JEI,
 			},
 		});
 
-		await build(context, "  Friends SMP  ");
+		const outcome = await generate(context);
 
-		const rows = await clientPack.list(context);
+		expect(outcome?.variables).toBeNull();
+		expect(outcome?.notice?.en).toStartWith("Built a CurseForge pack with 1 mod.");
+	});
 
-		expect(rows).toHaveLength(1);
-		expect(rows.at(0)).toMatchObject({
-			id: "client-pack",
-			name: "Friends SMP",
-			app: {
-				ar: "لانشر CurseForge",
-				en: "CurseForge app",
+	it("replaces the previous pack, even one of the other format", async () => {
+		const { context, files } = serverWith({
+			mods: {
+				"jei.jar": JEI,
 			},
-			mods: 1,
-			path: `${CLIENT_PACK_DIRECTORY}/client-pack.zip`,
+			files: {
+				[CLIENT_PACK_SIDECAR]: JSON.stringify({
+					name: "Old",
+					format: "modrinth",
+					mods: 3,
+					builtAt: "2026-10-01T00:00:00.000Z",
+				}),
+				[`${CLIENT_PACK_DIRECTORY}/client-pack.mrpack`]: "old",
+			},
 		});
-		expect(rows.at(0)?.built).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 
-		const row = rows.at(0);
+		await build(context);
 
-		if (!row) {
-			throw new Error("expected a row");
-		}
-
-		await clientPack.actions?.remove?.(context, row, {});
-
-		expect(files.has(`${CLIENT_PACK_DIRECTORY}/client-pack.zip`)).toBe(false);
-		expect(files.has(CLIENT_PACK_SIDECAR)).toBe(false);
-		expect(await clientPack.list(context)).toEqual([]);
+		expect(files.has(`${CLIENT_PACK_DIRECTORY}/client-pack.mrpack`)).toBe(false);
+		expect(files.has(`${CLIENT_PACK_DIRECTORY}/client-pack.zip`)).toBe(true);
+		expect(recordOf(files)).toMatchObject({
+			name: LABEL,
+			format: "curseforge",
+			mods: 1,
+		});
 	});
 
 	it("leaves out a catalog entry whose jar is no longer in the mods folder", async () => {
@@ -892,22 +964,23 @@ describe("building a modrinth client pack", () => {
 });
 
 describe("putting the server in the players' server list", () => {
-	it("writes the server into the zipped overrides/servers.dat under the pack name, with arabic intact", async () => {
+	it("writes the server into the zipped overrides/servers.dat under the name its address carries", async () => {
 		const { context, decoded, commands } = serverWith({
 			mods: {
 				"jei.jar": JEI,
 			},
+			address: "ahmed.srvk.localhost:25565",
 		});
 
-		await build(context, "سيرفر الأصحاب");
+		await build(context);
 
 		const parsed = await parseLevel(decoded.get(CLIENT_PACK_SERVERS_DAT) ?? new Uint8Array());
 
 		expect(parsed === null ? null : simplify(parsed)).toEqual({
 			servers: [
 				{
-					name: "سيرفر الأصحاب",
-					ip: ADDRESS,
+					name: LABEL,
+					ip: "ahmed.srvk.localhost:25565",
 				},
 			],
 		});
@@ -918,7 +991,7 @@ describe("putting the server in the players' server list", () => {
 		]);
 	});
 
-	it("puts the server in a modrinth pack as well", async () => {
+	it("puts the server in a modrinth pack as well, named by its code when the address is an ip", async () => {
 		const { context, decoded, commands } = serverWith({
 			variant: "fabric",
 			build: "0.15.3",
@@ -935,7 +1008,7 @@ describe("putting the server in the players' server list", () => {
 		expect(parsed === null ? null : simplify(parsed)).toEqual({
 			servers: [
 				{
-					name: "Friends SMP",
+					name: CODE,
 					ip: "203.0.113.7:25570",
 				},
 			],
@@ -988,7 +1061,7 @@ describe("putting the server in the players' server list", () => {
 });
 
 describe("when no client pack can be built", () => {
-	it("refuses while a modpack is applied and lists no pack, because that modpack is the one players need", async () => {
+	it("refuses while a modpack is applied and offers no pack, because that modpack is the one players need", async () => {
 		const { context } = serverWith({
 			mods: {
 				"jei.jar": JEI,
@@ -1009,10 +1082,16 @@ describe("when no client pack can be built", () => {
 
 		const refusal = await refusalOf(() => build(context));
 
-		expect(refusal.en).toBe(
-			"Your server runs a modpack, and players need that same modpack. Its name is in the Version tab, so send it to them to install in their launcher.",
-		);
-		expect(await clientPack.list(context)).toEqual([]);
+		expect(refusal).toEqual(MODPACK_APPLIED);
+		expect(await read(context)).toMatchObject({
+			title: NO_PACK_TITLE,
+			stats: [],
+			actions: [],
+			unavailable: {
+				[CLIENT_PACK_GENERATE]: MODPACK_APPLIED,
+			},
+			file: null,
+		});
 	});
 
 	it("refuses a paper server, which runs no mods", async () => {
@@ -1029,7 +1108,8 @@ describe("when no client pack can be built", () => {
 		expect(refusal.en).toBe(
 			"A Paper server runs no mods, so we can't build a modpack from it. Modpacks are for Fabric, Forge and NeoForge servers.",
 		);
-		expect(await clientPack.list(context)).toEqual([]);
+		expect((await read(context)).unavailable?.[CLIENT_PACK_GENERATE]).toEqual(refusal);
+		expect((await read(context)).actions).toEqual([]);
 	});
 
 	it("refuses when no jar in the mods folder can be downloaded by a launcher", async () => {
@@ -1048,13 +1128,10 @@ describe("when no client pack can be built", () => {
 
 		const refusal = await refusalOf(() => build(context));
 
-		expect(refusal).toEqual({
-			ar: "لا توجد في مجلد mods مودات يستطيع اللانشر تنزيلها من Modrinth أو CurseForge، ولذلك لا يوجد ما نضعه في المودباك. ثبّت مودات من تبويب المودات، ثم جرب مرة ثانية.",
-			en: "The mods folder has no mods a launcher can download from Modrinth or CurseForge, so there's nothing to put in the pack. Install mods from the Mods tab, then try again.",
-		});
+		expect(refusal).toEqual(NO_FETCHABLE_MODS);
 	});
 
-	it("refuses an empty mods folder without asking modrinth, and lists no pack", async () => {
+	it("refuses an empty mods folder without asking modrinth, and offers no pack", async () => {
 		const { context, requests } = serverWith({
 			variant: "fabric",
 			build: "0.15.3",
@@ -1074,15 +1151,269 @@ describe("when no client pack can be built", () => {
 
 		const refusal = await refusalOf(() => build(context));
 
-		expect(refusal.en).toStartWith("The mods folder has no mods a launcher can download");
+		expect(refusal).toEqual(NO_FETCHABLE_MODS);
 		expect(requests).toEqual([]);
-		expect(await clientPack.list(context)).toEqual([]);
+		expect(await read(context)).toMatchObject({
+			title: NO_PACK_TITLE,
+			actions: [],
+			unavailable: {
+				[CLIENT_PACK_GENERATE]: NO_FETCHABLE_MODS,
+			},
+			file: null,
+		});
+	});
+});
+
+describe("naming the pack after the server", () => {
+	it("takes the first label of a named address, with or without a port", () => {
+		expect(nameFor("ahmed.srvk.gg")).toBe(LABEL);
+		expect(nameFor("ahmed.srvk.gg:25570")).toBe(LABEL);
+		expect(nameFor("ahmed.srvk.localhost:25565")).toBe(LABEL);
 	});
 
-	it("refuses an empty or overlong pack name", () => {
-		expect(() => clientPackName("   ")).toThrow(BridgeUserError);
-		expect(() => clientPackName("x".repeat(65))).toThrow(BridgeUserError);
-		expect(clientPackName(" Friends SMP ")).toBe("Friends SMP");
+	it("falls back to the server code for an ipv4 or ipv6 literal", () => {
+		expect(nameFor("203.0.113.7:25570")).toBe(CODE);
+		expect(nameFor("203.0.113.7")).toBe(CODE);
+		expect(nameFor("[2001:db8::1]:25565")).toBe(CODE);
+		expect(nameFor("2001:db8::1")).toBe(CODE);
+	});
+
+	it("falls back to the server code while the server has no address", () => {
+		expect(addressLabelOf(null)).toBeNull();
+		expect(nameFor(null)).toBe(CODE);
+	});
+
+	it("cuts a name past 64 characters instead of refusing it", () => {
+		expect(nameFor(`${"a".repeat(70)}.srvk.gg`)).toBe("a".repeat(64));
+		expect(nameFor(null, "c".repeat(70))).toBe("c".repeat(64));
+	});
+});
+
+describe("reading the pack for the join page", () => {
+	it("offers to build when no pack exists yet", async () => {
+		const { context } = serverWith({
+			mods: {
+				"jei.jar": JEI,
+			},
+		});
+
+		const detail = await read(context);
+
+		expect(detail).toMatchObject({
+			id: "client-pack",
+			title: NO_PACK_TITLE,
+			subtitle: null,
+			badges: [],
+			stats: [],
+			stale: false,
+			actions: [
+				CLIENT_PACK_GENERATE,
+			],
+			file: null,
+		});
+		expect(detail.description).toEqual({
+			ar: "مودباك من مودات سيرفرك يستورده اللاعبون في اللانشر، فينزّل اللانشر كل مود من مصدره.",
+			en: "A pack of your server's mods for players to import in their launcher, which downloads each mod from its source.",
+		});
+		expect(detail.unavailable).toBeUndefined();
+	});
+
+	it("shows the built pack with its app, date, mod count and the file to download under the server's name", async () => {
+		const { context, files } = serverWith({
+			mods: {
+				"jei.jar": JEI,
+				"create.jar": CREATE,
+			},
+		});
+
+		await build(context);
+
+		const detail = await read(context);
+
+		expect(detail).toMatchObject({
+			title: LABEL,
+			subtitle: {
+				ar: "لانشر CurseForge",
+				en: "CurseForge app",
+			},
+			badges: [],
+			stale: false,
+			actions: [
+				CLIENT_PACK_GENERATE,
+			],
+			file: {
+				path: `${CLIENT_PACK_DIRECTORY}/client-pack.zip`,
+				name: "ahmed.zip",
+			},
+		});
+		expect(
+			detail.stats.map((stat) => [
+				stat.key,
+				stat.value,
+				stat.format,
+			]),
+		).toEqual([
+			[
+				"built",
+				recordOf(files).builtAt,
+				BridgeDetailFormat.Date,
+			],
+			[
+				"mods",
+				2,
+				BridgeDetailFormat.Number,
+			],
+		]);
+	});
+
+	it("names the modrinth file with its own extension", async () => {
+		const { context } = serverWith({
+			variant: "fabric",
+			build: "0.15.3",
+			mods: {
+				"sodium.jar": SODIUM,
+			},
+		});
+
+		await build(context);
+
+		expect((await read(context)).file).toEqual({
+			path: `${CLIENT_PACK_DIRECTORY}/client-pack.mrpack`,
+			name: "ahmed.mrpack",
+		});
+	});
+
+	it("offers no file once the built file is gone from disk", async () => {
+		const { context, files } = serverWith({
+			mods: {
+				"jei.jar": JEI,
+			},
+		});
+
+		await build(context);
+		files.delete(`${CLIENT_PACK_DIRECTORY}/client-pack.zip`);
+
+		expect(await read(context)).toMatchObject({
+			title: NO_PACK_TITLE,
+			file: null,
+			actions: [
+				CLIENT_PACK_GENERATE,
+			],
+		});
+	});
+
+	it("records a fingerprint of every jar the build considers, by file name and catalog version", async () => {
+		const { context, files } = serverWith({
+			variant: "fabric",
+			build: "0.15.3",
+			mods: {
+				"jei.jar": JEI,
+			},
+			jars: [
+				"jei.jar",
+				"custom.jar",
+				"geyser-fabric.jar",
+			],
+		});
+
+		await build(context);
+
+		expect(recordOf(files).fingerprint).toBe(
+			fingerprintOf([
+				"custom.jar",
+				`jei.jar:${JEI.versionId}`,
+			]),
+		);
+	});
+
+	it("marks the pack stale once a mod moves to another version", async () => {
+		const { context, files } = serverWith({
+			mods: {
+				"jei.jar": JEI,
+			},
+		});
+
+		await build(context);
+		files.set(
+			MODS_SIDECAR,
+			JSON.stringify({
+				"jei.jar": {
+					...JEI,
+					versionId: "4999999",
+				},
+			}),
+		);
+
+		expect(await read(context)).toMatchObject({
+			title: LABEL,
+			stale: true,
+			badges: [
+				STALE_BADGE,
+			],
+		});
+	});
+
+	it("marks the pack stale once a jar is added, and leaves it fresh when nothing changed", async () => {
+		const { context, files } = serverWith({
+			mods: {
+				"jei.jar": JEI,
+			},
+		});
+
+		await build(context);
+
+		expect((await read(context)).stale).toBe(false);
+
+		files.set("mods/custom.jar", "");
+
+		expect(await read(context)).toMatchObject({
+			stale: true,
+			badges: [
+				STALE_BADGE,
+			],
+		});
+	});
+
+	it("reads a record an older build wrote, with no fingerprint", async () => {
+		const { context } = serverWith({
+			mods: {
+				"jei.jar": JEI,
+			},
+			files: {
+				[CLIENT_PACK_SIDECAR]: JSON.stringify({
+					name: "Friends SMP",
+					format: "curseforge",
+					mods: 1,
+					builtAt: "2026-10-01T00:00:00.000Z",
+				}),
+				[`${CLIENT_PACK_DIRECTORY}/client-pack.zip`]: "old",
+			},
+		});
+
+		expect(await read(context)).toMatchObject({
+			title: "Friends SMP",
+			stale: true,
+			badges: [
+				STALE_BADGE,
+			],
+			stats: [
+				{
+					key: "built",
+					value: "2026-10-01T00:00:00.000Z",
+				},
+				{
+					key: "mods",
+					value: 1,
+				},
+			],
+			actions: [
+				CLIENT_PACK_GENERATE,
+			],
+			file: {
+				path: `${CLIENT_PACK_DIRECTORY}/client-pack.zip`,
+				name: "Friends SMP.zip",
+			},
+		});
 	});
 });
 

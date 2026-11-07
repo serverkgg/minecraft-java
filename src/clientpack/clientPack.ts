@@ -1,4 +1,6 @@
-import { type Bridge, BridgeKind, BridgeUserError } from "@serverkgg/bridge";
+import { createHash } from "node:crypto";
+import { isIP } from "node:net";
+import { type Bridge, BridgeDetailFormat, BridgeDetailTone, BridgeKind, BridgeUserError } from "@serverkgg/bridge";
 import { curseforgeDownloadUrl, curseforgeSha1 } from "@serverkgg/bridge/catalogs";
 import { execDetail } from "@serverkgg/bridge/utils";
 import { readSidecar, type SidecarEntry } from "../addons";
@@ -17,7 +19,9 @@ export enum ClientPackFormat {
 	Modrinth = "modrinth",
 }
 
-export const CLIENT_PACK_ROW = "client-pack";
+const CLIENT_PACK_DETAIL = "client-pack";
+
+export const CLIENT_PACK_GENERATE = "generate";
 
 export const CLIENT_PACK_FILE = "client-pack";
 
@@ -56,6 +60,10 @@ const MODRINTH_INDEX = "modrinth.index.json";
 const MOD_JARS = `${MODS_DIRECTORY}/*.jar`;
 
 const NUMERIC_ID = /^[0-9]+$/;
+
+const BRACKETED_HOST = /^\[([^\]]*)\](?::\d+)?$/;
+
+const PORT_SUFFIX = /:\d+$/;
 
 const FORMATS = new Set<string>(Object.values(ClientPackFormat));
 
@@ -107,11 +115,6 @@ const NO_FETCHABLE_MODS: Bridge.Text = {
 	en: "The mods folder has no mods a launcher can download from Modrinth or CurseForge, so there's nothing to put in the pack. Install mods from the Mods tab, then try again.",
 };
 
-const PACK_NAME_INVALID: Bridge.Text = {
-	ar: `اكتب اسمًا للمودباك من 1 إلى ${CLIENT_PACK_NAME_LIMIT} حرفًا.`,
-	en: `Type a pack name of 1 to ${CLIENT_PACK_NAME_LIMIT} characters.`,
-};
-
 const ZIP_FAILED: Bridge.Text = {
 	ar: "تعذّر تجهيز ملف المودباك. تأكد من المساحة وجرب مرة ثانية.",
 	en: "We couldn't build the pack file. Check disk space and try again.",
@@ -127,11 +130,40 @@ const SERVER_UNLISTED: Bridge.Text = {
 	en: "Your server has no address yet, so the pack doesn't add it to the players' server list.",
 };
 
+const NO_PACK_TITLE: Bridge.Text = {
+	ar: "لا يوجد مودباك بعد",
+	en: "No pack yet",
+};
+
+const PACK_DESCRIPTION: Bridge.Text = {
+	ar: "مودباك من مودات سيرفرك يستورده اللاعبون في اللانشر، فينزّل اللانشر كل مود من مصدره.",
+	en: "A pack of your server's mods for players to import in their launcher, which downloads each mod from its source.",
+};
+
+const STALE_BADGE: Bridge.DetailBadge = {
+	tone: BridgeDetailTone.Warning,
+	label: {
+		ar: "تغيّرت المودات بعد التجهيز",
+		en: "Mods changed since the build",
+	},
+};
+
+const BUILT_LABEL: Bridge.Text = {
+	ar: "تاريخ التجهيز",
+	en: "Built on",
+};
+
+const MODS_LABEL: Bridge.Text = {
+	ar: "عدد المودات",
+	en: "Mods",
+};
+
 interface ClientPackRecord {
 	name: string;
 	format: ClientPackFormat;
 	mods: number;
 	builtAt: string;
+	fingerprint: string | null;
 }
 
 interface PackJar {
@@ -188,6 +220,7 @@ export const parseClientPackRecord = (text: string): ClientPackRecord | null => 
 			format: parsed.format,
 			mods: typeof parsed.mods === "number" ? parsed.mods : 0,
 			builtAt: typeof parsed.builtAt === "string" ? parsed.builtAt : "",
+			fingerprint: typeof parsed.fingerprint === "string" ? parsed.fingerprint : null,
 		};
 	} catch {
 		return null;
@@ -202,14 +235,46 @@ const readClientPackRecord = async (context: Bridge.Context) => {
 	return parseClientPackRecord(await context.files.read(CLIENT_PACK_SIDECAR));
 };
 
-export const clientPackName = (input: string) => {
-	const name = input.trim();
+const hostOf = (address: string) => {
+	const bracketed = BRACKETED_HOST.exec(address);
 
-	if (name.length === 0 || name.length > CLIENT_PACK_NAME_LIMIT) {
-		throw new BridgeUserError(PACK_NAME_INVALID);
+	if (bracketed) {
+		return bracketed[1] ?? "";
 	}
 
-	return name;
+	return address.split(":").length > 2 ? address : address.replace(PORT_SUFFIX, "");
+};
+
+export const addressLabelOf = (address: string | null) => {
+	if (address === null) {
+		return null;
+	}
+
+	const host = hostOf(address.trim());
+
+	if (isIP(host) !== 0) {
+		return null;
+	}
+
+	const label = host.split(".").at(0) ?? "";
+
+	return label.length > 0 ? label : null;
+};
+
+export const clientPackName = (context: Bridge.Context) => {
+	return (addressLabelOf(context.server.playerAddress) ?? context.server.code).slice(0, CLIENT_PACK_NAME_LIMIT);
+};
+
+const fingerprintOf = (jars: PackJar[]) => {
+	const lines = jars
+		.map((jar) => {
+			const versionId = jar.entry?.versionId ?? "";
+
+			return versionId.length > 0 ? `${jar.fileName}:${versionId}` : jar.fileName;
+		})
+		.sort();
+
+	return createHash("sha256").update(lines.join("\n")).digest("hex");
 };
 
 export const modCountText = (count: number): Bridge.Text => {
@@ -341,6 +406,21 @@ export const clientPackFormat = (entries: (SidecarEntry | null)[]) => {
 		: ClientPackFormat.Modrinth;
 };
 
+const packJars = async (context: Bridge.Context): Promise<PackJar[]> => {
+	const sidecar = await readSidecar(context, MODS_DIRECTORY);
+
+	return (await context.files.list(MOD_JARS))
+		.map((entry) => entry.name)
+		.filter((fileName) => !isCompanionFile(context, fileName))
+		.sort()
+		.map((fileName) => {
+			return {
+				fileName,
+				entry: sidecar[fileName] ?? null,
+			};
+		});
+};
+
 const packSource = async (context: Bridge.Context, name: string, version: string): Promise<PackSource> => {
 	if (await modpackApplied(context)) {
 		throw new BridgeUserError(MODPACK_APPLIED);
@@ -362,17 +442,7 @@ const packSource = async (context: Bridge.Context, name: string, version: string
 
 	clientPackVariant(identity);
 
-	const sidecar = await readSidecar(context, MODS_DIRECTORY);
-	const jars = (await context.files.list(MOD_JARS))
-		.map((entry) => entry.name)
-		.filter((fileName) => !isCompanionFile(context, fileName))
-		.sort()
-		.map((fileName) => {
-			return {
-				fileName,
-				entry: sidecar[fileName] ?? null,
-			};
-		});
+	const jars = await packJars(context);
 
 	if (jars.length === 0) {
 		throw new BridgeUserError(NO_FETCHABLE_MODS);
@@ -618,10 +688,10 @@ export const clientPackPath = (format: ClientPackFormat) => {
 	return `${CLIENT_PACK_DIRECTORY}/${packFileName(format)}`;
 };
 
-const buildClientPack = async (context: Bridge.Context, input: string): Promise<Bridge.AddOutcome> => {
+const buildClientPack = async (context: Bridge.Context, name: string): Promise<Bridge.DetailOutcome> => {
 	const builtAt = new Date().toISOString();
 	const address = context.server.playerAddress;
-	const source = await packSource(context, clientPackName(input), packVersion(builtAt));
+	const source = await packSource(context, name, packVersion(builtAt));
 	const plan = await planPack(context, source.jars);
 	const pending = `${CLIENT_PACK_STAGING}/${packFileName(plan.format)}`;
 
@@ -648,6 +718,7 @@ const buildClientPack = async (context: Bridge.Context, input: string): Promise<
 		format: plan.format,
 		mods: plan.count,
 		builtAt,
+		fingerprint: fingerprintOf(source.jars),
 	};
 
 	await context.files.write(CLIENT_PACK_SIDECAR, `${JSON.stringify(record, null, 2)}\n`);
@@ -660,58 +731,116 @@ const buildClientPack = async (context: Bridge.Context, input: string): Promise<
 	});
 
 	return {
+		variables: null,
 		notice: clientPackNotice(plan.format, plan.count, plan.left, address !== null),
 	};
 };
 
-const packable = async (context: Bridge.Context) => {
+const readySource = async (context: Bridge.Context) => {
 	try {
-		await packSource(context, "", "");
-
-		return true;
+		return await packSource(context, "", "");
 	} catch (error) {
 		if (error instanceof BridgeUserError) {
-			return false;
+			return error;
 		}
 
 		throw error;
 	}
 };
 
-export const clientPack: Bridge.Collection = {
-	kind: BridgeKind.Collection,
+const generateOf = (refusal: Bridge.Text | null): Pick<Bridge.DetailResult, "actions" | "unavailable"> => {
+	if (refusal === null) {
+		return {
+			actions: [
+				CLIENT_PACK_GENERATE,
+			],
+		};
+	}
 
-	async list(context) {
-		const record = await readClientPackRecord(context);
+	return {
+		actions: [],
+		unavailable: {
+			[CLIENT_PACK_GENERATE]: refusal,
+		},
+	};
+};
 
-		if (!record || !(await context.files.exists(clientPackPath(record.format))) || !(await packable(context))) {
-			return [];
+const emptyDetail = (refusal: Bridge.Text | null): Bridge.DetailResult => {
+	return {
+		id: CLIENT_PACK_DETAIL,
+		title: NO_PACK_TITLE,
+		subtitle: null,
+		description: PACK_DESCRIPTION,
+		image: null,
+		badges: [],
+		stats: [],
+		links: [],
+		stale: false,
+		...generateOf(refusal),
+		file: null,
+	};
+};
+
+const builtDetail = (record: ClientPackRecord, fingerprint: string): Bridge.DetailResult => {
+	const stale = record.fingerprint !== fingerprint;
+
+	return {
+		id: CLIENT_PACK_DETAIL,
+		title: record.name,
+		subtitle: CLIENT_PACK_APPS[record.format],
+		description: PACK_DESCRIPTION,
+		image: null,
+		badges: stale
+			? [
+					STALE_BADGE,
+				]
+			: [],
+		stats: [
+			{
+				key: "built",
+				label: BUILT_LABEL,
+				value: record.builtAt.length > 0 ? record.builtAt : null,
+				format: BridgeDetailFormat.Date,
+			},
+			{
+				key: "mods",
+				label: MODS_LABEL,
+				value: record.mods,
+				format: BridgeDetailFormat.Number,
+			},
+		],
+		links: [],
+		stale,
+		...generateOf(null),
+		file: {
+			path: clientPackPath(record.format),
+			name: `${record.name}.${FORMAT_EXTENSIONS[record.format]}`,
+		},
+	};
+};
+
+export const clientPack: Bridge.Detail = {
+	kind: BridgeKind.Detail,
+
+	async read(context) {
+		const source = await readySource(context);
+
+		if (source instanceof BridgeUserError) {
+			return emptyDetail(source.text);
 		}
 
-		return [
-			{
-				id: CLIENT_PACK_ROW,
-				name: record.name,
-				app: CLIENT_PACK_APPS[record.format],
-				mods: record.mods,
-				built: record.builtAt.slice(0, 10),
-				path: clientPackPath(record.format),
-			},
-		];
-	},
+		const record = await readClientPackRecord(context);
 
-	async add(context, input) {
-		return await exclusive(() => buildClientPack(context, input));
+		if (!record || !(await context.files.exists(clientPackPath(record.format)))) {
+			return emptyDetail(null);
+		}
+
+		return builtDetail(record, fingerprintOf(source.jars));
 	},
 
 	actions: {
-		async remove(context) {
-			await exclusive(async () => {
-				await context.files.remove(CLIENT_PACK_DIRECTORY);
-				await context.files.remove(CLIENT_PACK_SIDECAR);
-			});
-
-			context.log("removed the client pack");
+		async [CLIENT_PACK_GENERATE](context) {
+			return await exclusive(() => buildClientPack(context, clientPackName(context)));
 		},
 	},
 };

@@ -9,6 +9,7 @@ import {
 	BridgeUploadMode,
 } from "@serverkgg/bridge";
 import { rconAccessSections } from "@serverkgg/bridge/rcon";
+import { CLIENT_PACK_GENERATE } from "../clientpack";
 import { CROSSPLAY, VERSION_COMPAT, VOICE_CHAT } from "../companions";
 import { MODPACK_UPDATE_ACTION, MODPACK_VARIABLE } from "../modpacks";
 import {
@@ -296,90 +297,6 @@ const modpacksTab: Bridge.Tab = {
 			empty: {
 				ar: "لا توجد مودباكات مرفوعة. ارفع ملف ZIP من لانشر CurseForge أو ملف mrpack لتثبّته على سيرفرك.",
 				en: "No uploaded modpacks. Upload a ZIP from the CurseForge app or an .mrpack file to install it on your server.",
-			},
-		},
-		{
-			layout: BridgeLayout.Table,
-			id: "client-pack",
-			title: {
-				ar: "مودباك للاعبين",
-				en: "Modpack for players",
-			},
-			help: {
-				ar: "نجهّز من مودات سيرفرك مودباكًا يستورده اللاعبون في اللانشر، فيدخلون بالمودات نفسها. يضم كل مود يستطيع اللانشر تنزيله من Modrinth أو CurseForge. اكتب اسمه، ثم نزّله وأرسله لهم.",
-				en: "We build a modpack from your server's mods. Players import it in their launcher and join with the same mods. It holds every mod a launcher can download from Modrinth or CurseForge. Type a name for it, then download it and send it to them.",
-			},
-			module: "clientPack",
-			columns: [
-				{
-					key: "name",
-					label: {
-						ar: "الاسم",
-						en: "Name",
-					},
-				},
-				{
-					key: "app",
-					label: {
-						ar: "يُستورد في",
-						en: "Import in",
-					},
-				},
-				{
-					key: "mods",
-					label: {
-						ar: "المودات",
-						en: "Mods",
-					},
-				},
-				{
-					key: "built",
-					label: {
-						ar: "تاريخ التجهيز",
-						en: "Built on",
-					},
-				},
-			],
-			add: {
-				label: {
-					ar: "جهّز المودباك",
-					en: "Build pack",
-				},
-				placeholder: "Friends SMP",
-			},
-			actions: [
-				{
-					id: "download",
-					label: {
-						ar: "نزّل",
-						en: "Download",
-					},
-					download: true,
-				},
-				{
-					id: "remove",
-					label: {
-						ar: "احذف",
-						en: "Delete",
-					},
-					confirm: BridgeConfirm.Normal,
-					confirmText: {
-						ar: "نحذف ملف المودباك من سيرفرك، ولا يتأثر ما نزّله اللاعبون منه. جهّزه من جديد متى أردت.",
-						en: "We delete the pack file from your server. Copies players already downloaded stay as they are. Build it again whenever you like.",
-					},
-				},
-			],
-			empty: {
-				ar: "لا يوجد مودباك للاعبين بعد. اكتب اسمًا واضغط «جهّز المودباك» لنجهّزه من مودات سيرفرك. وإذا كان سيرفرك على مودباك، فأرسل للاعبين ذلك المودباك نفسه.",
-				en: "No pack for players yet. Type a name and select Build pack to build one from your server's mods. If your server runs a modpack, send players that same modpack instead.",
-			},
-			visibleWhen: {
-				variable: "SERVER_TYPE",
-				values: [
-					"fabric",
-					"forge",
-					"neoforge",
-				],
 			},
 		},
 		{
@@ -1325,6 +1242,49 @@ const modsTab: Bridge.Tab = {
 			empty: {
 				ar: "لا توجد مودات مثبّتة بعد.",
 				en: "No mods installed yet.",
+			},
+			visibleWhen: {
+				variable: "SERVER_TYPE",
+				values: [
+					"fabric",
+					"forge",
+					"neoforge",
+				],
+			},
+		},
+		{
+			layout: BridgeLayout.Detail,
+			id: "client-pack",
+			title: {
+				ar: "مودباك للاعبين",
+				en: "Modpack for players",
+			},
+			help: {
+				ar: "نجهّز من مودات سيرفرك مودباكًا يستورده اللاعبون في اللانشر ليدخلوا بالمودات نفسها. جهّزه من جديد كلما غيّرت موداتك، ثم نزّله وأرسله لهم.",
+				en: "We build a pack from your server's mods that players import in their launcher to join with the same mods. Build it again whenever you change your mods, then download it and send it to them.",
+			},
+			place: BridgePlace.Join,
+			module: "clientPack",
+			actions: [
+				{
+					id: CLIENT_PACK_GENERATE,
+					label: {
+						ar: "جهّز المودباك",
+						en: "Build pack",
+					},
+				},
+				{
+					id: "download",
+					label: {
+						ar: "نزّل المودباك",
+						en: "Download pack",
+					},
+					download: true,
+				},
+			],
+			empty: {
+				ar: "لا يوجد مودباك للاعبين بعد.",
+				en: "No pack for players yet.",
 			},
 			visibleWhen: {
 				variable: "SERVER_TYPE",
