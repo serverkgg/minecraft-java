@@ -74,6 +74,7 @@ export interface ModpackIndex {
 	loaderVersion: string;
 	files: ModpackFile[];
 	blocked: BlockedFile[];
+	unsupportedProjects: string[];
 }
 
 interface RawIndexFile {
@@ -189,6 +190,16 @@ const readFile = (value: RawIndexFile): ModpackFile | null => {
 	};
 };
 
+const unsupportedProjectOf = (value: RawIndexFile) => {
+	if (value.env?.server !== MODRINTH_UNSUPPORTED) {
+		return null;
+	}
+
+	const url = readUrl(value.downloads);
+
+	return url === null ? null : modrinthProjectId(url);
+};
+
 const readLoader = (dependencies: Record<string, unknown>) => {
 	for (const [key, value] of Object.entries(dependencies)) {
 		if (QUILT_LOADERS.includes(key)) {
@@ -286,5 +297,14 @@ export const parseModpackIndex = (raw: string): ModpackIndex => {
 		loaderVersion,
 		files,
 		blocked: [],
+		unsupportedProjects: entries.flatMap((entry) => {
+			const project = unsupportedProjectOf(entry);
+
+			return project === null
+				? []
+				: [
+						project,
+					];
+		}),
 	};
 };

@@ -1,6 +1,7 @@
-import { type Bridge, BridgeDownloadError, BridgeUserError, describeDownloadFailure } from "@serverkgg/bridge";
+import { type Bridge, BridgeUserError } from "@serverkgg/bridge";
 import { BridgeEventName } from "@serverkgg/bridge/protocol";
 import {
+	AddonKind,
 	CatalogProviderId,
 	describeLookupFailure,
 	LookupFailure,
@@ -11,18 +12,17 @@ import {
 	modpackSourceById,
 } from "../providers";
 import {
-	createRequestPacer,
 	fileNameOf,
 	IDENTITY_SEPARATOR,
-	mapConcurrent,
 	modpackIdentity,
-	type RequestPacer,
 	type ServerVariant,
 	STAGING_ROOT,
 	VARIANT_LABELS,
 } from "../shared";
 import { CLIENT_ONLY_DIRECTORIES, isClientOnlyFilename } from "./clientMods";
 import { modpackCleanup } from "./modpackCleanup";
+import { resolveMissingLibraries } from "./modpackDependencies";
+import { downloadFailure, downloadFiles, PACK_STAGING } from "./modpackDownload";
 import {
 	MODPACK_INDEX,
 	MODS_DIRECTORY,
@@ -48,8 +48,6 @@ import { pickModpackVersion } from "./modpackVersion";
 
 export const MODPACK_VARIABLE = "MODPACK";
 
-const PACK_STAGING = `${STAGING_ROOT}/pack`;
-
 const MODRINTH_ARCHIVE = `${PACK_STAGING}/modpack.mrpack`;
 
 const CURSEFORGE_ARCHIVE = `${PACK_STAGING}/modpack.zip`;
@@ -70,16 +68,6 @@ const CURSEFORGE_OVERRIDE_EXCLUDES = [
 	...OVERRIDE_EXCLUDES,
 	"saves/**",
 ];
-
-const PROGRESS_STEP = 10;
-
-const DOWNLOAD_WIDTH = 4;
-
-const THROTTLE_WAIT_MS = 65_000;
-
-const DOWNLOAD_DEADLINE_MS = 15 * 60_000;
-
-const THROTTLED_STATUS = 429;
 
 export enum ModpackPlanKind {
 	Apply = "apply",
@@ -105,6 +93,7 @@ export interface StagedModpack {
 	excludes: string[];
 	prepared?: ModpackFile[];
 	skipped?: number;
+	unsupported: Set<string>;
 }
 
 const clearStaging = async (context: Bridge.Context) => {
@@ -174,115 +163,6 @@ const applyOverrides = async (context: Bridge.Context, staged: StagedModpack, fo
 	});
 
 	return kept;
-};
-
-const isThrottled = (error: unknown) => {
-	return error instanceof BridgeDownloadError && error.status === THROTTLED_STATUS;
-};
-
-export const downloadFailure = (error: unknown, subject: string) => {
-	return error instanceof BridgeDownloadError
-		? new BridgeUserError(describeDownloadFailure(error, subject), {
-				cause: error,
-			})
-		: error;
-};
-
-const wait = (ms: number) => {
-	return new Promise((resolve) => {
-		setTimeout(resolve, ms);
-	});
-};
-
-const downloadFile = async (context: Bridge.Context, file: ModpackFile, pacer: RequestPacer, deadline: number) => {
-	const options = {
-		cache: true,
-		digest: file.digest,
-		quiet: true,
-		...(file.sizeBytes === null
-			? {}
-			: {
-					sizeBytes: file.sizeBytes,
-				}),
-	};
-
-	for (;;) {
-		await pacer.acquire();
-
-		try {
-			await context.files.download(file.path, file.url, options);
-
-			return;
-		} catch (error) {
-			if (!isThrottled(error) || Date.now() + THROTTLE_WAIT_MS >= deadline) {
-				throw downloadFailure(error, fileNameOf(file.path));
-			}
-
-			context.log.warn("the download limit was reached, waiting before carrying on", {
-				file: fileNameOf(file.path),
-			});
-
-			await wait(THROTTLE_WAIT_MS);
-		}
-	}
-};
-
-const totalBytesOf = (files: ModpackFile[]) => {
-	let total = 0;
-
-	for (const file of files) {
-		if (file.sizeBytes === null) {
-			return null;
-		}
-
-		total += file.sizeBytes;
-	}
-
-	return total;
-};
-
-const downloadFiles = async (context: Bridge.Context, files: ModpackFile[]) => {
-	const pacer = createRequestPacer();
-	const started = Date.now();
-	const deadline = started + DOWNLOAD_DEADLINE_MS;
-	const total = files.length;
-	const totalBytes = totalBytesOf(files);
-
-	context.log("downloading the modpack's files", {
-		files: total,
-		sizeBytes: totalBytes,
-	});
-
-	let done = 0;
-	let doneBytes = 0;
-	let milestone = 0;
-
-	await mapConcurrent(files, DOWNLOAD_WIDTH, async (file) => {
-		await downloadFile(context, file, pacer, deadline);
-
-		done += 1;
-		doneBytes += file.sizeBytes ?? 0;
-
-		const reached = Math.floor(
-			totalBytes === null ? (done / total) * 100 : (doneBytes / Math.max(totalBytes, 1)) * 100,
-		);
-
-		if (reached >= milestone + PROGRESS_STEP && done < total) {
-			milestone = Math.floor(reached / PROGRESS_STEP) * PROGRESS_STEP;
-
-			context.log("downloading the modpack's files", {
-				done: `${done}/${total}`,
-				percent: milestone,
-				file: fileNameOf(file.path),
-			});
-		}
-	});
-
-	context.log("downloaded the modpack's files", {
-		files: total,
-		sizeBytes: totalBytes,
-		seconds: Math.round((Date.now() - started) / 1000),
-	});
 };
 
 export const parentDirectoriesOf = (paths: string[]) => {
@@ -662,10 +542,8 @@ export const stageModpack = async (
 		);
 	}
 
-	const { keep, skipped } = partitionModpackFiles(
-		staged.index.files,
-		await resolveModpackSignals(context, staged.index.files),
-	);
+	const signals = await resolveModpackSignals(context, staged.index.files);
+	const { keep, skipped } = partitionModpackFiles(staged.index.files, signals);
 	await downloadFiles(
 		context,
 		keep.map((file) => ({
@@ -689,6 +567,7 @@ export const stageModpack = async (
 		project,
 		ref,
 		release,
+		unsupported: signals.unsupported,
 	};
 };
 
@@ -783,6 +662,26 @@ export const applyModpack = async (context: Bridge.Context, staged: StagedModpac
 		installed.push(...(await applyOverrides(context, staged, folder)));
 	}
 
+	const modrinthFormat = (release.local?.format ?? ref.provider) === CatalogProviderId.Modrinth;
+	const libraries = modrinthFormat
+		? await resolveMissingLibraries(
+				context,
+				keep,
+				new Set([
+					...staged.unsupported,
+					...index.unsupportedProjects,
+				]),
+				{
+					kind: AddonKind.Mod,
+					variant: index.variant,
+					gameVersion: index.mcVersion,
+					directory: MODS_DIRECTORY,
+				},
+			)
+		: [];
+
+	installed.push(...libraries.map((file) => file.path));
+
 	await writeModpackSidecar(context, {
 		provider: ref.provider,
 		project: ref.project,
@@ -823,6 +722,7 @@ export const applyModpack = async (context: Bridge.Context, staged: StagedModpac
 				files: keep.length,
 				skipped: skippedCount,
 				pending: rescue.missing.length,
+				libraries: libraries.length,
 			},
 		},
 	};

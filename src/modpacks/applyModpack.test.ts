@@ -1,28 +1,29 @@
 import { describe, expect, it } from "bun:test";
 import {
 	type Bridge,
-	BridgeDownloadError,
 	BridgeFailureCode,
 	BridgeFailureError,
 	BridgeNetError,
 	BridgeSecretError,
 	BridgeUserError,
-	describeDownloadFailure,
 } from "@serverkgg/bridge";
 import { BridgeEventName } from "@serverkgg/bridge/protocol";
-import { CatalogProviderId, type ModpackRelease } from "../providers";
+import { CatalogProviderId, MODRINTH, type ModpackRelease } from "../providers";
 import { PACK_INDEX, type PackEntry, PackFormat, ServerVariant, STAGING_ROOT } from "../shared";
 import { type MemoryArchive, memoryContext } from "../testing";
 import {
-	downloadFailure,
+	applyModpack,
+	detachModpack,
 	modpackInstalledText,
 	modpackRemovedActivity,
 	parentDirectoriesOf,
 	placePreparedFiles,
 	releaseIdentity,
+	type StagedModpack,
 	stageModpack,
 } from "./applyModpack";
-import type { ModpackFile } from "./modpackIndex";
+import { type ModpackFile, modPath } from "./modpackIndex";
+import { readModpackSidecar } from "./modpackSidecar";
 
 const file = (path: string): ModpackFile => ({
 	path,
@@ -290,32 +291,6 @@ describe("why a modpack cannot be staged", () => {
 		expect((error as BridgeUserError).text.en).toBe(
 			"We couldn't find this modpack version at its source. Pick the modpack again from the Modpacks tab. Your files weren't changed.",
 		);
-	});
-});
-
-describe("a modpack download that fails", () => {
-	for (const status of [
-		404,
-		410,
-		401,
-		403,
-		503,
-		null,
-	]) {
-		it(`answering ${String(status)} becomes the customer's reason and keeps the original`, () => {
-			const original = new BridgeDownloadError(status, "cdn.modrinth.com answered");
-			const mapped = downloadFailure(original, "All the Mods 9 0.3.2");
-
-			expect(mapped).toBeInstanceOf(BridgeUserError);
-			expect((mapped as BridgeUserError).text).toEqual(describeDownloadFailure(original, "All the Mods 9 0.3.2"));
-			expect((mapped as BridgeUserError).cause).toBe(original);
-		});
-	}
-
-	it("anything that is not a download answer passes through untouched", () => {
-		const original = new Error("digest mismatch");
-
-		expect(downloadFailure(original, "mod.jar")).toBe(original);
 	});
 });
 
@@ -651,5 +626,197 @@ describe("staging a modpack the owner uploaded", () => {
 
 		expect(error).toBeInstanceOf(BridgeUserError);
 		expect((error as BridgeUserError).text.en).toContain("The modpack source CurseForge isn't available right now");
+	});
+});
+
+const PACK_SHA512 = "a".repeat(128);
+
+const REQUIRING_PROJECT = "DzZWws4q";
+
+const REQUIRING_JAR = "climaterivers.jar";
+
+const LIBRARY_PROJECT = "kkmrDlKT";
+
+const LIBRARY_JAR = "TerraBlender-fabric-1.20.1.jar";
+
+const PACK_ARCHIVE = `${STAGING_ROOT}/pack/modpack.mrpack`;
+
+const cdnFile = (project: string, version: string, filename: string) => {
+	return `https://cdn.modrinth.com/data/${project}/versions/${version}/${filename}`;
+};
+
+const LIBRARY_URL = cdnFile(LIBRARY_PROJECT, "tb000001", LIBRARY_JAR);
+
+const modrinthVersion = (id: string, project: string, filename: string, requires: string[]) => ({
+	id,
+	project_id: project,
+	version_number: "1.0.0",
+	version_type: "release",
+	date_published: "2026-10-01T00:00:00Z",
+	game_versions: [
+		"1.20.1",
+	],
+	loaders: [
+		"fabric",
+	],
+	files: [
+		{
+			url: cdnFile(project, id, filename),
+			filename,
+			primary: true,
+			size: 2048,
+			hashes: {
+				sha512: PACK_SHA512,
+			},
+		},
+	],
+	dependencies: requires.map((dependency) => ({
+		project_id: dependency,
+		version_id: null,
+		dependency_type: "required",
+	})),
+});
+
+const LIBRARY_ANSWERS: Record<string, unknown> = {
+	[`${MODRINTH}/versions`]: [
+		modrinthVersion("climate1", REQUIRING_PROJECT, REQUIRING_JAR, [
+			LIBRARY_PROJECT,
+		]),
+	],
+	[`${MODRINTH}/project/${LIBRARY_PROJECT}`]: {
+		id: LIBRARY_PROJECT,
+		title: "TerraBlender",
+		slug: "terrablender",
+		icon_url: null,
+		server_side: "required",
+	},
+	[`${MODRINTH}/project/${LIBRARY_PROJECT}/version`]: [
+		modrinthVersion("tb000001", LIBRARY_PROJECT, LIBRARY_JAR, []),
+	],
+};
+
+const installingContext = () => {
+	const requested: string[] = [];
+	const memory = memoryContext({
+		files: {
+			[`${STAGING_ROOT}/pack/content/${modPath(REQUIRING_JAR)}`]: "",
+		},
+		archives: {
+			[PACK_ARCHIVE]: {
+				"overrides/config/climaterivers.toml": "",
+			},
+		},
+		served: {
+			[LIBRARY_URL]: {
+				"fabric.mod.json": JSON.stringify({
+					id: "terrablender",
+				}),
+			},
+		},
+		json: (url) => {
+			requested.push(url);
+
+			const parsed = new URL(url);
+			const answer = LIBRARY_ANSWERS[`${parsed.origin}${parsed.pathname}`];
+
+			if (answer === undefined) {
+				throw new Error(`no stub for ${url}`);
+			}
+
+			return answer;
+		},
+	});
+
+	return {
+		...memory,
+		requested,
+	};
+};
+
+const stagedPack = (provider: CatalogProviderId): StagedModpack => {
+	const kept: ModpackFile = {
+		path: modPath(REQUIRING_JAR),
+		url: cdnFile(REQUIRING_PROJECT, "climate1", REQUIRING_JAR),
+		digest: `sha512:${PACK_SHA512}`,
+		sizeBytes: 2048,
+		projectId: REQUIRING_PROJECT,
+	};
+
+	return {
+		ref: {
+			provider,
+			project: "bmc2",
+			versionId: "v40",
+		},
+		project: {
+			id: "bmc2",
+			title: "Better MC",
+			icon: null,
+			pageUrl: null,
+			description: null,
+			author: null,
+			downloads: null,
+		},
+		release: release(
+			[
+				"fabric",
+			],
+			[
+				"1.20.1",
+			],
+		),
+		index: {
+			name: "Better MC",
+			mcVersion: "1.20.1",
+			variant: ServerVariant.Fabric,
+			loaderVersion: "0.16.9",
+			files: [
+				kept,
+			],
+			blocked: [],
+			unsupportedProjects: [],
+		},
+		archive: PACK_ARCHIVE,
+		overrides: [
+			"overrides",
+		],
+		excludes: [],
+		prepared: [
+			kept,
+		],
+		skipped: 0,
+		unsupported: new Set(),
+	};
+};
+
+describe("installing a modpack whose mods require a library the pack leaves out", () => {
+	it("adds the library and records it as one of the pack's files", async () => {
+		const { archives, context } = installingContext();
+		const applied = await applyModpack(context, stagedPack(CatalogProviderId.Modrinth));
+
+		expect(archives.has(modPath(LIBRARY_JAR))).toBe(true);
+		expect((await readModpackSidecar(context))?.files).toContain(modPath(LIBRARY_JAR));
+		expect(applied.activity.details?.libraries).toBe(1);
+	});
+
+	it("leaves a curseforge pack as published even when its files come from modrinth's mirror", async () => {
+		const { archives, context, requested } = installingContext();
+		const applied = await applyModpack(context, stagedPack(CatalogProviderId.CurseForge));
+
+		expect(requested).toEqual([]);
+		expect(archives.has(modPath(LIBRARY_JAR))).toBe(false);
+		expect(applied.activity.details?.libraries).toBe(0);
+	});
+
+	it("removes the library together with the pack", async () => {
+		const { archives, context } = installingContext();
+
+		await applyModpack(context, stagedPack(CatalogProviderId.Modrinth));
+
+		expect(archives.has(modPath(LIBRARY_JAR))).toBe(true);
+
+		await detachModpack(context);
+
+		expect(archives.has(modPath(LIBRARY_JAR))).toBe(false);
 	});
 });

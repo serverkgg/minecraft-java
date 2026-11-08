@@ -167,6 +167,7 @@ describe("writing a client pack modrinth index", () => {
 					},
 				],
 				blocked: [],
+				unsupportedProjects: [],
 			});
 		}
 	});

@@ -105,21 +105,25 @@ export const parseModIds = (fileName: string, text: string): string[] => {
 	}
 };
 
-const jarModIds = async (context: Bridge.Context, jar: string) => {
+export const declaredModIds = async (context: Bridge.Context, jar: string): Promise<string[]> => {
 	await context.files.remove(MOD_INDEX_STAGING);
 
-	const written = await context.files.extract(jar, MOD_INDEX_STAGING, {
-		selects: MOD_METADATA_SELECTS,
-		tree: false,
-	});
+	try {
+		const written = await context.files.extract(jar, MOD_INDEX_STAGING, {
+			selects: MOD_METADATA_SELECTS,
+			tree: false,
+		});
 
-	const ids: string[] = [];
+		const ids: string[] = [];
 
-	for (const path of written) {
-		ids.push(...parseModIds(path, await context.files.read(path)));
+		for (const path of written) {
+			ids.push(...parseModIds(path, await context.files.read(path)));
+		}
+
+		return ids;
+	} finally {
+		await context.files.remove(MOD_INDEX_STAGING);
 	}
-
-	return ids;
 };
 
 const buildIndex = async (context: Bridge.Context, entries: Bridge.FileEntry[]) => {
@@ -129,7 +133,7 @@ const buildIndex = async (context: Bridge.Context, entries: Bridge.FileEntry[]) 
 
 	for (const entry of entries) {
 		try {
-			for (const id of await jarModIds(context, entry.path)) {
+			for (const id of await declaredModIds(context, entry.path)) {
 				const key = id.toLowerCase();
 
 				if (!jars.has(key)) {
@@ -140,8 +144,6 @@ const buildIndex = async (context: Bridge.Context, entries: Bridge.FileEntry[]) 
 			unreadable += 1;
 		}
 	}
-
-	await context.files.remove(MOD_INDEX_STAGING);
 
 	context.log("indexed the mod ids the installed jars declare", {
 		jars: entries.length,
@@ -156,11 +158,18 @@ const signatureOf = (entries: Bridge.FileEntry[]) => {
 	return `${entries.length}:${entries.reduce((total, entry) => total + entry.sizeBytes, 0)}`;
 };
 
-const installedJars = async (context: Bridge.Context) => {
+const modJars = async (context: Bridge.Context) => {
 	return (await context.files.list(MODS_GLOB))
 		.filter((entry) => !entry.directory)
-		.sort((left, right) => left.path.localeCompare(right.path))
-		.slice(0, MAX_INDEXED_JARS);
+		.sort((left, right) => left.path.localeCompare(right.path));
+};
+
+const installedJars = async (context: Bridge.Context) => {
+	return (await modJars(context)).slice(0, MAX_INDEXED_JARS);
+};
+
+export const installedModIds = async (context: Bridge.Context): Promise<Map<string, string>> => {
+	return await buildIndex(context, await modJars(context));
 };
 
 export const resolveModJar = async (context: Bridge.Context, modId: string): Promise<string | null> => {

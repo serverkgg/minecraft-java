@@ -28,6 +28,8 @@ const CDN_VERSION_PATTERN = /^\/data\/[A-Za-z0-9]+\/versions\/([A-Za-z0-9]+)\//;
 
 export const MODRINTH_REQUIRED = "required";
 
+export const MODRINTH_EMBEDDED = "embedded";
+
 export const MODRINTH_SHA1 = "sha1";
 
 const REJECTED_STATUSES = [

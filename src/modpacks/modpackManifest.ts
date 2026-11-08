@@ -605,6 +605,7 @@ export const resolveCurseforgeFiles = async (
 		loaderVersion: manifest.loaderVersion,
 		mcVersion: manifest.mcVersion,
 		name: manifest.name,
+		unsupportedProjects: [],
 		variant: manifest.variant,
 	};
 };
